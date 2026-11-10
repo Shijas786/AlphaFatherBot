@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Upbit Listing Sniper</title>
+  <!-- Telegram Web App JS SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-group">
+        <div class="logo-icon">⚡</div>
+        <div>
+          <h1 class="app-title">UPBIT SNIPER</h1>
+          <p class="app-subtitle" id="user-display">Connecting...</p>
+        </div>
+      </div>
+      <div class="header-status">
+        <span class="badge" id="system-status-badge">STANDBY</span>
+      </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-tab="tab-dashboard">📊 Dashboard</button>
+      <button class="tab-btn" data-tab="tab-settings">⚙️ Strategy</button>
+      <button class="tab-btn" data-tab="tab-api">🔑 API Keys</button>
+      <button class="tab-btn" data-tab="tab-history">📜 Activity</button>
+    </nav>
+
+    <!-- TAB 1: DASHBOARD -->
+    <main class="tab-content active" id="tab-dashboard">
+      <!-- Main Bot Switch Card -->
+      <section class="card hero-card">
+        <div class="hero-header">
+          <div>
+            <div class="hero-label">AUTO-SNIPER STATUS</div>
+            <div class="hero-state" id="hero-state-text">PAUSED</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="bot-active-toggle">
+            <span class="slider round"></span>
+          </label>
+        </div>
+        <p class="hero-desc">When enabled, the bot listens to Upbit listings and fires Binance orders instantly.</p>
+      </section>
+
+      <!-- Key Metrics Grid -->
+      <div class="grid grid-2">
+        <div class="card metric-card">
+          <div class="metric-label">TRADING MODE</div>
+          <div class="metric-val" id="metric-mode">🧪 SIMULATION</div>
+          <button class="btn btn-secondary btn-sm" id="btn-toggle-sim">Switch Mode</button>
+        </div>
+        <div class="card metric-card">
+          <div class="metric-label">MARKET TYPE</div>
+          <div class="metric-val" id="metric-market">SPOT</div>
+          <button class="btn btn-secondary btn-sm" id="btn-toggle-market">Switch Market</button>
+        </div>
+        <div class="card metric-card">
+          <div class="metric-label">ORDER SIZE</div>
+          <div class="metric-val highlight" id="metric-order-size">$50 USDT</div>
+        </div>
+        <div class="card metric-card">
+          <div class="metric-label">BINANCE BALANCE</div>
+          <div class="metric-val" id="metric-balance">$0.00 USDT</div>
+        </div>
+      </div>
+
+      <!-- Active Position / Live Trade Section -->
+      <section class="card section-card">
+        <div class="card-title-row">
+          <h2 class="card-title">🔥 Active Positions</h2>
+          <span class="badge badge-pulse" id="active-pos-count">0 OPEN</span>
+        </div>
+        <div id="active-positions-container">
+          <div class="empty-state">No open positions. Ready to snipe listings.</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- TAB 2: SETTINGS -->
+    <main class="tab-content" id="tab-settings">
+      <section class="card">
+        <h2 class="card-title">🎯 Order Execution Settings</h2>
+        
+        <div class="form-group">
+          <label class="form-label">Order Amount (USDT)</label>
+          <div class="pill-group" id="amount-pills">
+            <button class="pill-btn" data-amt="25">$25</button>
+            <button class="pill-btn active" data-amt="50">$50</button>
+            <button class="pill-btn" data-amt="100">$100</button>
+            <button class="pill-btn" data-amt="250">$250</button>
+            <button class="pill-btn" data-amt="500">$500</button>
+          </div>
+          <input type="number" class="input-field" id="input-custom-amount" placeholder="Or enter custom amount in USDT" min="10" step="5">
+        </div>
+
+        <div class="form-group" id="futures-leverage-group">
+          <label class="form-label">Futures Leverage (USDT-M)</label>
+          <div class="pill-group" id="leverage-pills">
+            <button class="pill-btn" data-lev="2">2x</button>
+            <button class="pill-btn active" data-lev="3">3x</button>
+            <button class="pill-btn" data-lev="5">5x</button>
+            <button class="pill-btn" data-lev="10">10x</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">🧠 Smart Exit Parameters</h2>
+        <p class="section-desc">Upbit listing pumps peak within 5–60s. Configure automated profit taking and risk protection:</p>
+
+        <div class="form-group">
+          <div class="label-with-val">
+            <label class="form-label">Hard Take Profit</label>
+            <span class="val-tag" id="val-tp">+15%</span>
+          </div>
+          <input type="range" class="slider-input" id="range-tp" min="5" max="50" step="1" value="15">
+        </div>
+
+        <div class="form-group">
+          <div class="label-with-val">
+            <label class="form-label">Hard Stop Loss</label>
+            <span class="val-tag danger" id="val-sl">-5%</span>
+          </div>
+          <input type="range" class="slider-input" id="range-sl" min="2" max="20" step="1" value="5">
+        </div>
+
+        <div class="form-group">
+          <div class="label-with-val">
+            <label class="form-label">Trailing Stop Pullback</label>
+            <span class="val-tag" id="val-trailing">4%</span>
+          </div>
+          <input type="range" class="slider-input" id="range-trailing" min="1" max="10" step="1" value="4">
+          <small class="hint-text">Arms after profit hits +8%, then sells if price drops 4% from the peak watermark.</small>
+        </div>
+
+        <div class="form-group">
+          <div class="label-with-val">
+            <label class="form-label">Max Hold Timeout</label>
+            <span class="val-tag" id="val-timeout">90s</span>
+          </div>
+          <input type="range" class="slider-input" id="range-timeout" min="15" max="300" step="15" value="90">
+          <small class="hint-text">Auto-sells at market if target isn't hit in time, preventing post-pump bleed.</small>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="btn-save-settings">💾 Save Strategy Settings</button>
+      </section>
+    </main>
+
+    <!-- TAB 3: API KEYS -->
+    <main class="tab-content" id="tab-api">
+      <section class="card">
+        <h2 class="card-title">🔐 Connect Binance API</h2>
+        <div class="security-banner">
+          <div class="sec-icon">🛡️</div>
+          <div>
+            <strong>AES-256 Encrypted</strong>
+            <p>Your API Secret is encrypted at rest. Never share your withdrawal password. Disable withdrawals on Binance.</p>
+          </div>
+        </div>
+
+        <div class="api-status-box" id="api-status-box">
+          <span class="status-dot"></span>
+          <span id="api-status-text">Checking API status...</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Binance API Key</label>
+          <input type="text" class="input-field mono" id="input-api-key" placeholder="Paste Binance API Key (64 chars)">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Binance API Secret</label>
+          <input type="password" class="input-field mono" id="input-api-secret" placeholder="Paste Binance API Secret">
+        </div>
+
+        <button class="btn btn-primary btn-block" id="btn-save-api">🔗 Validate & Connect API</button>
+      </section>
+    </main>
+
+    <!-- TAB 4: ACTIVITY & TRADES -->
+    <main class="tab-content" id="tab-history">
+      <section class="card">
+        <h2 class="card-title">📢 Recent Upbit Listings</h2>
+        <div id="listings-feed-container">
+          <div class="empty-state">Loading announcements...</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">📊 Trade History</h2>
+        <div id="trade-history-container">
+          <div class="empty-state">Loading trade history...</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
+
