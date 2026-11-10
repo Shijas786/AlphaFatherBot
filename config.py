@@ -25,12 +25,20 @@ BINANCE_SPOT_BASE_URL = os.getenv("BINANCE_SPOT_BASE_URL", "https://api.binance.
 BINANCE_FUTURES_BASE_URL = os.getenv("BINANCE_FUTURES_BASE_URL", "https://fapi.binance.com")
 
 # Database Path
-DATABASE_PATH = BASE_DIR / os.getenv("DATABASE_PATH", "data/bot.db")
+db_env = os.getenv("DATABASE_PATH", "data/bot.db")
+if os.path.isabs(db_env):
+    DATABASE_PATH = Path(db_env)
+else:
+    DATABASE_PATH = BASE_DIR / db_env
 DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-# WebApp Server Settings
+# WebApp Server Settings (Compatible with Railway's dynamic $PORT & public domain)
 WEBAPP_HOST = os.getenv("WEBAPP_HOST", "0.0.0.0")
-WEBAPP_PORT = int(os.getenv("WEBAPP_PORT", "8080"))
-WEBAPP_URL = os.getenv("WEBAPP_URL", "")
+WEBAPP_PORT = int(os.getenv("PORT") or os.getenv("WEBAPP_PORT") or "8080")
+
+# Auto-detect Railway public domain if WEBAPP_URL is not explicitly configured
+railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN", "")
+WEBAPP_URL = os.getenv("WEBAPP_URL") or (f"https://{railway_domain}" if railway_domain else "")
+
 
 
