@@ -59,12 +59,14 @@ class BinanceService:
             logger.error(f"Error testing Binance credentials: {e}")
             return False, f"Connection error: {str(e)}"
 
-    async def get_balance(self, api_key: str, api_secret: str, is_futures: bool = False) -> float:
-        """Get available free USDT balance."""
+    async def get_balances(self, api_key: str, api_secret: str, is_futures: bool = False) -> Dict[str, float]:
+        """Get available free USDT, USDC, and combined USD balance."""
         session = await self.get_session()
         params = {"timestamp": int(time.time() * 1000), "recvWindow": 5000}
         params["signature"] = self._sign(api_secret, params)
         headers = {"X-MBX-APIKEY": api_key}
+
+        result = {"usdt": 0.0, "usdc": 0.0, "total": 0.0}
 
         try:
             if is_futures:
@@ -73,19 +75,33 @@ class BinanceService:
                     if resp.status == 200:
                         data = await resp.json()
                         for item in data:
-                            if item.get("asset") == "USDT":
-                                return float(item.get("availableBalance", 0.0))
+                            asset = item.get("asset")
+                            if asset == "USDT":
+                                result["usdt"] = float(item.get("availableBalance", 0.0))
+                            elif asset == "USDC":
+                                result["usdc"] = float(item.get("availableBalance", 0.0))
             else:
                 url = f"{config.BINANCE_SPOT_BASE_URL}/api/v3/account"
                 async with session.get(url, params=params, headers=headers) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         for item in data.get("balances", []):
-                            if item.get("asset") == "USDT":
-                                return float(item.get("free", 0.0))
+                            asset = item.get("asset")
+                            if asset == "USDT":
+                                result["usdt"] = float(item.get("free", 0.0))
+                            elif asset == "USDC":
+                                result["usdc"] = float(item.get("free", 0.0))
+
+            result["total"] = result["usdt"] + result["usdc"]
         except Exception as e:
-            logger.error(f"Error fetching USDT balance: {e}")
-        return 0.0
+            logger.error(f"Error fetching balances: {e}")
+
+        return result
+
+    async def get_balance(self, api_key: str, api_secret: str, is_futures: bool = False) -> float:
+        """Get total available stablecoin balance (USDT + USDC)."""
+        b = await self.get_balances(api_key, api_secret, is_futures=is_futures)
+        return b["total"]
 
     async def get_symbol_price(self, symbol: str, is_futures: bool = False) -> float:
         """Fetch current ticker price."""

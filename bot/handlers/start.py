@@ -20,8 +20,13 @@ async def format_dashboard_text(user: dict) -> str:
         try:
             api_key = decrypt_secret(user.get("binance_api_key", ""))
             api_secret = decrypt_secret(user.get("binance_api_secret", ""))
-            bal = await binance_service.get_balance(api_key, api_secret, is_futures=(trade_mode == "FUTURES"))
-            balance_text = f"${bal:,.2f} USDT"
+            b = await binance_service.get_balances(api_key, api_secret, is_futures=(trade_mode == "FUTURES"))
+            if b["usdc"] > 0 and b["usdt"] > 0:
+                balance_text = f"${b['total']:,.2f} ({b['usdt']:,.0f} USDT + {b['usdc']:,.0f} USDC)"
+            elif b["usdc"] > 0:
+                balance_text = f"${b['usdc']:,.2f} USDC"
+            else:
+                balance_text = f"${b['usdt']:,.2f} USDT"
         except Exception:
             balance_text = "API Key Error"
 
@@ -32,7 +37,7 @@ async def format_dashboard_text(user: dict) -> str:
         f"STATUS: {status_icon}\n"
         f"MARKET: `{trade_mode}`\n"
         f"ORDER SIZE: `${order_amount:,.0f} USDT`\n"
-        f"AVAILABLE USDT: `{balance_text}`\n"
+        f"AVAILABLE FUNDS: `{balance_text}`\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "EXECUTION RULES:\n"
         f" • Take Profit: `+{user.get('tp_percent', 15):.0f}%` (Market Sell)\n"

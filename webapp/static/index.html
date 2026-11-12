@@ -743,7 +743,7 @@
       <!-- Key Stats 2x2 Grid -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-label">BINANCE USDT BALANCE</div>
+          <div class="stat-label">AVAILABLE BALANCE (USD)</div>
           <div class="stat-value" id="val-balance">$0.00</div>
           <div class="stat-sub" id="label-api-status">API Disconnected</div>
         </div>
@@ -1056,7 +1056,8 @@
       }
 
       // Metric Boxes
-      document.getElementById("val-balance").textContent = "$" + u.usdt_balance.toFixed(2);
+      const totalBal = u.total_balance !== undefined ? u.total_balance : u.usdt_balance;
+      document.getElementById("val-balance").textContent = "$" + totalBal.toFixed(2);
       document.getElementById("val-order-size").textContent = "$" + u.order_amount_usdt.toFixed(2);
       document.getElementById("val-market").textContent = u.trade_mode.toUpperCase();
       document.getElementById("val-timeout").textContent = u.max_hold_seconds + "s";
@@ -1068,11 +1069,17 @@
       const badgeVer = document.getElementById("badge-conn-verified");
 
       if (u.has_api_keys) {
-        statusLabel.textContent = "Binance Connected ✔";
+        if (u.usdc_balance > 0 && u.usdt_balance > 0) {
+          statusLabel.textContent = `${u.usdt_balance.toFixed(0)} USDT + ${u.usdc_balance.toFixed(0)} USDC`;
+        } else if (u.usdc_balance > 0) {
+          statusLabel.textContent = `${u.usdc_balance.toFixed(2)} USDC Available`;
+        } else {
+          statusLabel.textContent = `${u.usdt_balance.toFixed(2)} USDT Available`;
+        }
         statusLabel.style.color = "#ffffff";
         badgeConn.textContent = "CONNECTED ✔";
         badgeConn.style.color = "#4ade80";
-        badgeBal.textContent = "$" + u.usdt_balance.toFixed(2) + " USDT";
+        badgeBal.textContent = `$${totalBal.toFixed(2)} (${u.usdt_balance.toFixed(0)} USDT / ${u.usdc_balance.toFixed(0)} USDC)`;
         badgeVer.textContent = "YES";
       } else {
         statusLabel.textContent = "No API Key ✖";

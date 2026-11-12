@@ -46,12 +46,12 @@ async def api_get_user(request: web.Request):
         )
 
     has_api = bool(user.get("binance_api_key"))
-    balance = 0.0
+    balances = {"usdt": 0.0, "usdc": 0.0, "total": 0.0}
     if has_api:
         try:
             k = decrypt_secret(user.get("binance_api_key"))
             s = decrypt_secret(user.get("binance_api_secret"))
-            balance = await binance_service.get_balance(k, s, is_futures=(user.get("trade_mode") == "futures"))
+            balances = await binance_service.get_balances(k, s, is_futures=(user.get("trade_mode") == "futures"))
         except Exception:
             pass
 
@@ -71,7 +71,9 @@ async def api_get_user(request: web.Request):
             "sl_percent": user.get("sl_percent", 5.0),
             "max_hold_seconds": user.get("max_hold_seconds", 60),
             "has_api_keys": has_api,
-            "usdt_balance": balance,
+            "usdt_balance": balances.get("usdt", 0.0),
+            "usdc_balance": balances.get("usdc", 0.0),
+            "total_balance": balances.get("total", 0.0),
             "stats": stats
         }
     })
