@@ -170,3 +170,15 @@ async def api_get_listings(request: web.Request):
     listings = await get_recent_listings(limit=15)
     return web.json_response({"success": True, "listings": listings})
 
+async def api_get_server_ip(request: web.Request):
+    """GET /api/ip - Get server outbound IP for Binance trusted IP whitelist."""
+    try:
+        session = await binance_service.get_session()
+        async with session.get("https://api.ipify.org?format=json", timeout=3) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                return web.json_response({"success": True, "ip": data.get("ip")})
+    except Exception as e:
+        logger.error(f"Failed to fetch outbound IP: {e}")
+    return web.json_response({"success": False, "error": "Could not determine IP"})
+

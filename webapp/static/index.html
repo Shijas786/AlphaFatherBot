@@ -885,6 +885,19 @@
           ✖ <strong>DISABLE WITHDRAWALS</strong> (Never give withdrawal access!)
         </div>
 
+        <!-- Trusted IP for Binance Restriction -->
+        <div class="field-group">
+          <div class="field-head">
+            <label class="field-label">TRUSTED SERVER IP (BINANCE RESTRICTION)</label>
+            <span class="field-val-badge" style="color: #4ade80;">ALLOWLIST IP</span>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="text" class="text-input" id="trusted-server-ip" value="Fetching Server IP..." readonly style="font-weight: 700; color: #4ade80; cursor: pointer;">
+            <button type="button" class="btn-action" id="btn-copy-ip" style="width: auto; margin-top: 0; padding: 11px 16px; white-space: nowrap;">COPY IP</button>
+          </div>
+          <span class="field-hint">Paste into Binance under <strong>'Restrict access to trusted IPs only'</strong> to unlock Spot & Futures trading.</span>
+        </div>
+
         <div class="field-group">
           <label class="field-label">BINANCE API KEY</label>
           <input type="text" class="text-input" id="input-api-key" placeholder="Paste 64-character API Key" autocomplete="off" spellcheck="false">
@@ -1355,10 +1368,31 @@
       } catch (e) {}
     }
 
+    async function loadServerIp() {
+      try {
+        const res = await fetch("/api/ip");
+        const data = await res.json();
+        if (data.success && data.ip) {
+          const el = document.getElementById("trusted-server-ip");
+          if (el) el.value = data.ip;
+        }
+      } catch (e) {}
+    }
+
+    document.getElementById("btn-copy-ip")?.addEventListener("click", () => {
+      const el = document.getElementById("trusted-server-ip");
+      if (el && el.value && !el.value.includes("Fetching")) {
+        navigator.clipboard.writeText(el.value);
+        showToast("Copied IP: " + el.value);
+        haptic("impact");
+      }
+    });
+
     // Boot
     loadUserState();
     loadPositions();
     loadListingsFeed();
+    loadServerIp();
     setInterval(loadPositions, 2000);
     setInterval(loadListingsFeed, 5000);
   </script>

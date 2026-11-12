@@ -8,7 +8,8 @@ from webapp.routes import (
     api_save_api_keys,
     api_get_trades,
     api_panic_sell,
-    api_get_listings
+    api_get_listings,
+    api_get_server_ip
 )
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ def create_webapp() -> web.Application:
     app.router.add_get("/api/trades", api_get_trades)
     app.router.add_post("/api/trades/panic-sell", api_panic_sell)
     app.router.add_get("/api/listings", api_get_listings)
+    app.router.add_get("/api/ip", api_get_server_ip)
 
     # Static assets
     app.router.add_get("/", serve_index)
