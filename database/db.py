@@ -64,6 +64,18 @@ async def init_db():
             )
         """)
 
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS telegram_groups (
+                chat_id INTEGER PRIMARY KEY,
+                title TEXT,
+                chat_type TEXT,
+                is_active INTEGER DEFAULT 1,
+                added_by INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         # Seamless migrations for existing databases
         migrations = [
             "ALTER TABLE users ADD COLUMN profit_share_percent REAL DEFAULT 10.0",
@@ -314,4 +326,48 @@ async def get_open_trade_by_id(trade_id: int) -> Optional[Dict[str, Any]]:
         async with db.execute("SELECT * FROM trades WHERE id = ?", (trade_id,)) as cursor:
             row = await cursor.fetchone()
             return dict(row) if row else None
+
+# ================= Telegram Groups Alert Management =================
+async def register_group(chat_id: int, title: str = "", chat_type: str = "group", added_by: Optional[int] = None):
+    """Register or re-activate a Telegram group for listing broadcasts."""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        await db.execute("""
+            INSERT INTO telegram_groups (chat_id, title, chat_type, is_active, added_by, updated_at)
+            VALUES (?, ?, ?, 1, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(chat_id) DO UPDATE SET
+                title = excluded.title,
+                chat_type = excluded.chat_type,
+                is_active = 1,
+                added_by = COALESCE(excluded.added_by, telegram_groups.added_by),
+                updated_at = CURRENT_TIMESTAMP
+        """, (chat_id, title or "Telegram Group", chat_type, added_by))
+        await db.commit()
+
+async def deactivate_group(chat_id: int):
+    """Mark a group as inactive (e.g. when bot is removed/kicked)."""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        await db.execute("""
+            UPDATE telegram_groups SET is_active = 0, updated_at = CURRENT_TIMESTAMP
+            WHERE chat_id = ?
+        """, (chat_id,))
+        await db.commit()
+
+async def get_active_groups() -> List[Dict[str, Any]]:
+    """Retrieve all active groups registered for listing alerts."""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT chat_id, title, chat_type FROM telegram_groups WHERE is_active = 1"
+        ) as cursor:
+            rows = await cursor.fetchall()
+            return [dict(r) for r in rows]
+
+async def get_group_stats() -> Dict[str, int]:
+    """Retrieve group count metrics."""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        async with db.execute("SELECT COUNT(*) FROM telegram_groups WHERE is_active = 1") as c1:
+            active = (await c1.fetchone())[0]
+        async with db.execute("SELECT COUNT(*) FROM telegram_groups") as c2:
+            total = (await c2.fetchone())[0]
+        return {"active_groups": active, "total_groups": total}
 

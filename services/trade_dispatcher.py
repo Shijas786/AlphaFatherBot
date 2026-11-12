@@ -13,32 +13,53 @@ logger = logging.getLogger(__name__)
 class TradeDispatcher:
     def __init__(self):
         self.telegram_buy_notifier: Optional[Callable] = None
+        self.group_broadcaster: Optional[Callable] = None
 
     def set_telegram_buy_notifier(self, notifier: Callable):
         self.telegram_buy_notifier = notifier
 
+    def set_group_broadcaster(self, broadcaster: Callable):
+        self.group_broadcaster = broadcaster
+
     async def handle_listing(self, raw_title: str, source: str, coin: str):
         """
         Main handler invoked when Tree News or Upbit Scraper detects a listing.
-        Concurrently executes orders for all active users.
+        Broadcasts listing alert to all groups and concurrently executes orders for active users.
         """
         start_time = time.time()
         logger.info(f"=== DISPATCHING LISTING: {coin} (Source: {source}) ===")
 
-        # 1. Resolve coin to Binance symbol
+        # 1. Resolve coin to Binance symbol (if tradable)
         sym_info = symbol_cache.resolve_symbol(coin)
+        binance_symbol = sym_info["symbol"] if sym_info else None
+
+        # 2. Record listing in database
+        market_status = "USDT" if binance_symbol else "UNSUPPORTED_ON_BINANCE"
+        await record_listing(raw_title, source, coin, market_status)
+
+        detection_latency_ms = int((time.time() - start_time) * 1000)
+
+        # 3. Broadcast instant announcement to all registered Telegram groups!
+        if self.group_broadcaster:
+            asyncio.create_task(
+                self.group_broadcaster(
+                    coin=coin,
+                    binance_symbol=binance_symbol,
+                    raw_title=raw_title,
+                    source=source,
+                    latency_ms=detection_latency_ms
+                )
+            )
+
+        # 4. Check if tradable on Binance for automated sniping
         if not sym_info:
             logger.warning(f"Coin '{coin}' is NOT tradable on Binance. Skipping trade execution.")
-            await record_listing(raw_title, source, coin, "UNSUPPORTED_ON_BINANCE")
             return
 
         binance_symbol = sym_info["symbol"]
         logger.info(f"Resolved {coin} -> Binance symbol: {binance_symbol}")
 
-        # 2. Record listing in database
-        await record_listing(raw_title, source, coin, "USDT")
-
-        # 3. Get all active users
+        # 5. Get all active users
         active_users = await get_active_traders()
         if not active_users:
             logger.info("No active users enabled for auto-buying.")

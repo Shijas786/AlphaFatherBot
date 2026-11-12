@@ -49,6 +49,7 @@ async def main():
     app = build_telegram_app()
     notifier = TelegramNotifier(app.bot)
     trade_dispatcher.set_telegram_buy_notifier(notifier.notify_buy)
+    trade_dispatcher.set_group_broadcaster(notifier.broadcast_listing_to_groups)
     position_tracker.set_telegram_notifier(notifier.notify_exit)
 
     # 5. Define Centralized Listing Callback

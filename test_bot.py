@@ -73,6 +73,20 @@ class TestUpbitSniper(unittest.TestCase):
             self.assertEqual(res["symbol"], "BTCUSDT")
             print(f"Symbol cache verification successful: Resolved BTC -> {res['symbol']}")
 
+            # Test Group Registration and Alerts
+            from database.db import register_group, deactivate_group, get_active_groups, get_group_stats
+            test_group_id = -1009988776655
+            await register_group(test_group_id, "Crypto Alpha Syndicate", "supergroup", 123456)
+            active_groups = await get_active_groups()
+            self.assertTrue(any(g["chat_id"] == test_group_id for g in active_groups))
+            stats = await get_group_stats()
+            self.assertGreaterEqual(stats["active_groups"], 1)
+
+            # Test Group Deactivation
+            await deactivate_group(test_group_id)
+            active_after = await get_active_groups()
+            self.assertFalse(any(g["chat_id"] == test_group_id for g in active_after))
+
         asyncio.run(run_async_tests())
 
 if __name__ == "__main__":

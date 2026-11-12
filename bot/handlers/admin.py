@@ -2,7 +2,7 @@ import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 import config
-from database.db import get_all_users, get_active_traders, get_global_profit_sharing_summary
+from database.db import get_all_users, get_active_traders, get_global_profit_sharing_summary, get_group_stats
 from services.trade_dispatcher import trade_dispatcher
 
 logger = logging.getLogger(__name__)
@@ -71,6 +71,7 @@ async def admin_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     all_users = await get_all_users()
     active_users = await get_active_traders()
     profit_summary = await get_global_profit_sharing_summary()
+    group_stats = await get_group_stats()
 
     total_profits = profit_summary.get("total_user_profits", 0.0)
     accrued_fees = profit_summary.get("total_fees_accrued", 0.0)
@@ -89,6 +90,7 @@ async def admin_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         f"👥 *Total Registered Users:* `{len(all_users)}`\n"
         f"🟢 *Active Snipers:* `{len(active_users)}`\n"
+        f"🏛 *Broadcast Groups:* `{group_stats['active_groups']}`\n"
         f"📦 *Total Volume Traded:* `${volume:,.2f} USDT`\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         f"💰 *Total User Net Profits:* `+${total_profits:,.2f} USDT`\n"

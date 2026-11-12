@@ -1,6 +1,7 @@
-from telegram import Update
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ContextTypes
-from database.db import create_or_update_user, get_user, update_user_fields
+import config
+from database.db import create_or_update_user, get_user, update_user_fields, register_group
 from database.encryption import decrypt_secret
 from services.binance_service import binance_service
 from bot.keyboards import get_main_dashboard_kb
@@ -43,8 +44,35 @@ async def format_dashboard_text(user: dict) -> str:
     return text
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle /start command."""
+    """Handle /start command in private chats or groups."""
+    chat = update.effective_chat
     user_obj = update.effective_user
+
+    # If executed inside a group or supergroup
+    if chat.type in ["group", "supergroup"]:
+        await register_group(
+            chat_id=chat.id,
+            title=chat.title or "Telegram Group",
+            chat_type=chat.type,
+            added_by=user_obj.id if user_obj else None
+        )
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("⚡ Open Capo Mini App", url=f"https://t.me/{config.TELEGRAM_BOT_USERNAME}/app")],
+            [InlineKeyboardButton("🤖 Open Bot in Private", url=f"https://t.me/{config.TELEGRAM_BOT_USERNAME}?start=group")]
+        ])
+        group_text = (
+            "⚡ *THE CAPO SNIPER // LISTING RADAR ACTIVE*\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🏛 *Group:* `{chat.title}`\n"
+            "✅ *Status:* Upbit Listing Alerts are **ENABLED**.\n\n"
+            "📡 Every new Upbit listing notice (KRW / BTC / USDT) will be broadcasted here instantly within milliseconds via sub-second Tree News.\n\n"
+            "👉 *Want to snipe listings automatically with real money on Binance?*\n"
+            "Tap below to open your personal Capo Terminal:"
+        )
+        await update.message.reply_text(group_text, reply_markup=kb, parse_mode="Markdown")
+        return
+
+    # Private chat dashboard
     user = await create_or_update_user(
         telegram_id=user_obj.id,
         username=user_obj.username or "",
