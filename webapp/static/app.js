@@ -1,4 +1,4 @@
-// Telegram Web App Client Engine
+// The Capo Terminal Engine
 const tg = window.Telegram?.WebApp;
 
 if (tg) {
@@ -6,12 +6,11 @@ if (tg) {
   tg.expand();
 }
 
-// State
 let currentUser = null;
 const initData = tg?.initData || "test_user_123456789";
 
-// Haptic feedback helper
-function triggerHaptic(type = "light") {
+// Haptic feedback
+function haptic(type = "light") {
   try {
     if (tg?.HapticFeedback) {
       if (type === "impact") tg.HapticFeedback.impactOccurred("medium");
@@ -22,367 +21,400 @@ function triggerHaptic(type = "light") {
   } catch (e) {}
 }
 
-// Show toast helper
-function showToast(msg, isError = false) {
-  const toast = document.getElementById("toast");
+// Toast popup
+function showToast(msg) {
+  const toast = document.getElementById("terminal-toast");
   toast.textContent = msg;
-  toast.style.borderColor = isError ? "var(--danger)" : "var(--primary)";
   toast.classList.remove("hidden");
-  setTimeout(() => toast.classList.add("hidden"), 3000);
+  setTimeout(() => toast.classList.add("hidden"), 2500);
 }
 
-// Authenticated Fetch Wrapper
-async function apiFetch(endpoint, options = {}) {
+// Authenticated API request
+async function api(path, options = {}) {
   const headers = {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${initData}`,
     ...(options.headers || {})
   };
-  const resp = await fetch(endpoint, { ...options, headers });
+  const resp = await fetch(path, { ...options, headers });
   return await resp.json();
 }
 
-// Tab Switching
-document.querySelectorAll(".tab-btn").forEach(btn => {
+// Navigation Tabs
+document.querySelectorAll(".nav-item").forEach(btn => {
   btn.addEventListener("click", () => {
-    triggerHaptic("selection");
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    haptic("selection");
+    document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
     
     btn.classList.add("active");
     const target = btn.dataset.tab;
     document.getElementById(target).classList.add("active");
 
-    if (target === "tab-history") {
-      loadHistory();
+    if (target === "tab-logs") {
+      loadLogs();
       loadListings();
     }
   });
 });
 
-// Load User Profile
-async function loadUser() {
+// Load and Render User State
+async function loadUserData() {
   try {
-    const data = await apiFetch("/api/user");
-    if (!data.success) {
-      showToast(data.error || "Failed to load user", true);
+    const res = await api("/api/user");
+    if (!res.success) {
+      showToast(res.error || "Failed to load state");
       return;
     }
-    currentUser = data.user;
-    renderUser();
+    currentUser = res.user;
+    renderTerminal();
   } catch (e) {
-    showToast("Server connection error", true);
+    showToast("Connection to backend failed");
   }
 }
 
-function renderUser() {
+function renderTerminal() {
   const u = currentUser;
   document.getElementById("user-display").textContent = `@${u.username || u.telegram_id}`;
-  
-  // Hero Switch
-  const activeToggle = document.getElementById("bot-active-toggle");
-  activeToggle.checked = u.is_active;
-  const heroState = document.getElementById("hero-state-text");
+
+  // Power Switch & Status Banner
+  const powerSwitch = document.getElementById("bot-power-switch");
+  powerSwitch.checked = u.is_active;
+  const masterTitle = document.getElementById("master-status-text");
+  const pill = document.getElementById("terminal-state-pill");
+  const radar = document.getElementById("radar-light");
+
   if (u.is_active) {
-    heroState.textContent = "SNIPING ACTIVE 🟢";
-    heroState.className = "hero-state active";
-    document.getElementById("system-status-badge").textContent = "ACTIVE";
-    document.getElementById("system-status-badge").className = "badge badge-active badge-pulse";
+    masterTitle.textContent = "ENGINE ARMED 🟢";
+    masterTitle.className = "master-title active";
+    pill.textContent = "SNIPING ACTIVE";
+    pill.className = "live-pill active";
+    radar.className = "status-radar active";
   } else {
-    heroState.textContent = "PAUSED 🔴";
-    heroState.className = "hero-state";
-    document.getElementById("system-status-badge").textContent = "PAUSED";
-    document.getElementById("system-status-badge").className = "badge";
+    masterTitle.textContent = "SYSTEM PAUSED ⚪";
+    masterTitle.className = "master-title";
+    pill.textContent = "STANDBY";
+    pill.className = "live-pill";
+    radar.className = "status-radar";
   }
 
-  // Key Metrics
-  document.getElementById("metric-mode").textContent = u.simulation_mode ? "🧪 SIMULATION" : "💰 REAL MONEY";
-  document.getElementById("metric-market").textContent = u.trade_mode.toUpperCase();
-  document.getElementById("metric-order-size").textContent = `$${u.order_amount_usdt} USDT`;
-  document.getElementById("metric-balance").textContent = `$${u.usdt_balance.toFixed(2)} USDT`;
+  // Metric Boxes
+  document.getElementById("box-balance").textContent = `$${u.usdt_balance.toFixed(2)}`;
+  document.getElementById("box-size").textContent = `$${u.order_amount_usdt.toFixed(2)}`;
+  document.getElementById("box-market").textContent = u.trade_mode.toUpperCase();
+  document.getElementById("box-timeout").textContent = `${u.max_hold_seconds}s`;
 
-  // Settings Sliders & Labels
-  document.getElementById("range-tp").value = u.tp_percent;
-  document.getElementById("val-tp").textContent = `+${u.tp_percent}%`;
+  // API status text
+  const apiInd = document.getElementById("api-indicator");
+  const apiBadge = document.getElementById("api-status-badge");
+  const apiVerified = document.getElementById("api-summary-verified");
+  const apiBal = document.getElementById("api-summary-balance");
 
-  document.getElementById("range-sl").value = u.sl_percent;
-  document.getElementById("val-sl").textContent = `-${u.sl_percent}%`;
-
-  document.getElementById("range-trailing").value = u.trailing_stop_percent;
-  document.getElementById("val-trailing").textContent = `${u.trailing_stop_percent}%`;
-
-  document.getElementById("range-timeout").value = u.max_hold_seconds;
-  document.getElementById("val-timeout").textContent = `${u.max_hold_seconds}s`;
-
-  // Pills active state
-  updateAmountPills(u.order_amount_usdt);
-  updateLeveragePills(u.futures_leverage);
-
-  // API Status box
-  const dot = document.querySelector(".status-dot");
-  const apiStatusText = document.getElementById("api-status-text");
   if (u.has_api_keys) {
-    dot.className = "status-dot connected";
-    apiStatusText.textContent = `Binance API Connected ✅ (Balance: $${u.usdt_balance.toFixed(2)} USDT)`;
+    apiInd.textContent = "API Connected ✔";
+    apiInd.style.color = "#ffffff";
+    apiBadge.textContent = "CONNECTED ✔";
+    apiBadge.style.color = "#ffffff";
+    apiVerified.textContent = "YES";
+    apiVerified.style.color = "#ffffff";
+    apiBal.textContent = `$${u.usdt_balance.toFixed(2)} USDT`;
   } else {
-    dot.className = "status-dot";
-    apiStatusText.textContent = "No API Key connected yet. Paste keys below.";
+    apiInd.textContent = "No API Key ✖";
+    apiInd.style.color = "#8e929b";
+    apiBadge.textContent = "DISCONNECTED";
+    apiBadge.style.color = "#8e929b";
+    apiVerified.textContent = "NO";
+    apiBal.textContent = "--";
   }
+
+  // Strategy Sliders & Labels
+  document.getElementById("slider-tp").value = u.tp_percent;
+  document.getElementById("label-tp").textContent = `+${u.tp_percent}%`;
+
+  document.getElementById("slider-sl").value = u.sl_percent;
+  document.getElementById("label-sl").textContent = `-${u.sl_percent}%`;
+
+  document.getElementById("slider-timeout").value = u.max_hold_seconds;
+  document.getElementById("label-timeout").textContent = `${u.max_hold_seconds}s`;
+
+  // Market Segmented Control
+  document.querySelectorAll("#market-selector .seg-btn").forEach(b => {
+    if (b.dataset.market === u.trade_mode) b.classList.add("active");
+    else b.classList.remove("active");
+  });
+
+  const levBlock = document.getElementById("leverage-block");
+  if (u.trade_mode === "futures") {
+    levBlock.style.display = "block";
+    document.querySelectorAll("#leverage-selector .seg-btn").forEach(b => {
+      if (parseInt(b.dataset.lev) === u.futures_leverage) b.classList.add("active");
+      else b.classList.remove("active");
+    });
+  } else {
+    levBlock.style.display = "none";
+  }
+
+  // Order Amount Chips
+  document.querySelectorAll("#amount-chips .chip").forEach(c => {
+    if (parseFloat(c.dataset.val) === u.order_amount_usdt) c.classList.add("active");
+    else c.classList.remove("active");
+  });
 }
 
-// Bot Active Toggle Listener
-document.getElementById("bot-active-toggle").addEventListener("change", async (e) => {
+// Power Toggle Listener
+document.getElementById("bot-power-switch").addEventListener("change", async (e) => {
+  haptic("impact");
   const is_active = e.target.checked ? 1 : 0;
-  triggerHaptic("impact");
-  await apiFetch("/api/user/settings", {
+  
+  if (is_active && !currentUser.has_api_keys) {
+    showToast("Connect your Binance API Key first!");
+    e.target.checked = false;
+    return;
+  }
+
+  await api("/api/user/settings", {
     method: "POST",
     body: JSON.stringify({ is_active })
   });
   currentUser.is_active = is_active;
-  renderUser();
+  renderTerminal();
+  showToast(is_active ? "Execution Engine ARMED" : "Execution Engine PAUSED");
 });
 
-// Toggle Sim Button
-document.getElementById("btn-toggle-sim").addEventListener("click", async () => {
-  triggerHaptic("impact");
-  const newSim = currentUser.simulation_mode ? 0 : 1;
-  await apiFetch("/api/user/settings", {
-    method: "POST",
-    body: JSON.stringify({ simulation_mode: newSim })
-  });
-  currentUser.simulation_mode = newSim;
-  renderUser();
-  showToast(newSim ? "Switched to Simulation Mode" : "Switched to Real Money Mode");
-});
-
-// Toggle Market Button
-document.getElementById("btn-toggle-market").addEventListener("click", async () => {
-  triggerHaptic("impact");
+// Quick Market Toggle from Metric Box
+document.getElementById("btn-quick-market-toggle").addEventListener("click", async () => {
+  haptic("impact");
   const newMode = currentUser.trade_mode === "spot" ? "futures" : "spot";
-  await apiFetch("/api/user/settings", {
+  await api("/api/user/settings", {
     method: "POST",
     body: JSON.stringify({ trade_mode: newMode })
   });
   currentUser.trade_mode = newMode;
-  renderUser();
-  showToast(`Switched market to ${newMode.toUpperCase()}`);
+  renderTerminal();
+  showToast(`Market switched to ${newMode.toUpperCase()}`);
 });
 
-// Amount pills
-function updateAmountPills(amt) {
-  document.querySelectorAll("#amount-pills .pill-btn").forEach(p => {
-    if (parseFloat(p.dataset.amt) === amt) p.classList.add("active");
-    else p.classList.remove("active");
-  });
-}
-
-document.querySelectorAll("#amount-pills .pill-btn").forEach(btn => {
+// Strategy: Market Selector
+document.querySelectorAll("#market-selector .seg-btn").forEach(btn => {
   btn.addEventListener("click", () => {
-    triggerHaptic("selection");
-    document.querySelectorAll("#amount-pills .pill-btn").forEach(b => b.classList.remove("active"));
+    haptic("selection");
+    document.querySelectorAll("#market-selector .seg-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    document.getElementById("input-custom-amount").value = "";
-    currentUser.order_amount_usdt = parseFloat(btn.dataset.amt);
+    currentUser.trade_mode = btn.dataset.market;
+    document.getElementById("leverage-block").style.display = (currentUser.trade_mode === "futures") ? "block" : "none";
   });
 });
 
-document.getElementById("input-custom-amount").addEventListener("input", (e) => {
-  const val = parseFloat(e.target.value);
-  if (val && val >= 10) {
-    document.querySelectorAll("#amount-pills .pill-btn").forEach(b => b.classList.remove("active"));
-    currentUser.order_amount_usdt = val;
-  }
-});
-
-// Leverage pills
-function updateLeveragePills(lev) {
-  document.querySelectorAll("#leverage-pills .pill-btn").forEach(p => {
-    if (parseInt(p.dataset.lev) === lev) p.classList.add("active");
-    else p.classList.remove("active");
-  });
-}
-
-document.querySelectorAll("#leverage-pills .pill-btn").forEach(btn => {
+// Strategy: Leverage Selector
+document.querySelectorAll("#leverage-selector .seg-btn").forEach(btn => {
   btn.addEventListener("click", () => {
-    triggerHaptic("selection");
-    document.querySelectorAll("#leverage-pills .pill-btn").forEach(b => b.classList.remove("active"));
+    haptic("selection");
+    document.querySelectorAll("#leverage-selector .seg-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     currentUser.futures_leverage = parseInt(btn.dataset.lev);
   });
 });
 
-// Slider Input listeners
-document.getElementById("range-tp").addEventListener("input", (e) => {
-  document.getElementById("val-tp").textContent = `+${e.target.value}%`;
-});
-document.getElementById("range-sl").addEventListener("input", (e) => {
-  document.getElementById("val-sl").textContent = `-${e.target.value}%`;
-});
-document.getElementById("range-trailing").addEventListener("input", (e) => {
-  document.getElementById("val-trailing").textContent = `${e.target.value}%`;
-});
-document.getElementById("range-timeout").addEventListener("input", (e) => {
-  document.getElementById("val-timeout").textContent = `${e.target.value}s`;
+// Strategy: Amount Chips
+document.querySelectorAll("#amount-chips .chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    haptic("selection");
+    document.querySelectorAll("#amount-chips .chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    document.getElementById("input-custom-order-size").value = "";
+    currentUser.order_amount_usdt = parseFloat(chip.dataset.val);
+  });
 });
 
-// Save Settings Button
-document.getElementById("btn-save-settings").addEventListener("click", async () => {
-  triggerHaptic("impact");
+document.getElementById("input-custom-order-size").addEventListener("input", (e) => {
+  const val = parseFloat(e.target.value);
+  if (val && val >= 10) {
+    document.querySelectorAll("#amount-chips .chip").forEach(c => c.classList.remove("active"));
+    currentUser.order_amount_usdt = val;
+  }
+});
+
+// Sliders live text
+document.getElementById("slider-tp").addEventListener("input", (e) => {
+  document.getElementById("label-tp").textContent = `+${e.target.value}%`;
+});
+document.getElementById("slider-sl").addEventListener("input", (e) => {
+  document.getElementById("label-sl").textContent = `-${e.target.value}%`;
+});
+document.getElementById("slider-timeout").addEventListener("input", (e) => {
+  document.getElementById("label-timeout").textContent = `${e.target.value}s`;
+});
+
+// Save Strategy Button
+document.getElementById("btn-save-strategy").addEventListener("click", async () => {
+  haptic("impact");
   const payload = {
-    order_amount_usdt: currentUser.order_amount_usdt,
+    trade_mode: currentUser.trade_mode,
     futures_leverage: currentUser.futures_leverage,
-    tp_percent: parseFloat(document.getElementById("range-tp").value),
-    sl_percent: parseFloat(document.getElementById("range-sl").value),
-    trailing_stop_percent: parseFloat(document.getElementById("range-trailing").value),
-    max_hold_seconds: parseInt(document.getElementById("range-timeout").value)
+    order_amount_usdt: currentUser.order_amount_usdt,
+    tp_percent: parseFloat(document.getElementById("slider-tp").value),
+    sl_percent: parseFloat(document.getElementById("slider-sl").value),
+    max_hold_seconds: parseInt(document.getElementById("slider-timeout").value)
   };
 
-  const res = await apiFetch("/api/user/settings", {
+  const res = await api("/api/user/settings", {
     method: "POST",
     body: JSON.stringify(payload)
   });
 
   if (res.success) {
-    showToast("Strategy settings saved!");
-    loadUser();
+    showToast("Strategy parameters saved ✔");
+    loadUserData();
   } else {
-    showToast("Error saving settings", true);
+    showToast("Error saving strategy");
   }
 });
 
-// Connect Binance API Keys
-document.getElementById("btn-save-api").addEventListener("click", async () => {
+// Connect API Keys
+document.getElementById("btn-connect-api").addEventListener("click", async () => {
   const key = document.getElementById("input-api-key").value.trim();
   const secret = document.getElementById("input-api-secret").value.trim();
 
   if (!key || !secret) {
-    showToast("Please enter both Key and Secret", true);
+    showToast("Enter both API Key & Secret");
     return;
   }
 
-  triggerHaptic("impact");
-  const btn = document.getElementById("btn-save-api");
-  btn.textContent = "🔄 Validating with Binance...";
+  haptic("impact");
+  const btn = document.getElementById("btn-connect-api");
+  btn.textContent = "VERIFYING WITH BINANCE...";
   btn.disabled = true;
 
   try {
-    const res = await apiFetch("/api/user/api-keys", {
+    const res = await api("/api/user/api-keys", {
       method: "POST",
       body: JSON.stringify({ api_key: key, api_secret: secret })
     });
 
     if (res.success) {
-      showToast("Binance API Connected successfully!");
+      showToast("Binance API Connected & Verified ✔");
       document.getElementById("input-api-key").value = "";
       document.getElementById("input-api-secret").value = "";
-      loadUser();
+      loadUserData();
     } else {
-      showToast(res.error || "Binance authentication failed", true);
+      showToast(res.error || "Authentication failed");
     }
   } catch (e) {
-    showToast("Error verifying keys", true);
+    showToast("Connection error");
   } finally {
-    btn.textContent = "🔗 Validate & Connect API";
+    btn.textContent = "VALIDATE & CONNECT API";
     btn.disabled = false;
   }
 });
 
-// Active Positions & Panic Sell
+// Active Positions Loader & Real-Time Panic Exit
 async function loadActivePositions() {
   try {
-    const res = await apiFetch("/api/trades");
+    const res = await api("/api/trades");
     if (!res.success) return;
 
     const openTrades = res.trades.filter(t => t.status === "OPEN");
-    const container = document.getElementById("active-positions-container");
-    const countBadge = document.getElementById("active-pos-count");
-    countBadge.textContent = `${openTrades.length} OPEN`;
+    const container = document.getElementById("active-positions-feed");
+    const countTag = document.getElementById("active-count-tag");
+    countTag.textContent = `${openTrades.length} OPEN`;
 
     if (openTrades.length === 0) {
-      container.innerHTML = `<div class="empty-state">No open positions. Ready to snipe listings.</div>`;
+      container.innerHTML = `
+        <div class="terminal-empty">
+          <div class="empty-icon">⬡</div>
+          <div class="empty-title">NO ACTIVE TRADES</div>
+          <div class="empty-desc">Engine is monitoring Upbit feed. Orders will appear here upon announcement.</div>
+        </div>
+      `;
       return;
     }
 
     container.innerHTML = openTrades.map(t => `
-      <div class="pos-card">
-        <div class="pos-header">
-          <div class="pos-symbol">${t.symbol} <small>(${t.trade_mode.toUpperCase()})</small></div>
-          <span class="pnl-badge ${t.pnl_percent >= 0 ? 'pnl-green' : 'pnl-red'}">
+      <div class="trade-card">
+        <div class="trade-card-header">
+          <div class="trade-pair">${t.symbol} <small style="color:#71717a">(${t.trade_mode.toUpperCase()})</small></div>
+          <span class="trade-pnl-pill ${t.pnl_percent >= 0 ? 'profit' : 'loss'}">
             ${t.pnl_percent >= 0 ? '+' : ''}${t.pnl_percent.toFixed(2)}%
           </span>
         </div>
-        <div class="pos-details">
-          <div>Entry: $${t.buy_price.toFixed(4)}</div>
-          <div>Size: $${t.usdt_spent.toFixed(2)} USDT</div>
+        <div class="trade-stats">
+          <div>ENTRY: $${t.buy_price.toFixed(4)}</div>
+          <div>SIZE: $${t.usdt_spent.toFixed(2)} USDT</div>
         </div>
-        <button class="btn btn-danger btn-block btn-sm" onclick="panicSell(${t.id})">
-          🚨 PANIC SELL 100% NOW
+        <button class="btn-panic" onclick="panicClose(${t.id})">
+          🚨 SELL AT MARKET (100%)
         </button>
       </div>
     `).join("");
   } catch (e) {}
 }
 
-window.panicSell = async function(tradeId) {
-  triggerHaptic("impact");
-  const res = await apiFetch("/api/trades/panic-sell", {
+window.panicClose = async function(tradeId) {
+  haptic("impact");
+  const res = await api("/api/trades/panic-sell", {
     method: "POST",
     body: JSON.stringify({ trade_id: tradeId })
   });
 
   if (res.success) {
-    showToast("Position closed at market!");
+    showToast("Order closed at market ✔");
     loadActivePositions();
   } else {
-    showToast(res.error || "Panic sell failed", true);
+    showToast(res.error || "Failed to close position");
   }
 };
 
-// Activity & History Loaders
+// Listings Banner & Log
 async function loadListings() {
-  const container = document.getElementById("listings-feed-container");
   try {
-    const res = await apiFetch("/api/listings");
-    if (!res.success || res.listings.length === 0) {
-      container.innerHTML = `<div class="empty-state">No listings detected yet. Waiting for Upbit news...</div>`;
-      return;
-    }
-    container.innerHTML = res.listings.map(l => `
-      <div class="feed-item">
-        <div class="feed-header">
-          <span class="feed-coin">${l.parsed_coin}</span>
-          <small>${l.detected_at}</small>
+    const res = await api("/api/listings");
+    if (!res.success || res.listings.length === 0) return;
+
+    // Latest banner
+    const latest = res.listings[0];
+    document.getElementById("news-time").textContent = latest.detected_at || "JUST NOW";
+    document.getElementById("news-headline").textContent = `[${latest.parsed_coin}] ${latest.raw_title}`;
+
+    // Logs view
+    const hist = document.getElementById("listings-history-container");
+    hist.innerHTML = res.listings.map(l => `
+      <div class="log-row">
+        <div>
+          <span class="log-coin">${l.parsed_coin}</span>
+          <div class="log-meta">${l.raw_title}</div>
         </div>
-        <div>${l.raw_title}</div>
+        <div class="log-meta">${l.detected_at}</div>
       </div>
     `).join("");
   } catch (e) {}
 }
 
-async function loadHistory() {
-  const container = document.getElementById("trade-history-container");
+async function loadLogs() {
   try {
-    const res = await apiFetch("/api/trades");
+    const res = await api("/api/trades");
+    const container = document.getElementById("trade-ledger-container");
     if (!res.success || res.trades.length === 0) {
-      container.innerHTML = `<div class="empty-state">No completed trades yet.</div>`;
+      container.innerHTML = `<div class="terminal-empty">No closed trades recorded yet.</div>`;
       return;
     }
+
     container.innerHTML = res.trades.map(t => `
-      <div class="feed-item">
-        <div class="feed-header">
-          <strong>${t.symbol} (${t.trade_mode.toUpperCase()})</strong>
-          <span class="${t.pnl_percent >= 0 ? 'val-tag' : 'val-tag danger'}">
-            ${t.pnl_percent >= 0 ? '+' : ''}${t.pnl_percent.toFixed(1)}% ($${t.pnl_usdt.toFixed(2)})
-          </span>
+      <div class="log-row">
+        <div>
+          <span class="log-coin">${t.symbol} (${t.trade_mode.toUpperCase()})</span>
+          <div class="log-meta">Size: $${t.usdt_spent} | Exit: ${t.exit_reason || t.status}</div>
         </div>
-        <div>Exit: ${t.exit_reason || t.status} | Size: $${t.usdt_spent}</div>
+        <div style="font-family: var(--font-mono); font-weight:700; color:${t.pnl_percent >= 0 ? 'var(--pnl-green)' : 'var(--pnl-red)'}">
+          ${t.pnl_percent >= 0 ? '+' : ''}${t.pnl_percent.toFixed(2)}% ($${t.pnl_usdt.toFixed(2)})
+        </div>
       </div>
     `).join("");
   } catch (e) {}
 }
 
-// Initial Boot & Poller
-loadUser();
+// Startup
+loadUserData();
 loadActivePositions();
-setInterval(loadActivePositions, 3000);
-
+loadListings();
+setInterval(loadActivePositions, 2000);
+setInterval(loadListings, 5000);

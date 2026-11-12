@@ -8,41 +8,37 @@ from bot.keyboards import get_main_dashboard_kb
 async def format_dashboard_text(user: dict) -> str:
     telegram_id = user["telegram_id"]
     is_active = bool(user.get("is_active", 0))
-    is_sim = bool(user.get("simulation_mode", 1))
     trade_mode = user.get("trade_mode", "spot").upper()
     order_amount = user.get("order_amount_usdt", 50.0)
     has_api = bool(user.get("binance_api_key"))
 
-    status_icon = "🟢 ACTIVE (Sniping listings)" if is_active else "🔴 PAUSED"
-    mode_icon = "🧪 SIMULATION (Paper Trading - No Real Risk)" if is_sim else "💰 REAL MONEY (Live Trading)"
+    status_icon = "🟢 ACTIVE (Auto-buying listings)" if is_active else "⚪ PAUSED"
 
-    balance_text = "N/A (Simulation Mode)"
-    if has_api and not is_sim:
+    balance_text = "Disconnected"
+    if has_api:
         try:
             api_key = decrypt_secret(user.get("binance_api_key", ""))
             api_secret = decrypt_secret(user.get("binance_api_secret", ""))
             bal = await binance_service.get_balance(api_key, api_secret, is_futures=(trade_mode == "FUTURES"))
-            balance_text = f"${bal:.2f} USDT"
+            balance_text = f"${bal:,.2f} USDT"
         except Exception:
             balance_text = "API Key Error"
 
     text = (
-        "⚡ *UPBIT LISTING SNIPER BOT*\n"
+        "THE CAPO TERMINAL ⚡\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"👤 *Account:* `{telegram_id}`\n"
-        f"📡 *Status:* {status_icon}\n"
-        f"⚙️ *Mode:* {mode_icon}\n"
-        f"🏦 *Market:* `{trade_mode}`\n"
-        f"💵 *Order Size:* `${order_amount:.0f} USDT`\n"
-        f"💼 *Binance Balance:* `{balance_text}`\n"
+        f"ACCOUNT: `{telegram_id}`\n"
+        f"STATUS: {status_icon}\n"
+        f"MARKET: `{trade_mode}`\n"
+        f"ORDER SIZE: `${order_amount:,.0f} USDT`\n"
+        f"AVAILABLE USDT: `{balance_text}`\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "🎯 *Smart Exit Rules:*\n"
-        f" • *Take Profit:* `+{user.get('tp_percent', 15):.0f}%`\n"
-        f" • *Stop Loss:* `-{user.get('sl_percent', 5):.0f}%`\n"
-        f" • *Trailing Pullback:* `{user.get('trailing_stop_percent', 4):.0f}%` (arms at +{user.get('trailing_activation_percent', 8):.0f}%)\n"
-        f" • *Max Hold Duration:* `{user.get('max_hold_seconds', 90)}s`\n"
+        "EXECUTION RULES:\n"
+        f" • Take Profit: `+{user.get('tp_percent', 15):.0f}%` (Market Sell)\n"
+        f" • Stop Loss: `-{user.get('sl_percent', 5):.0f}%` (Market Sell)\n"
+        f" • Auto-Sell Timer: `{user.get('max_hold_seconds', 60)}s`\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "💡 *Tip:* Test with Simulation Mode first to observe speed and PnL!"
+        "⚡ Tap 'OPEN PRO TERMINAL' below for the Web Dashboard."
     )
     return text
 
@@ -82,31 +78,14 @@ async def toggle_active_callback(update: Update, context: ContextTypes.DEFAULT_T
     current_state = bool(user.get("is_active", 0))
     new_state = 0 if current_state else 1
 
-    # Safety check: if enabling in real mode, verify API key
-    if new_state == 1 and not user.get("simulation_mode", 1) and not user.get("binance_api_key"):
-        await query.answer("⚠️ Please connect your Binance API Key first, or switch to Simulation Mode!", show_alert=True)
+    # Safety check: if enabling, verify API key exists
+    if new_state == 1 and not user.get("binance_api_key"):
+        await query.answer("⚠️ Connect your Binance API Key first in Settings!", show_alert=True)
         return
 
     await update_user_fields(query.from_user.id, is_active=new_state)
-    await query.answer(f"Bot {'ACTIVATED! 🟢' if new_state else 'PAUSED 🔴'}")
+    await query.answer(f"Sniping {'ACTIVATED! 🟢' if new_state else 'PAUSED ⚪'}")
     
-    updated_user = await get_user(query.from_user.id)
-    text = await format_dashboard_text(updated_user)
-    await query.edit_message_text(text, reply_markup=get_main_dashboard_kb(updated_user), parse_mode="Markdown")
-
-async def toggle_sim_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Toggle between Paper Simulation and Real Trading."""
-    query = update.callback_query
-    user = await get_user(query.from_user.id)
-    if not user:
-        return
-
-    current_sim = bool(user.get("simulation_mode", 1))
-    new_sim = 0 if current_sim else 1
-
-    await update_user_fields(query.from_user.id, simulation_mode=new_sim)
-    await query.answer(f"Mode switched to {'🧪 SIMULATION' if new_sim else '💰 REAL FUNDS'}")
-
     updated_user = await get_user(query.from_user.id)
     text = await format_dashboard_text(updated_user)
     await query.edit_message_text(text, reply_markup=get_main_dashboard_kb(updated_user), parse_mode="Markdown")

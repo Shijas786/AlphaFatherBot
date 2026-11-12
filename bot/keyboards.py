@@ -5,45 +5,39 @@ import config
 def get_main_dashboard_kb(user: Dict[str, Any]) -> InlineKeyboardMarkup:
     """Main Control Dashboard Keyboard."""
     is_active = bool(user.get("is_active", 0))
-    is_sim = bool(user.get("simulation_mode", 1))
     trade_mode = user.get("trade_mode", "spot").upper()
     has_api = bool(user.get("binance_api_key"))
 
-    status_text = "🟢 Status: ACTIVE" if is_active else "🔴 Status: PAUSED"
+    status_text = "🟢 SNIPING: ACTIVE" if is_active else "⚪ SNIPING: PAUSED"
     toggle_data = "toggle_active"
 
-    sim_text = "🧪 Mode: SIMULATION (Paper)" if is_sim else "💰 Mode: REAL FUNDS"
-    sim_data = "toggle_sim"
-
-    api_text = "🔑 Binance API: Connected ✅" if has_api else "🔑 Connect Binance API ⚠️"
+    api_text = "🔑 BINANCE API: CONNECTED" if has_api else "⚠️ CONNECT BINANCE API"
 
     keyboard = []
 
-    # If WEBAPP_URL is configured, add top Launch Mini App button
+    # Mini App Button
     if config.WEBAPP_URL:
         keyboard.append([
-            InlineKeyboardButton("🚀 Open Sniper Mini App", web_app=WebAppInfo(url=config.WEBAPP_URL))
+            InlineKeyboardButton("⚡ OPEN PRO TERMINAL", web_app=WebAppInfo(url=config.WEBAPP_URL))
         ])
 
     keyboard.extend([
         [
-            InlineKeyboardButton(status_text, callback_data=toggle_data),
-            InlineKeyboardButton(sim_text, callback_data=sim_data)
+            InlineKeyboardButton(status_text, callback_data=toggle_data)
         ],
         [
-            InlineKeyboardButton(f"📈 Market: {trade_mode}", callback_data="toggle_trade_mode"),
-            InlineKeyboardButton(f"💵 Size: ${user.get('order_amount_usdt', 50):.0f}", callback_data="open_settings")
+            InlineKeyboardButton(f"MARKET: {trade_mode}", callback_data="toggle_trade_mode"),
+            InlineKeyboardButton(f"SIZE: ${user.get('order_amount_usdt', 50):.0f}", callback_data="open_settings")
         ],
         [
             InlineKeyboardButton(api_text, callback_data="setup_api_keys")
         ],
         [
-            InlineKeyboardButton("⚙️ Strategy Settings", callback_data="open_settings"),
-            InlineKeyboardButton("📊 Trade History", callback_data="view_trades")
+            InlineKeyboardButton("⚙️ STRATEGY RULES", callback_data="open_settings"),
+            InlineKeyboardButton("📊 TRADE LEDGER", callback_data="view_trades")
         ],
         [
-            InlineKeyboardButton("🔄 Refresh Dashboard", callback_data="refresh_dashboard"),
-            InlineKeyboardButton("ℹ️ Help", callback_data="view_help")
+            InlineKeyboardButton("🔄 REFRESH", callback_data="refresh_dashboard")
         ]
     ])
     return InlineKeyboardMarkup(keyboard)

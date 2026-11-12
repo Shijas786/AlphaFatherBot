@@ -7,3 +7,4 @@ startCommand = "python main.py"
 healthcheckPath = "/"
 healthcheckTimeout = 120
 restartPolicyType = "ALWAYS"
+

@@ -16,7 +16,7 @@ class TestWebApp(AioHTTPTestCase):
         resp = await self.client.get("/")
         self.assertEqual(resp.status, 200)
         text = await resp.text()
-        self.assertIn("UPBIT SNIPER", text)
+        self.assertIn("CAPO", text)
 
     @unittest_run_loop
     async def test_api_user_endpoint(self):

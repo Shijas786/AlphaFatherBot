@@ -187,63 +187,56 @@ class PositionTracker:
         quantity = float(trade_data["quantity"])
         entry_price = float(trade_data["buy_price"])
         usdt_spent = float(trade_data["usdt_spent"])
-        is_simulation = bool(user.get("simulation_mode", 0))
 
-        api_key = decrypt_secret(user.get("binance_api_key", "")) if not is_simulation else ""
-        api_secret = decrypt_secret(user.get("binance_api_secret", "")) if not is_simulation else ""
+        api_key = decrypt_secret(user.get("binance_api_key", ""))
+        api_secret = decrypt_secret(user.get("binance_api_secret", ""))
 
         # Step size info for symbol
         sym_info = symbol_cache.resolve_symbol(symbol, trade_mode=trade_data["trade_mode"])
         step_size = sym_info["step_size"] if sym_info else 0.001
 
-        sell_order_id = "SIMULATED"
+        sell_order_id = ""
         sell_price = exit_price
 
-        if is_simulation or not api_key:
-            # Paper trading exit
+        # Real Binance Market Sell
+        if is_futures:
+            sell_res = await binance_service.place_futures_market_sell(
+                api_key=api_key,
+                api_secret=api_secret,
+                symbol=symbol,
+                quantity=quantity,
+                step_size=step_size
+            )
+        else:
+            sell_res = await binance_service.place_spot_market_sell(
+                api_key=api_key,
+                api_secret=api_secret,
+                symbol=symbol,
+                quantity=quantity,
+                step_size=step_size
+            )
+
+        if sell_res.get("success"):
+            sell_order_id = sell_res.get("order_id", "")
+            sell_price = sell_res.get("avg_price", sell_price)
             if sell_price <= 0:
                 sell_price = await binance_service.get_symbol_price(symbol, is_futures=is_futures)
+
             pnl_percent = ((sell_price - entry_price) / entry_price) * 100.0 if entry_price > 0 else 0.0
             if is_futures:
                 pnl_percent *= user.get("futures_leverage", 1)
             pnl_usdt = usdt_spent * (pnl_percent / 100.0)
             res = {"success": True, "pnl_percent": pnl_percent, "pnl_usdt": pnl_usdt}
         else:
-            # Real Binance Market Sell
+            logger.error(f"[Trade #{trade_id}] Sell order failed: {sell_res.get('error')}")
+            # Fallback calculate with mark price
+            if sell_price <= 0:
+                sell_price = await binance_service.get_symbol_price(symbol, is_futures=is_futures)
+            pnl_percent = ((sell_price - entry_price) / entry_price) * 100.0 if entry_price > 0 else 0.0
             if is_futures:
-                sell_res = await binance_service.place_futures_market_sell(
-                    api_key=api_key,
-                    api_secret=api_secret,
-                    symbol=symbol,
-                    quantity=quantity,
-                    step_size=step_size
-                )
-            else:
-                sell_res = await binance_service.place_spot_market_sell(
-                    api_key=api_key,
-                    api_secret=api_secret,
-                    symbol=symbol,
-                    quantity=quantity,
-                    step_size=step_size
-                )
-
-            if sell_res.get("success"):
-                sell_order_id = sell_res.get("order_id", "")
-                sell_price = sell_res.get("avg_price", sell_price)
-                if sell_price <= 0:
-                    sell_price = await binance_service.get_symbol_price(symbol, is_futures=is_futures)
-
-                pnl_percent = ((sell_price - entry_price) / entry_price) * 100.0 if entry_price > 0 else 0.0
-                if is_futures:
-                    pnl_percent *= user.get("futures_leverage", 1)
-                pnl_usdt = usdt_spent * (pnl_percent / 100.0)
-                res = {"success": True, "pnl_percent": pnl_percent, "pnl_usdt": pnl_usdt}
-            else:
-                logger.error(f"[Trade #{trade_id}] Sell order failed: {sell_res.get('error')}")
-                # Fallback record
-                pnl_percent = 0.0
-                pnl_usdt = 0.0
-                res = {"success": False, "error": sell_res.get("error")}
+                pnl_percent *= user.get("futures_leverage", 1)
+            pnl_usdt = usdt_spent * (pnl_percent / 100.0)
+            res = {"success": False, "error": sell_res.get("error")}
 
         # Update database
         await close_trade(

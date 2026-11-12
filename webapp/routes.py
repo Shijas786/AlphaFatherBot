@@ -46,7 +46,7 @@ async def api_get_user(request: web.Request):
 
     has_api = bool(user.get("binance_api_key"))
     balance = 0.0
-    if has_api and not user.get("simulation_mode", 1):
+    if has_api:
         try:
             k = decrypt_secret(user.get("binance_api_key"))
             s = decrypt_secret(user.get("binance_api_secret"))
@@ -61,15 +61,12 @@ async def api_get_user(request: web.Request):
             "first_name": user.get("first_name", ""),
             "username": user.get("username", ""),
             "is_active": bool(user.get("is_active", 0)),
-            "simulation_mode": bool(user.get("simulation_mode", 1)),
             "trade_mode": user.get("trade_mode", "spot"),
             "order_amount_usdt": user.get("order_amount_usdt", 50.0),
             "futures_leverage": user.get("futures_leverage", 3),
             "tp_percent": user.get("tp_percent", 15.0),
             "sl_percent": user.get("sl_percent", 5.0),
-            "trailing_stop_percent": user.get("trailing_stop_percent", 4.0),
-            "trailing_activation_percent": user.get("trailing_activation_percent", 8.0),
-            "max_hold_seconds": user.get("max_hold_seconds", 90),
+            "max_hold_seconds": user.get("max_hold_seconds", 60),
             "has_api_keys": has_api,
             "usdt_balance": balance
         }
@@ -82,9 +79,8 @@ async def api_update_settings(request: web.Request):
     data = await request.json()
 
     allowed_fields = [
-        "is_active", "simulation_mode", "trade_mode", "order_amount_usdt",
-        "futures_leverage", "tp_percent", "sl_percent", "trailing_stop_percent",
-        "trailing_activation_percent", "max_hold_seconds"
+        "is_active", "trade_mode", "order_amount_usdt",
+        "futures_leverage", "tp_percent", "sl_percent", "max_hold_seconds"
     ]
 
     updates = {}

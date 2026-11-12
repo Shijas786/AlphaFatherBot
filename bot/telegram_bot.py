@@ -13,7 +13,6 @@ from bot.handlers.start import (
     start_command,
     refresh_dashboard_callback,
     toggle_active_callback,
-    toggle_sim_callback,
     toggle_trade_mode_callback,
     view_help_callback
 )
@@ -86,7 +85,6 @@ def build_telegram_app() -> Application:
     # Callback Query handlers - Dashboard
     app.add_handler(CallbackQueryHandler(refresh_dashboard_callback, pattern="^refresh_dashboard$"))
     app.add_handler(CallbackQueryHandler(toggle_active_callback, pattern="^toggle_active$"))
-    app.add_handler(CallbackQueryHandler(toggle_sim_callback, pattern="^toggle_sim$"))
     app.add_handler(CallbackQueryHandler(toggle_trade_mode_callback, pattern="^toggle_trade_mode$"))
     app.add_handler(CallbackQueryHandler(view_help_callback, pattern="^view_help$"))
     app.add_handler(CallbackQueryHandler(view_trades_callback, pattern="^view_trades$"))

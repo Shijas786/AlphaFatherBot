@@ -60,60 +60,21 @@ class TradeDispatcher:
         user_id = user["telegram_id"]
         trade_mode = user.get("trade_mode", "spot")
         order_amount = float(user.get("order_amount_usdt", 50.0))
-        is_simulation = bool(user.get("simulation_mode", 0))
 
         try:
-            if is_simulation:
-                # --- PAPER / SIMULATION TRADING ---
-                price = await binance_service.get_symbol_price(symbol, is_futures=(trade_mode == "futures"))
-                if price <= 0:
-                    price = 1.0  # fallback
-                qty = (order_amount * user.get("futures_leverage", 1)) / price if trade_mode == "futures" else order_amount / price
-                latency_ms = int((time.time() - announcement_start_time) * 1000)
-
-                trade_id = await record_trade(
-                    user_id=user_id,
-                    symbol=symbol,
-                    trade_mode=trade_mode,
-                    side="BUY",
-                    order_id=f"SIM_{int(time.time()*1000)}",
-                    buy_price=price,
-                    quantity=qty,
-                    usdt_spent=order_amount,
-                    status="OPEN"
-                )
-
-                trade_data = {
-                    "symbol": symbol,
-                    "trade_mode": trade_mode,
-                    "buy_price": price,
-                    "quantity": qty,
-                    "usdt_spent": order_amount
-                }
-
-                # Start smart exit monitoring
-                position_tracker.start_tracking(trade_id, user, trade_data)
-
-                # Send Telegram notification
-                if self.telegram_buy_notifier:
-                    await self.telegram_buy_notifier(user_id, {
-                        "trade_id": trade_id,
-                        "symbol": symbol,
-                        "trade_mode": trade_mode,
-                        "buy_price": price,
-                        "quantity": qty,
-                        "usdt_spent": order_amount,
-                        "latency_ms": latency_ms,
-                        "is_simulation": True
-                    })
-                return
-
-            # --- REAL BINANCE TRADING ---
+            # REAL BINANCE TRADING
             api_key = decrypt_secret(user.get("binance_api_key", ""))
             api_secret = decrypt_secret(user.get("binance_api_secret", ""))
 
             if not api_key or not api_secret:
                 logger.warning(f"User {user_id} has bot enabled but missing API credentials.")
+                if self.telegram_buy_notifier:
+                    await self.telegram_buy_notifier(user_id, {
+                        "symbol": symbol,
+                        "failed": True,
+                        "error": "Binance API Key not connected! Please add your API key in settings.",
+                        "latency_ms": int((time.time() - announcement_start_time) * 1000)
+                    })
                 return
 
             if trade_mode == "futures":
@@ -168,8 +129,7 @@ class TradeDispatcher:
                         "buy_price": order_res.get("avg_price", 0.0),
                         "quantity": order_res.get("executed_qty", 0.0),
                         "usdt_spent": order_res.get("usdt_spent", order_amount),
-                        "latency_ms": total_latency_ms,
-                        "is_simulation": False
+                        "latency_ms": total_latency_ms
                     })
             else:
                 err_msg = order_res.get("error", "Unknown error")
