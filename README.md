@@ -36,7 +36,7 @@ An ultra-low latency Telegram-controlled crypto trading bot designed to detect n
 │   ├── db.py                 # SQLite async database operations
 │   └── encryption.py         # AES-256 Fernet key encryption/decryption
 ├── services/
-│   ├── tree_news_listener.py # Tree News WebSocket stream client & regex parser
+│   ├── tree_news_listener.py # High-speed WebSocket stream client & regex parser
 │   ├── upbit_notice_scraper.py # Redundant Upbit official notice scraper
 │   ├── symbol_cache.py       # In-memory Binance symbol & precision cache
 │   ├── binance_service.py    # Binance Spot & Futures REST API execution
