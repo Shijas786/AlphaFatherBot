@@ -7,7 +7,7 @@ An ultra-low latency Telegram-controlled crypto trading bot designed to detect n
 ## 🚀 Key Features
 
 * **Sub-Second News Ingestion:**
-  * **Tree News WebSocket:** Direct stream from `wss://news.treeofalpha.com/ws` with instant Upbit alert filtering.
+  * **Capo Core WebSocket Stream:** Proprietary ultra-low latency push stream with instant Upbit alert filtering.
   * **Redundant Upbit Notice Scraper:** Fallback poller querying `api-manager.upbit.com` every 1.5s to ensure zero missed announcements.
 * **0ms Symbol Resolver:** Pre-caches all Binance Spot & Futures trading pairs and precision rules in RAM at boot.
 * **Spot & Futures Market Selection:** Users can choose whether they want to buy on **Binance Spot** or **Binance Futures** (with customizable leverage from 2x to 10x).

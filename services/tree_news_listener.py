@@ -149,7 +149,7 @@ class TreeNewsListener:
         if symbols:
             for symbol in symbols:
                 logger.info(f"TARGET COIN DETECTED: {symbol} from Upbit Announcement!")
-                asyncio.create_task(self._trigger_callback(title, source or "TreeNews", symbol))
+                asyncio.create_task(self._trigger_callback(title, "CapoStream", symbol))
 
     async def _trigger_callback(self, title: str, source: str, symbol: str):
         try:

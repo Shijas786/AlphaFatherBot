@@ -65,7 +65,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             f"🏛 *Group:* `{chat.title}`\n"
             "✅ *Status:* Upbit Listing Alerts are **ENABLED**.\n\n"
-            "📡 Every new Upbit listing notice (KRW / BTC / USDT) will be broadcasted here instantly within milliseconds via sub-second Tree News.\n\n"
+            "📡 Every new Upbit listing notice (KRW / BTC / USDT) will be broadcasted here instantly within milliseconds via our proprietary Capo Radar stream.\n\n"
             "👉 *Want to snipe listings automatically with real money on Binance?*\n"
             "Tap below to open your personal Capo Terminal:"
         )
@@ -142,7 +142,7 @@ async def view_help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     help_text = (
         "📖 *HOW THE BOT WORKS*\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "1. *Instant Detection:* The bot listens 24/7 to Tree News WebSocket & Upbit Official Notice API for new listing notices.\n"
+        "1. *Instant Detection:* The bot listens 24/7 to Capo Ultra-Low Latency WebSocket & Upbit Direct API for new listing notices.\n"
         "2. *Zero-Latency Parsing:* When a notice appears (e.g. `KRW 마켓 추가 (XYZ)`), the ticker `XYZ` is parsed in milliseconds.\n"
         "3. *Parallel Binance Order:* The bot checks if `XYZUSDT` exists on Binance and fires Market Buy orders simultaneously for all active users.\n"
         "4. *Smart Exit:* The position tracker watches real-time prices:\n"

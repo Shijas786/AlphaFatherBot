@@ -52,7 +52,7 @@ class TestTradingPipeline(unittest.TestCase):
                 print("Triggering real Upbit listing execution for BTC...")
                 await trade_dispatcher.handle_listing(
                     raw_title="[거래] KRW, BTC 마켓 신규 디지털 자산 추가 (BTC)",
-                    source="TreeNewsSim",
+                    source="CapoStreamSim",
                     coin="BTC"
                 )
 

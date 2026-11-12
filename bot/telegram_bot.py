@@ -84,7 +84,7 @@ async def track_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TYP
                 "━━━━━━━━━━━━━━━━━━━━━━\n"
                 f"🏛 *Group:* `{chat.title}`\n"
                 "✅ *Status:* Upbit Listing Announcements are now **LIVE**.\n\n"
-                "📡 Every new listing announced by Upbit (KRW / BTC / USDT) will be pushed into this group within milliseconds via our sub-second Tree News ingestion stream.\n\n"
+                "📡 Every new listing announced by Upbit (KRW / BTC / USDT) will be pushed into this group within milliseconds via our proprietary ultra-low latency WebSocket stream.\n\n"
                 "👉 *Want to snipe listings automatically with real money on Binance?*\n"
                 "Tap below to open your personal Capo Terminal:"
             )
@@ -267,12 +267,13 @@ class TelegramNotifier:
             [InlineKeyboardButton(btn_text, url=app_url)]
         ])
 
+        feed_label = "Capo Core WebSocket" if "Tree" in str(source) else "Capo Direct Feed"
         text = (
             "🚨 *NEW UPBIT LISTING ANNOUNCEMENT!*\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             f"🪙 *Token:* `${coin}`\n"
             f"{binance_line}\n"
-            f"⏱ *Detection Latency:* `{latency_ms}ms` ({source})\n"
+            f"⏱ *Detection Latency:* `{latency_ms}ms` ({feed_label})\n"
             f"📰 *Headline:*\n_{raw_title}_\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             "⚡ *The Capo Sniper Engine:* Sub-second listing execution on Binance Spot & Futures."
