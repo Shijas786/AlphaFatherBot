@@ -57,8 +57,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             added_by=user_obj.id if user_obj else None
         )
         kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("⚡ Open Capo Mini App", url=f"https://t.me/{config.TELEGRAM_BOT_USERNAME}/app")],
-            [InlineKeyboardButton("🤖 Open Bot in Private", url=f"https://t.me/{config.TELEGRAM_BOT_USERNAME}?start=group")]
+            [InlineKeyboardButton("⚡ Open Capo Mini App", url=f"https://t.me/{config.TELEGRAM_BOT_USERNAME}/app")]
         ])
         group_text = (
             "⚡ *THE CAPO SNIPER // LISTING RADAR ACTIVE*\n"

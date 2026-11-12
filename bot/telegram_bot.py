@@ -76,8 +76,7 @@ async def track_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TYP
         logger.info(f"⚡ Bot joined group {chat.id} ({chat.title}). Alerts enabled!")
         try:
             kb = InlineKeyboardMarkup([
-                [InlineKeyboardButton("⚡ Open Capo Mini App", url=f"https://t.me/{config.TELEGRAM_BOT_USERNAME}/app")],
-                [InlineKeyboardButton("🤖 Open Bot in Private", url=f"https://t.me/{config.TELEGRAM_BOT_USERNAME}?start=group")]
+                [InlineKeyboardButton("⚡ Open Capo Mini App", url=f"https://t.me/{config.TELEGRAM_BOT_USERNAME}/app")]
             ])
             welcome_text = (
                 "⚡ *THE CAPO SNIPER // LISTING RADAR ACTIVATED*\n"
