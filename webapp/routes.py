@@ -126,10 +126,25 @@ async def api_save_api_keys(request: web.Request):
     })
 
 async def api_get_trades(request: web.Request):
-    """GET /api/trades - List user's recent trades and active positions."""
+    """GET /api/trades - List user's recent trades and active positions with live mark prices."""
     tg_user = get_auth_user(request)
     user_id = tg_user["id"]
+    user = await get_user(user_id)
     trades = await get_user_trades(user_id, limit=20)
+
+    # For any open trade, calculate live real-time price & PnL
+    for t in trades:
+        if t.get("status") == "OPEN":
+            symbol = t["symbol"]
+            is_futures = (t.get("trade_mode") == "futures")
+            buy_price = float(t.get("buy_price", 0.0))
+            if buy_price > 0:
+                current_p = await binance_service.get_symbol_price(symbol, is_futures=is_futures)
+                if current_p > 0:
+                    t["current_price"] = current_p
+                    leverage = user.get("futures_leverage", 1) if (user and is_futures) else 1
+                    t["pnl_percent"] = ((current_p - buy_price) / buy_price) * 100.0 * leverage
+
     return web.json_response({"success": True, "trades": trades})
 
 async def api_panic_sell(request: web.Request):

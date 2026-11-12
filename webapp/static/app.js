@@ -339,7 +339,9 @@ async function loadActivePositions() {
         </div>
         <div class="trade-stats">
           <div>ENTRY: $${t.buy_price.toFixed(4)}</div>
+          <div>MARK: $${(t.current_price || t.buy_price).toFixed(4)}</div>
           <div>SIZE: $${t.usdt_spent.toFixed(2)} USDT</div>
+          <div>TYPE: ${t.trade_mode.toUpperCase()}</div>
         </div>
         <button class="btn-panic" onclick="panicClose(${t.id})">
           🚨 SELL AT MARKET (100%)
