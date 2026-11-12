@@ -14,16 +14,15 @@ async def init_db():
                 binance_api_key TEXT DEFAULT '',
                 binance_api_secret TEXT DEFAULT '',
                 is_active INTEGER DEFAULT 0,
-                simulation_mode INTEGER DEFAULT 1,
                 trade_mode TEXT DEFAULT 'spot',
                 order_amount_usdt REAL DEFAULT 50.0,
                 futures_leverage INTEGER DEFAULT 3,
-                exit_strategy TEXT DEFAULT 'smart',
                 tp_percent REAL DEFAULT 15.0,
                 sl_percent REAL DEFAULT 5.0,
-                trailing_stop_percent REAL DEFAULT 4.0,
-                trailing_activation_percent REAL DEFAULT 8.0,
-                max_hold_seconds INTEGER DEFAULT 90,
+                max_hold_seconds INTEGER DEFAULT 60,
+                profit_share_percent REAL DEFAULT 10.0,
+                total_profit_usdt REAL DEFAULT 0.0,
+                total_fees_due_usdt REAL DEFAULT 0.0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -45,6 +44,9 @@ async def init_db():
                 sell_time TIMESTAMP,
                 pnl_percent REAL DEFAULT 0.0,
                 pnl_usdt REAL DEFAULT 0.0,
+                fee_rate REAL DEFAULT 0.10,
+                fee_usdt REAL DEFAULT 0.0,
+                fee_status TEXT DEFAULT 'CALCULATED',
                 exit_reason TEXT DEFAULT '',
                 status TEXT DEFAULT 'OPEN',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -61,6 +63,22 @@ async def init_db():
                 detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Seamless migrations for existing databases
+        migrations = [
+            "ALTER TABLE users ADD COLUMN profit_share_percent REAL DEFAULT 10.0",
+            "ALTER TABLE users ADD COLUMN total_profit_usdt REAL DEFAULT 0.0",
+            "ALTER TABLE users ADD COLUMN total_fees_due_usdt REAL DEFAULT 0.0",
+            "ALTER TABLE trades ADD COLUMN fee_rate REAL DEFAULT 0.10",
+            "ALTER TABLE trades ADD COLUMN fee_usdt REAL DEFAULT 0.0",
+            "ALTER TABLE trades ADD COLUMN fee_status TEXT DEFAULT 'CALCULATED'"
+        ]
+        for m in migrations:
+            try:
+                await db.execute(m)
+            except Exception:
+                pass
+
         await db.commit()
 
 async def get_user(telegram_id: int) -> Optional[Dict[str, Any]]:
@@ -150,8 +168,37 @@ async def close_trade(
     exit_reason: str,
     status: str = "CLOSED"
 ):
-    """Update a trade upon completion/exit."""
+    """Update a trade upon completion/exit and calculate profit sharing."""
     async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+
+        # Fetch trade user_id
+        user_id = None
+        async with db.execute("SELECT user_id FROM trades WHERE id = ?", (trade_id,)) as cursor:
+            row = await cursor.fetchone()
+            if row:
+                user_id = row["user_id"]
+
+        fee_rate = 0.10
+        fee_usdt = 0.0
+
+        if user_id:
+            async with db.execute("SELECT profit_share_percent FROM users WHERE telegram_id = ?", (user_id,)) as cursor:
+                u_row = await cursor.fetchone()
+                if u_row and u_row["profit_share_percent"]:
+                    fee_rate = float(u_row["profit_share_percent"]) / 100.0
+
+            # Calculate profit sharing on winning trades only
+            if pnl_usdt > 0:
+                fee_usdt = round(pnl_usdt * fee_rate, 4)
+                # Update user running ledger totals
+                await db.execute("""
+                    UPDATE users
+                    SET total_profit_usdt = total_profit_usdt + ?,
+                        total_fees_due_usdt = total_fees_due_usdt + ?
+                    WHERE telegram_id = ?
+                """, (pnl_usdt, fee_usdt, user_id))
+
         await db.execute("""
             UPDATE trades
             SET sell_price = ?,
@@ -159,11 +206,84 @@ async def close_trade(
                 sell_time = CURRENT_TIMESTAMP,
                 pnl_percent = ?,
                 pnl_usdt = ?,
+                fee_rate = ?,
+                fee_usdt = ?,
+                fee_status = 'CALCULATED',
                 exit_reason = ?,
                 status = ?
             WHERE id = ?
-        """, (sell_price, sell_order_id, pnl_percent, pnl_usdt, exit_reason, status, trade_id))
+        """, (sell_price, sell_order_id, pnl_percent, pnl_usdt, fee_rate, fee_usdt, exit_reason, status, trade_id))
         await db.commit()
+
+async def get_user_profit_stats(user_id: int) -> Dict[str, Any]:
+    """Calculate aggregate trade metrics and profit sharing for a user."""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("""
+            SELECT 
+                COUNT(*) as total_trades,
+                SUM(CASE WHEN pnl_usdt > 0 THEN 1 ELSE 0 END) as winning_trades,
+                COALESCE(SUM(pnl_usdt), 0.0) as gross_pnl_usdt,
+                COALESCE(SUM(fee_usdt), 0.0) as total_fee_usdt,
+                COALESCE(SUM(usdt_spent), 0.0) as total_volume_usdt
+            FROM trades
+            WHERE user_id = ? AND status = 'CLOSED'
+        """, (user_id,)) as cursor:
+            row = await cursor.fetchone()
+            total_trades = row["total_trades"] or 0
+            wins = row["winning_trades"] or 0
+            gross_pnl = round(float(row["gross_pnl_usdt"]), 2)
+            fees = round(float(row["total_fee_usdt"]), 2)
+            net_profit = round(gross_pnl - fees, 2)
+            win_rate = round((wins / total_trades * 100), 1) if total_trades > 0 else 0.0
+
+            return {
+                "total_trades": total_trades,
+                "win_rate": win_rate,
+                "gross_pnl_usdt": gross_pnl,
+                "platform_fee_accrued_usdt": fees,
+                "net_user_profit_usdt": net_profit,
+                "total_volume_usdt": round(float(row["total_volume_usdt"]), 2)
+            }
+
+async def get_global_profit_sharing_summary() -> Dict[str, Any]:
+    """Retrieve global platform-wide stats for admin dashboard."""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("""
+            SELECT 
+                COUNT(DISTINCT user_id) as active_traders_count,
+                COUNT(*) as total_trades,
+                COALESCE(SUM(pnl_usdt), 0.0) as total_user_profits,
+                COALESCE(SUM(fee_usdt), 0.0) as total_fees_accrued,
+                COALESCE(SUM(usdt_spent), 0.0) as total_volume
+            FROM trades
+            WHERE status = 'CLOSED'
+        """) as cursor:
+            stats = await cursor.fetchone()
+
+        async with db.execute("""
+            SELECT 
+                u.telegram_id, u.username, u.first_name,
+                COUNT(t.id) as trades_count,
+                COALESCE(SUM(t.pnl_usdt), 0.0) as total_pnl,
+                COALESCE(SUM(t.fee_usdt), 0.0) as total_fees
+            FROM users u
+            LEFT JOIN trades t ON u.telegram_id = t.user_id AND t.status = 'CLOSED'
+            GROUP BY u.telegram_id
+            HAVING total_pnl > 0
+            ORDER BY total_pnl DESC
+            LIMIT 10
+        """) as cursor:
+            top_users = await cursor.fetchall()
+
+        return {
+            "total_trades": stats["total_trades"] or 0,
+            "total_user_profits": round(float(stats["total_user_profits"]), 2),
+            "total_fees_accrued": round(float(stats["total_fees_accrued"]), 2),
+            "total_volume": round(float(stats["total_volume"]), 2),
+            "top_earning_users": [dict(r) for r in top_users]
+        }
 
 async def get_user_trades(user_id: int, limit: int = 10) -> List[Dict[str, Any]]:
     """Get recent trades for a user."""

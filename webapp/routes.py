@@ -6,7 +6,8 @@ from database.db import (
     create_or_update_user,
     update_user_fields,
     get_user_trades,
-    get_recent_listings
+    get_recent_listings,
+    get_user_profit_stats
 )
 from database.encryption import encrypt_secret, decrypt_secret
 from services.binance_service import binance_service
@@ -54,6 +55,8 @@ async def api_get_user(request: web.Request):
         except Exception:
             pass
 
+    stats = await get_user_profit_stats(user_id)
+
     return web.json_response({
         "success": True,
         "user": {
@@ -68,7 +71,8 @@ async def api_get_user(request: web.Request):
             "sl_percent": user.get("sl_percent", 5.0),
             "max_hold_seconds": user.get("max_hold_seconds", 60),
             "has_api_keys": has_api,
-            "usdt_balance": balance
+            "usdt_balance": balance,
+            "stats": stats
         }
     })
 

@@ -127,6 +127,14 @@ function renderTerminal() {
     apiBal.textContent = "--";
   }
 
+  // Ledger Stats
+  if (u.stats) {
+    document.getElementById("ledger-gross-profit").textContent = `$${u.stats.gross_pnl_usdt.toFixed(2)} USDT`;
+    document.getElementById("ledger-platform-fee").textContent = `$${u.stats.platform_fee_accrued_usdt.toFixed(2)} USDT`;
+    document.getElementById("ledger-net-profit").textContent = `$${u.stats.net_user_profit_usdt.toFixed(2)} USDT`;
+    document.getElementById("ledger-win-rate").textContent = `${u.stats.win_rate}% (${u.stats.total_trades} Trades)`;
+  }
+
   // Strategy Sliders & Labels
   document.getElementById("slider-tp").value = u.tp_percent;
   document.getElementById("label-tp").textContent = `+${u.tp_percent}%`;
@@ -404,7 +412,7 @@ async function loadLogs() {
       <div class="log-row">
         <div>
           <span class="log-coin">${t.symbol} (${t.trade_mode.toUpperCase()})</span>
-          <div class="log-meta">Size: $${t.usdt_spent} | Exit: ${t.exit_reason || t.status}</div>
+          <div class="log-meta">Size: $${t.usdt_spent} | Exit: ${t.exit_reason || t.status}${t.fee_usdt > 0 ? ` | Fee (10%): $${t.fee_usdt.toFixed(2)}` : ''}</div>
         </div>
         <div style="font-family: var(--font-mono); font-weight:700; color:${t.pnl_percent >= 0 ? 'var(--pnl-green)' : 'var(--pnl-red)'}">
           ${t.pnl_percent >= 0 ? '+' : ''}${t.pnl_percent.toFixed(2)}% ($${t.pnl_usdt.toFixed(2)})

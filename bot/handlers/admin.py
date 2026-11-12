@@ -2,7 +2,7 @@ import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 import config
-from database.db import get_all_users, get_active_traders
+from database.db import get_all_users, get_active_traders, get_global_profit_sharing_summary
 from services.trade_dispatcher import trade_dispatcher
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ async def admin_broadcast_command(update: Update, context: ContextTypes.DEFAULT_
     await update.message.reply_text(f"✅ Broadcast sent to {sent_count}/{len(users)} users.")
 
 async def admin_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """View bot metrics."""
+    """View bot metrics and profit sharing ledger."""
     user_id = update.effective_user.id
     if not is_admin(user_id):
         await update.message.reply_text("⛔ Unauthorized.")
@@ -70,15 +70,34 @@ async def admin_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     all_users = await get_all_users()
     active_users = await get_active_traders()
+    profit_summary = await get_global_profit_sharing_summary()
+
+    total_profits = profit_summary.get("total_user_profits", 0.0)
+    accrued_fees = profit_summary.get("total_fees_accrued", 0.0)
+    volume = profit_summary.get("total_volume", 0.0)
+
+    top_text = ""
+    for u in profit_summary.get("top_earning_users", []):
+        handle = f"@{u['username']}" if u.get("username") else f"`{u['telegram_id']}`"
+        top_text += f" • {handle}: `+${u['total_pnl']:.2f}` (Fee: `${u['total_fees']:.2f}`)\n"
+
+    if not top_text:
+        top_text = " • No winning trades recorded yet.\n"
 
     text = (
-        "📈 *ADMIN METRICS & SYSTEM STATUS*\n"
+        "💼 *CAPO ADMIN: PROFIT SHARING LEDGER*\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         f"👥 *Total Registered Users:* `{len(all_users)}`\n"
-        f"🟢 *Active Traders:* `{len(active_users)}`\n"
-        f"📡 *Tree News WS:* `{config.TREE_NEWS_WS_URL}`\n"
+        f"🟢 *Active Snipers:* `{len(active_users)}`\n"
+        f"📦 *Total Volume Traded:* `${volume:,.2f} USDT`\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "Use `/simulate_listing <COIN>` to test execution."
+        f"💰 *Total User Net Profits:* `+${total_profits:,.2f} USDT`\n"
+        f"💵 *Accrued Platform Share (10%):* `${accrued_fees:,.2f} USDT`\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "🏆 *Top Earning Traders:*\n"
+        f"{top_text}"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "💡 _Fee tracking is calculated automatically. Collection can be initiated anytime._"
     )
     await update.message.reply_text(text, parse_mode="Markdown")
 

@@ -232,6 +232,29 @@
     <!-- ================= TAB 4: LOGS ================= -->
     <section class="tab-pane" id="tab-logs">
       <div class="panel">
+        <div class="panel-heading">PROFIT SHARING & PERFORMANCE LEDGER</div>
+        <div class="panel-desc">Tracks net earnings and calculated platform share (10% on profitable trades).</div>
+        <div class="status-summary">
+          <div class="summary-row">
+            <span>Gross Realized Profit</span>
+            <strong id="ledger-gross-profit">$0.00 USDT</strong>
+          </div>
+          <div class="summary-row">
+            <span>Platform Fee (10% Calculated)</span>
+            <strong id="ledger-platform-fee" style="color: #8e929b;">$0.00 USDT</strong>
+          </div>
+          <div class="summary-row">
+            <span>Net Profit (You Keep)</span>
+            <strong id="ledger-net-profit" style="color: #22c55e;">$0.00 USDT</strong>
+          </div>
+          <div class="summary-row">
+            <span>Win Rate</span>
+            <strong id="ledger-win-rate">0.0%</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
         <div class="panel-heading">TRADE EXECUTION LEDGER</div>
         <div id="trade-ledger-container">
           <div class="terminal-empty">No closed trades recorded yet.</div>
