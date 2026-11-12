@@ -5,274 +5,1340 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>The Capo Terminal</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="/static/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* =======================================================
+       EXCHANGE PRO DESIGN SYSTEM - MONOCHROME B&W EDITION
+       ======================================================= */
+    :root {
+      --bg: #090a0c;
+      --card: #121418;
+      --card-elevated: #181a20;
+      --card-border: #23272e;
+      --border-subtle: #1c1f26;
+      --text-white: #ffffff;
+      --text-gray: #9ba1ad;
+      --text-muted: #5e6573;
+      --green: #00e676;
+      --green-glow: rgba(0, 230, 118, 0.2);
+      --red: #ff3344;
+      --red-glow: rgba(255, 51, 68, 0.25);
+      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-white);
+      font-family: var(--font);
+      font-size: 13px;
+      line-height: 1.45;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px 12px 40px;
+      user-select: none;
+    }
+
+    .app-viewport {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* Top Bar */
+    .terminal-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: #ffffff;
+      color: #000000;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 16px;
+    }
+
+    .brand-text h1 {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .brand-text p {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+    }
+
+    .header-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-beta {
+      font-size: 9px;
+      font-weight: 800;
+      font-family: var(--mono);
+      letter-spacing: 0.5px;
+      background: #23272e;
+      color: #ffffff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid #333842;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
+    }
+
+    /* Exchange Navigation Tabs */
+    .tab-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+
+    .tab-trigger {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 10px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+
+    .tab-trigger.active {
+      background: #ffffff;
+      color: #000000;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    /* Master Engine Card */
+    .engine-card {
+      background: linear-gradient(180deg, #16181f 0%, #121418 100%);
+      border: 1px solid #2e333d;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .engine-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .engine-eyebrow {
+      font-size: 9px;
+      font-weight: 800;
+      font-family: var(--mono);
+      letter-spacing: 1px;
+      color: var(--text-muted);
+    }
+
+    .engine-status-text {
+      font-size: 18px;
+      font-weight: 800;
+      font-family: var(--mono);
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .engine-status-text.active {
+      color: #ffffff;
+    }
+
+    .engine-desc {
+      font-size: 11px;
+      color: var(--text-gray);
+      line-height: 1.4;
+    }
+
+    /* High-End Pro Toggle Switch */
+    .pro-switch {
+      position: relative;
+      display: inline-block;
+      width: 52px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .pro-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #23272e;
+      border: 1px solid #333842;
+      border-radius: 28px;
+      transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #717784;
+      border-radius: 50%;
+      transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    input:checked + .switch-slider {
+      background-color: #ffffff;
+      border-color: #ffffff;
+    }
+
+    input:checked + .switch-slider:before {
+      transform: translateX(24px);
+      background-color: #000000;
+    }
+
+    /* Metrics Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      font-weight: 800;
+      font-family: var(--mono);
+      color: var(--text-muted);
+      letter-spacing: 0.6px;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 17px;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .stat-sub {
+      font-size: 10px;
+      color: var(--text-gray);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stat-btn {
+      background: none;
+      border: none;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: var(--mono);
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    /* Card Title Bar */
+    .card-title-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .card-heading {
+      font-size: 11px;
+      font-weight: 800;
+      font-family: var(--mono);
+      letter-spacing: 0.8px;
+      color: #ffffff;
+    }
+
+    .card-caption {
+      font-size: 11px;
+      color: var(--text-gray);
+      margin-top: 4px;
+      margin-bottom: 14px;
+    }
+
+    .pill-tag {
+      font-size: 10px;
+      font-family: var(--mono);
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--card-elevated);
+      border: 1px solid var(--card-border);
+      color: var(--text-gray);
+    }
+
+    /* Live Positions Card */
+    .position-item {
+      background: var(--card-elevated);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .pos-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .pos-ticker {
+      font-size: 16px;
+      font-weight: 800;
+      font-family: var(--mono);
+    }
+
+    .pos-badge {
+      font-family: var(--mono);
+      font-weight: 800;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .pos-badge.gain {
+      background: rgba(0, 230, 118, 0.15);
+      color: var(--green);
+    }
+
+    .pos-badge.drop {
+      background: rgba(255, 51, 68, 0.15);
+      color: var(--red);
+    }
+
+    .pos-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-gray);
+      margin-bottom: 12px;
+    }
+
+    .btn-panic-sell {
+      display: block;
+      width: 100%;
+      background: var(--red);
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 11px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px var(--red-glow);
+    }
+
+    /* Empty States */
+    .empty-box {
+      text-align: center;
+      padding: 24px 12px;
+      color: var(--text-muted);
+    }
+
+    .empty-box .icon {
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+
+    .empty-box h4 {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--text-gray);
+      margin-bottom: 4px;
+    }
+
+    .empty-box p {
+      font-size: 10px;
+      line-height: 1.4;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    /* Live Announcement Banner */
+    .announcement-box {
+      background: var(--card-elevated);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .ann-time {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .ann-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    /* Segmented Selector */
+    .segmented {
+      display: flex;
+      background: var(--card-elevated);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 3px;
+      margin-bottom: 14px;
+    }
+
+    .seg-option {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 9px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .seg-option.active {
+      background: #ffffff;
+      color: #000000;
+    }
+
+    /* Input Blocks */
+    .field-group {
+      margin-bottom: 16px;
+    }
+
+    .field-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .field-label {
+      font-size: 10px;
+      font-weight: 800;
+      font-family: var(--mono);
+      color: var(--text-gray);
+      letter-spacing: 0.5px;
+    }
+
+    .field-val-badge {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .chips-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .chip-item {
+      flex: 1;
+      background: var(--card-elevated);
+      border: 1px solid var(--card-border);
+      color: var(--text-gray);
+      padding: 8px 0;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+
+    .chip-item.active {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 11px 12px;
+      background: var(--card-elevated);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+
+    .text-input:focus {
+      outline: none;
+      border-color: #ffffff;
+    }
+
+    .slider-track {
+      width: 100%;
+      accent-color: #ffffff;
+      height: 4px;
+      background: #23272e;
+      border-radius: 2px;
+    }
+
+    .field-hint {
+      display: block;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    /* Buttons */
+    .btn-action {
+      display: block;
+      width: 100%;
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      border-radius: 8px;
+      padding: 13px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-action:active {
+      opacity: 0.85;
+    }
+
+    /* Security Notice */
+    .security-notice {
+      background: var(--card-elevated);
+      border-left: 3px solid #ffffff;
+      padding: 12px;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 14px;
+      font-size: 11px;
+      color: var(--text-gray);
+    }
+
+    .security-notice strong {
+      color: #ffffff;
+      display: block;
+      margin-bottom: 4px;
+      font-family: var(--mono);
+    }
+
+    /* Status Table */
+    .status-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-gray);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .status-item strong {
+      font-family: var(--mono);
+      color: #ffffff;
+    }
+
+    /* Tab Panes */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Log Rows */
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 11px;
+    }
+
+    .log-item:last-child {
+      border-bottom: none;
+    }
+
+    .log-symbol {
+      font-weight: 800;
+      font-family: var(--mono);
+      color: #ffffff;
+    }
+
+    .log-sub {
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+
+    /* Toast */
+    .toast-pill {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffffff;
+      color: #000000;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 9px 18px;
+      border-radius: 20px;
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.9);
+      z-index: 9999;
+      transition: opacity 0.25s ease;
+    }
+
+    .toast-pill.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
-  <div class="terminal-wrapper">
-    <!-- Top Bar -->
-    <header class="terminal-header">
-      <div class="brand">
-        <div class="status-radar" id="radar-light"></div>
+  <div class="app-viewport">
+    <!-- Top Exchange Bar -->
+    <header class="terminal-bar">
+      <div class="brand-group">
+        <div class="brand-icon">⚡</div>
         <div class="brand-text">
-          <span class="brand-name">CAPO // PRO TERMINAL</span>
-          <span class="brand-sub" id="user-display">CONNECTING...</span>
+          <h1>THE CAPO // PRO</h1>
+          <p id="user-display">CONNECTING...</p>
         </div>
       </div>
-      <div class="header-pills">
-        <span class="live-pill" id="terminal-state-pill">STANDBY</span>
+      <div class="header-badges">
+        <span class="badge-beta">BETA • FREE</span>
+        <div class="pulse-dot"></div>
       </div>
     </header>
 
-    <!-- Exchange Navigation Tabs -->
-    <nav class="terminal-nav">
-      <button class="nav-item active" data-tab="tab-terminal">TERMINAL</button>
-      <button class="nav-item" data-tab="tab-strategy">STRATEGY</button>
-      <button class="nav-item" data-tab="tab-api">API & KEYS</button>
-      <button class="nav-item" data-tab="tab-logs">LOGS</button>
+    <!-- Navigation Tabs -->
+    <nav class="tab-strip">
+      <button class="tab-trigger active" data-tab="tab-terminal">TERMINAL</button>
+      <button class="tab-trigger" data-tab="tab-strategy">STRATEGY</button>
+      <button class="tab-trigger" data-tab="tab-api">API KEYS</button>
+      <button class="tab-trigger" data-tab="tab-history">HISTORY</button>
     </nav>
 
     <!-- ================= TAB 1: TERMINAL ================= -->
-    <section class="tab-pane active" id="tab-terminal">
-      <!-- Master Engine Switch -->
-      <div class="panel master-panel">
-        <div class="master-header">
+    <main class="tab-content active" id="tab-terminal">
+      <!-- Engine Control Card -->
+      <section class="card engine-card">
+        <div class="engine-row">
           <div>
-            <div class="panel-eyebrow">AUTOMATED EXECUTION ENGINE</div>
-            <div class="master-title" id="master-status-text">SYSTEM PAUSED</div>
+            <div class="engine-eyebrow">AUTOMATED LISTING SNIPER</div>
+            <div class="engine-status-text" id="engine-title">STANDBY ⚪</div>
           </div>
-          <label class="toggle-switch">
-            <input type="checkbox" id="bot-power-switch">
-            <span class="toggle-track"></span>
+          <label class="pro-switch">
+            <input type="checkbox" id="power-toggle">
+            <span class="switch-slider"></span>
           </label>
         </div>
-        <div class="master-caption">
-          Real-money order execution. Fires instant Binance market orders upon Upbit listing announcements.
-        </div>
-      </div>
+        <p class="engine-desc">
+          Ultra-low latency execution. Detects Upbit listing announcements and fires instant Binance market buys.
+        </p>
+      </section>
 
-      <!-- Quick Metrics Grid -->
-      <div class="metrics-grid">
-        <div class="metric-box">
-          <div class="metric-caption">AVAILABLE USDT</div>
-          <div class="metric-number" id="box-balance">$0.00</div>
-          <div class="metric-foot" id="api-indicator">API Disconnected</div>
+      <!-- Key Stats 2x2 Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">BINANCE USDT BALANCE</div>
+          <div class="stat-value" id="val-balance">$0.00</div>
+          <div class="stat-sub" id="label-api-status">API Disconnected</div>
         </div>
-        <div class="metric-box">
-          <div class="metric-caption">EXECUTION SIZE</div>
-          <div class="metric-number" id="box-size">$50.00</div>
-          <div class="metric-foot">Per Listing Notice</div>
+        <div class="stat-card">
+          <div class="stat-label">ORDER SIZE</div>
+          <div class="stat-value" id="val-order-size">$50.00</div>
+          <div class="stat-sub">Per Listing Notice</div>
         </div>
-        <div class="metric-box">
-          <div class="metric-caption">MARKET TYPE</div>
-          <div class="metric-number" id="box-market">SPOT</div>
-          <button class="action-link" id="btn-quick-market-toggle">Switch Market</button>
-        </div>
-        <div class="metric-box">
-          <div class="metric-caption">TIMEOUT EXIT</div>
-          <div class="metric-number" id="box-timeout">60s</div>
-          <div class="metric-foot">Auto Sell Protection</div>
-        </div>
-      </div>
-
-      <!-- Active Position / Live Trade -->
-      <div class="panel">
-        <div class="panel-title-bar">
-          <div class="panel-heading">LIVE POSITIONS</div>
-          <span class="count-tag" id="active-count-tag">0 OPEN</span>
-        </div>
-        <div id="active-positions-feed">
-          <div class="terminal-empty">
-            <div class="empty-icon">⬡</div>
-            <div class="empty-title">NO ACTIVE TRADES</div>
-            <div class="empty-desc">Engine is monitoring Upbit feed. Orders will appear here upon announcement.</div>
+        <div class="stat-card">
+          <div class="stat-label">MARKET TYPE</div>
+          <div class="stat-value" id="val-market">SPOT</div>
+          <div class="stat-sub">
+            <button class="stat-btn" id="btn-switch-market">Switch Market</button>
           </div>
         </div>
+        <div class="stat-card">
+          <div class="stat-label">MAX HOLD TIMER</div>
+          <div class="stat-value" id="val-timeout">60s</div>
+          <div class="stat-sub">Auto-Sell Protection</div>
+        </div>
       </div>
 
-      <!-- Live Upbit Ticker Watch -->
-      <div class="panel">
-        <div class="panel-title-bar">
-          <div class="panel-heading">LATEST UPBIT ANNOUNCEMENT</div>
-          <span class="live-tag">LIVE FEED</span>
+      <!-- Active Positions Card -->
+      <section class="card">
+        <div class="card-title-bar">
+          <h2 class="card-heading">LIVE POSITIONS</h2>
+          <span class="pill-tag" id="active-positions-count">0 OPEN</span>
         </div>
-        <div id="latest-announcement-card" class="news-banner">
-          <div class="news-time" id="news-time">--:--:--</div>
-          <div class="news-text" id="news-headline">Listening to Tree News & Upbit notices...</div>
+        <div id="positions-container">
+          <div class="empty-box">
+            <div class="icon">⬡</div>
+            <h4>NO OPEN POSITIONS</h4>
+            <p>Scanning Tree News & Upbit notices. When a coin is listed, it will execute and appear here.</p>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <!-- Upbit Live Feed Banner -->
+      <section class="card">
+        <div class="card-title-bar">
+          <h2 class="card-heading">LATEST UPBIT ANNOUNCEMENT</h2>
+          <span class="pill-tag" style="background: #ffffff; color: #000000; font-weight:800;">LIVE FEED</span>
+        </div>
+        <div class="announcement-box">
+          <div class="ann-time" id="ann-time">--:--:--</div>
+          <div class="ann-title" id="ann-title">Listening to Upbit notices stream...</div>
+        </div>
+      </section>
+    </main>
 
     <!-- ================= TAB 2: STRATEGY ================= -->
-    <section class="tab-pane" id="tab-strategy">
-      <div class="panel">
-        <div class="panel-heading">ORDER CONFIGURATION</div>
-        <div class="panel-desc">Configure order parameters strictly supported by the Binance REST API.</div>
+    <main class="tab-content" id="tab-strategy">
+      <section class="card">
+        <h2 class="card-heading">ORDER CONFIGURATION</h2>
+        <p class="card-caption">Configure buy orders executed directly on your Binance account.</p>
 
         <!-- Market Selector -->
-        <div class="input-block">
+        <div class="field-group">
           <label class="field-label">TRADING MARKET</label>
-          <div class="segmented-control" id="market-selector">
-            <button class="seg-btn active" data-market="spot">BINANCE SPOT</button>
-            <button class="seg-btn" data-market="futures">BINANCE FUTURES (USDT-M)</button>
+          <div class="segmented" id="market-seg">
+            <button class="seg-option active" data-market="spot">BINANCE SPOT</button>
+            <button class="seg-option" data-market="futures">BINANCE FUTURES (USDT-M)</button>
           </div>
         </div>
 
-        <!-- Futures Leverage -->
-        <div class="input-block" id="leverage-block" style="display: none;">
+        <!-- Leverage (Futures only) -->
+        <div class="field-group" id="group-leverage" style="display: none;">
           <label class="field-label">FUTURES LEVERAGE</label>
-          <div class="segmented-control" id="leverage-selector">
-            <button class="seg-btn" data-lev="2">2x</button>
-            <button class="seg-btn active" data-lev="3">3x</button>
-            <button class="seg-btn" data-lev="5">5x</button>
-            <button class="seg-btn" data-lev="10">10x</button>
+          <div class="segmented" id="leverage-seg">
+            <button class="seg-option" data-lev="2">2x</button>
+            <button class="seg-option active" data-lev="3">3x</button>
+            <button class="seg-option" data-lev="5">5x</button>
+            <button class="seg-option" data-lev="10">10x</button>
           </div>
         </div>
 
-        <!-- Buy Amount -->
-        <div class="input-block">
+        <!-- Order Size -->
+        <div class="field-group">
           <label class="field-label">BUY AMOUNT (USDT)</label>
-          <div class="chips-row" id="amount-chips">
-            <button class="chip" data-val="25">$25</button>
-            <button class="chip active" data-val="50">$50</button>
-            <button class="chip" data-val="100">$100</button>
-            <button class="chip" data-val="250">$250</button>
-            <button class="chip" data-val="500">$500</button>
+          <div class="chips-bar" id="chips-amount">
+            <button class="chip-item" data-val="25">$25</button>
+            <button class="chip-item active" data-val="50">$50</button>
+            <button class="chip-item" data-val="100">$100</button>
+            <button class="chip-item" data-val="250">$250</button>
+            <button class="chip-item" data-val="500">$500</button>
           </div>
-          <input type="number" class="terminal-input" id="input-custom-order-size" placeholder="Or enter exact custom USDT amount" min="10" step="5">
+          <input type="number" class="text-input" id="input-custom-size" placeholder="Or enter exact custom USDT amount" min="10" step="5">
         </div>
-      </div>
+      </section>
 
-      <div class="panel">
-        <div class="panel-heading">AUTOMATED EXIT RULES</div>
-        <div class="panel-desc">Listing pumps spike in seconds. Automatic market sell commands execute the moment rules are met.</div>
+      <section class="card">
+        <h2 class="card-heading">AUTOMATED EXIT RULES</h2>
+        <p class="card-caption">All exit rules trigger instant market sells directly via Binance API.</p>
 
         <!-- Take Profit -->
-        <div class="input-block">
-          <div class="split-label">
+        <div class="field-group">
+          <div class="field-head">
             <label class="field-label">TAKE PROFIT (TP)</label>
-            <span class="mono-value" id="label-tp">+15%</span>
+            <span class="field-val-badge" id="badge-tp">+15%</span>
           </div>
-          <input type="range" class="range-slider" id="slider-tp" min="5" max="100" step="1" value="15">
-          <span class="field-sub">Instantly sells 100% on Binance when gain reaches this target.</span>
+          <input type="range" class="slider-track" id="slider-tp" min="5" max="100" step="1" value="15">
+          <span class="field-hint">Sells 100% at market the instant profit hits this target.</span>
         </div>
 
         <!-- Stop Loss -->
-        <div class="input-block">
-          <div class="split-label">
+        <div class="field-group">
+          <div class="field-head">
             <label class="field-label">STOP LOSS (SL)</label>
-            <span class="mono-value danger-text" id="label-sl">-5%</span>
+            <span class="field-val-badge" style="color: var(--red);" id="badge-sl">-5%</span>
           </div>
-          <input type="range" class="range-slider" id="slider-sl" min="2" max="25" step="1" value="5">
-          <span class="field-sub">Instantly cuts loss if trade drops below this threshold.</span>
+          <input type="range" class="slider-track" id="slider-sl" min="2" max="25" step="1" value="5">
+          <span class="field-hint">Cuts 100% of the position if price drops below this limit.</span>
         </div>
 
-        <!-- Auto-Sell Timer -->
-        <div class="input-block">
-          <div class="split-label">
-            <label class="field-label">AUTO-SELL TIMER (MAX HOLD DURATION)</label>
-            <span class="mono-value" id="label-timeout">60s</span>
+        <!-- Max Hold Timer -->
+        <div class="field-group">
+          <div class="field-head">
+            <label class="field-label">MAX HOLD DURATION (SECONDS)</label>
+            <span class="field-val-badge" id="badge-timeout">60s</span>
           </div>
-          <input type="range" class="range-slider" id="slider-timeout" min="15" max="300" step="15" value="60">
-          <span class="field-sub">Auto-sells at market if TP/SL not triggered in time. Prevents bag holding post-pump.</span>
+          <input type="range" class="slider-track" id="slider-timeout" min="15" max="300" step="15" value="60">
+          <span class="field-hint">Auto-sells after this time so you never hold coins after the pump fades.</span>
         </div>
 
-        <button class="btn-solid" id="btn-save-strategy">SAVE STRATEGY SETTINGS</button>
-      </div>
-    </section>
+        <button class="btn-action" id="btn-save-settings">SAVE STRATEGY RULES</button>
+      </section>
+    </main>
 
-    <!-- ================= TAB 3: API & KEYS ================= -->
-    <section class="tab-pane" id="tab-api">
-      <div class="panel">
-        <div class="panel-heading">BINANCE API CREDENTIALS</div>
-        <div class="panel-desc">Your keys are encrypted at rest with military-grade AES-256-GCM. We never store plain text keys.</div>
+    <!-- ================= TAB 3: API KEYS ================= -->
+    <main class="tab-content" id="tab-api">
+      <section class="card">
+        <h2 class="card-heading">BINANCE API CONFIGURATION</h2>
+        <p class="card-caption">Credentials are encrypted with AES-256-GCM. We never store plain text keys.</p>
 
-        <div class="security-card">
-          <div class="sec-title">REQUIRED BINANCE PERMISSIONS:</div>
-          <ul class="sec-list">
-            <li>✔ Enable Reading</li>
-            <li>✔ Enable Spot & Margin Trading (or Futures)</li>
-            <li>✖ <strong>DO NOT ENABLE WITHDRAWALS</strong> (Keep Withdrawals Off!)</li>
-          </ul>
+        <div class="security-notice">
+          <strong>REQUIRED BINANCE PERMISSIONS:</strong>
+          ✔ Enable Reading<br>
+          ✔ Enable Spot & Margin Trading (or Futures)<br>
+          ✖ <strong>DISABLE WITHDRAWALS</strong> (Never give withdrawal access!)
         </div>
 
-        <div class="input-block">
-          <label class="field-label">API KEY</label>
-          <input type="text" class="terminal-input mono" id="input-api-key" placeholder="Paste 64-character Binance API Key" autocomplete="off" spellcheck="false">
+        <div class="field-group">
+          <label class="field-label">BINANCE API KEY</label>
+          <input type="text" class="text-input" id="input-api-key" placeholder="Paste 64-character API Key" autocomplete="off" spellcheck="false">
         </div>
 
-        <div class="input-block">
-          <label class="field-label">API SECRET</label>
-          <input type="password" class="terminal-input mono" id="input-api-secret" placeholder="Paste Binance API Secret" autocomplete="off" spellcheck="false">
+        <div class="field-group">
+          <label class="field-label">BINANCE API SECRET</label>
+          <input type="password" class="text-input" id="input-api-secret" placeholder="Paste API Secret" autocomplete="off" spellcheck="false">
         </div>
 
-        <button class="btn-solid" id="btn-connect-api">VALIDATE & CONNECT API</button>
-      </div>
+        <button class="btn-action" id="btn-validate-api">VALIDATE & CONNECT API</button>
+      </section>
 
-      <div class="panel">
-        <div class="panel-heading">CONNECTION STATUS</div>
-        <div class="status-summary">
-          <div class="summary-row">
-            <span>Status</span>
-            <strong id="api-status-badge">DISCONNECTED</strong>
+      <section class="card">
+        <h2 class="card-heading">CONNECTION STATUS</h2>
+        <div class="status-list">
+          <div class="status-item">
+            <span>API State</span>
+            <strong id="badge-conn-state">DISCONNECTED</strong>
           </div>
-          <div class="summary-row">
-            <span>Account Balance</span>
-            <strong id="api-summary-balance">--</strong>
+          <div class="status-item">
+            <span>Live Account Balance</span>
+            <strong id="badge-conn-balance">--</strong>
           </div>
-          <div class="summary-row">
+          <div class="status-item">
             <span>Permissions Verified</span>
-            <strong id="api-summary-verified">NO</strong>
+            <strong id="badge-conn-verified">NO</strong>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </main>
 
-    <!-- ================= TAB 4: LOGS ================= -->
-    <section class="tab-pane" id="tab-logs">
-      <div class="panel">
-        <div class="panel-heading">PROFIT SHARING & PERFORMANCE LEDGER</div>
-        <div class="panel-desc">Tracks net earnings and calculated platform share (10% on profitable trades).</div>
-        <div class="status-summary">
-          <div class="summary-row">
-            <span>Gross Realized Profit</span>
-            <strong id="ledger-gross-profit">$0.00 USDT</strong>
-          </div>
-          <div class="summary-row">
-            <span>Platform Fee (10% Calculated)</span>
-            <strong id="ledger-platform-fee" style="color: #8e929b;">$0.00 USDT</strong>
-          </div>
-          <div class="summary-row">
-            <span>Net Profit (You Keep)</span>
-            <strong id="ledger-net-profit" style="color: #22c55e;">$0.00 USDT</strong>
-          </div>
-          <div class="summary-row">
-            <span>Win Rate</span>
-            <strong id="ledger-win-rate">0.0%</strong>
-          </div>
+    <!-- ================= TAB 4: HISTORY ================= -->
+    <main class="tab-content" id="tab-history">
+      <section class="card">
+        <h2 class="card-heading">TRADE EXECUTION LEDGER</h2>
+        <div id="trades-ledger-list">
+          <div class="empty-box">No completed trades recorded yet.</div>
         </div>
-      </div>
+      </section>
 
-      <div class="panel">
-        <div class="panel-heading">TRADE EXECUTION LEDGER</div>
-        <div id="trade-ledger-container">
-          <div class="terminal-empty">No closed trades recorded yet.</div>
+      <section class="card">
+        <h2 class="card-heading">UPBIT ANNOUNCEMENTS STREAM</h2>
+        <div id="listings-stream-list">
+          <div class="empty-box">Monitoring news feed...</div>
         </div>
-      </div>
+      </section>
+    </main>
 
-      <div class="panel">
-        <div class="panel-heading">DETECTED UPBIT LISTINGS</div>
-        <div id="listings-history-container">
-          <div class="terminal-empty">Scanning for announcements...</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Toast Component -->
-    <div id="terminal-toast" class="toast-popup hidden"></div>
+    <!-- Toast Notification -->
+    <div id="toast-pill" class="toast-pill hidden"></div>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script>
+    // =======================================================
+    // THE CAPO ENGINE - INLINE JAVASCRIPT CONTROLLER
+    // =======================================================
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    let currentUser = null;
+    const initData = tg?.initData || "test_user_123456789";
+
+    function haptic(type = "light") {
+      try {
+        if (tg?.HapticFeedback) {
+          if (type === "impact") tg.HapticFeedback.impactOccurred("medium");
+          else if (type === "success") tg.HapticFeedback.notificationOccurred("success");
+          else if (type === "error") tg.HapticFeedback.notificationOccurred("error");
+          else tg.HapticFeedback.selectionChanged();
+        }
+      } catch (e) {}
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById("toast-pill");
+      el.textContent = msg;
+      el.classList.remove("hidden");
+      setTimeout(() => el.classList.add("hidden"), 2500);
+    }
+
+    async function api(path, options = {}) {
+      const headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + initData,
+        ...(options.headers || {})
+      };
+      const res = await fetch(path, { ...options, headers });
+      return await res.json();
+    }
+
+    // Tab Navigation
+    document.querySelectorAll(".tab-trigger").forEach(btn => {
+      btn.addEventListener("click", () => {
+        haptic("selection");
+        document.querySelectorAll(".tab-trigger").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+        btn.classList.add("active");
+        const targetId = btn.dataset.tab;
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) targetEl.classList.add("active");
+
+        if (targetId === "tab-history") {
+          loadTradesLedger();
+          loadListingsFeed();
+        }
+      });
+    });
+
+    // Load and Render User State
+    async function loadUserState() {
+      try {
+        const res = await api("/api/user");
+        if (!res.success) {
+          showToast(res.error || "Failed to load state");
+          return;
+        }
+        currentUser = res.user;
+        renderDashboard();
+      } catch (e) {
+        showToast("Connection to backend failed");
+      }
+    }
+
+    function renderDashboard() {
+      const u = currentUser;
+      document.getElementById("user-display").textContent = "@" + (u.username || u.telegram_id);
+
+      // Power Switch
+      const toggle = document.getElementById("power-toggle");
+      toggle.checked = u.is_active;
+      const title = document.getElementById("engine-title");
+
+      if (u.is_active) {
+        title.textContent = "ENGINE ARMED 🟢";
+        title.className = "engine-status-text active";
+      } else {
+        title.textContent = "STANDBY ⚪";
+        title.className = "engine-status-text";
+      }
+
+      // Metric Boxes
+      document.getElementById("val-balance").textContent = "$" + u.usdt_balance.toFixed(2);
+      document.getElementById("val-order-size").textContent = "$" + u.order_amount_usdt.toFixed(2);
+      document.getElementById("val-market").textContent = u.trade_mode.toUpperCase();
+      document.getElementById("val-timeout").textContent = u.max_hold_seconds + "s";
+
+      // API Status Badges
+      const statusLabel = document.getElementById("label-api-status");
+      const badgeConn = document.getElementById("badge-conn-state");
+      const badgeBal = document.getElementById("badge-conn-balance");
+      const badgeVer = document.getElementById("badge-conn-verified");
+
+      if (u.has_api_keys) {
+        statusLabel.textContent = "Binance Connected ✔";
+        statusLabel.style.color = "#ffffff";
+        badgeConn.textContent = "CONNECTED ✔";
+        badgeConn.style.color = "#4ade80";
+        badgeBal.textContent = "$" + u.usdt_balance.toFixed(2) + " USDT";
+        badgeVer.textContent = "YES";
+      } else {
+        statusLabel.textContent = "No API Key ✖";
+        statusLabel.style.color = "#9ba1ad";
+        badgeConn.textContent = "DISCONNECTED";
+        badgeConn.style.color = "#9ba1ad";
+        badgeBal.textContent = "--";
+        badgeVer.textContent = "NO";
+      }
+
+      // Sliders & Values
+      document.getElementById("slider-tp").value = u.tp_percent;
+      document.getElementById("badge-tp").textContent = "+" + u.tp_percent + "%";
+
+      document.getElementById("slider-sl").value = u.sl_percent;
+      document.getElementById("badge-sl").textContent = "-" + u.sl_percent + "%";
+
+      document.getElementById("slider-timeout").value = u.max_hold_seconds;
+      document.getElementById("badge-timeout").textContent = u.max_hold_seconds + "s";
+
+      // Market Segmented
+      document.querySelectorAll("#market-seg .seg-option").forEach(b => {
+        if (b.dataset.market === u.trade_mode) b.classList.add("active");
+        else b.classList.remove("active");
+      });
+
+      const levGroup = document.getElementById("group-leverage");
+      if (u.trade_mode === "futures") {
+        levGroup.style.display = "block";
+        document.querySelectorAll("#leverage-seg .seg-option").forEach(b => {
+          if (parseInt(b.dataset.lev) === u.futures_leverage) b.classList.add("active");
+          else b.classList.remove("active");
+        });
+      } else {
+        levGroup.style.display = "none";
+      }
+
+      // Chips
+      document.querySelectorAll("#chips-amount .chip-item").forEach(c => {
+        if (parseFloat(c.dataset.val) === u.order_amount_usdt) c.classList.add("active");
+        else c.classList.remove("active");
+      });
+    }
+
+    // Power Toggle Event
+    document.getElementById("power-toggle").addEventListener("change", async (e) => {
+      haptic("impact");
+      const is_active = e.target.checked ? 1 : 0;
+
+      if (is_active && !currentUser.has_api_keys) {
+        showToast("Connect Binance API Key first!");
+        e.target.checked = false;
+        return;
+      }
+
+      await api("/api/user/settings", {
+        method: "POST",
+        body: JSON.stringify({ is_active })
+      });
+      currentUser.is_active = is_active;
+      renderDashboard();
+      showToast(is_active ? "Sniper Engine ARMED ✔" : "Sniper Engine PAUSED ⚪");
+    });
+
+    // Quick Market Switch
+    document.getElementById("btn-switch-market").addEventListener("click", async () => {
+      haptic("impact");
+      const newMode = currentUser.trade_mode === "spot" ? "futures" : "spot";
+      await api("/api/user/settings", {
+        method: "POST",
+        body: JSON.stringify({ trade_mode: newMode })
+      });
+      currentUser.trade_mode = newMode;
+      renderDashboard();
+      showToast("Market switched to " + newMode.toUpperCase());
+    });
+
+    // Market Segmented Click
+    document.querySelectorAll("#market-seg .seg-option").forEach(btn => {
+      btn.addEventListener("click", () => {
+        haptic("selection");
+        document.querySelectorAll("#market-seg .seg-option").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentUser.trade_mode = btn.dataset.market;
+        document.getElementById("group-leverage").style.display = (currentUser.trade_mode === "futures") ? "block" : "none";
+      });
+    });
+
+    // Leverage Segmented Click
+    document.querySelectorAll("#leverage-seg .seg-option").forEach(btn => {
+      btn.addEventListener("click", () => {
+        haptic("selection");
+        document.querySelectorAll("#leverage-seg .seg-option").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentUser.futures_leverage = parseInt(btn.dataset.lev);
+      });
+    });
+
+    // Amount Chips Click
+    document.querySelectorAll("#chips-amount .chip-item").forEach(chip => {
+      chip.addEventListener("click", () => {
+        haptic("selection");
+        document.querySelectorAll("#chips-amount .chip-item").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        document.getElementById("input-custom-size").value = "";
+        currentUser.order_amount_usdt = parseFloat(chip.dataset.val);
+      });
+    });
+
+    document.getElementById("input-custom-size").addEventListener("input", (e) => {
+      const val = parseFloat(e.target.value);
+      if (val && val >= 10) {
+        document.querySelectorAll("#chips-amount .chip-item").forEach(c => c.classList.remove("active"));
+        currentUser.order_amount_usdt = val;
+      }
+    });
+
+    // Sliders Live Badges
+    document.getElementById("slider-tp").addEventListener("input", (e) => {
+      document.getElementById("badge-tp").textContent = "+" + e.target.value + "%";
+    });
+    document.getElementById("slider-sl").addEventListener("input", (e) => {
+      document.getElementById("badge-sl").textContent = "-" + e.target.value + "%";
+    });
+    document.getElementById("slider-timeout").addEventListener("input", (e) => {
+      document.getElementById("badge-timeout").textContent = e.target.value + "s";
+    });
+
+    // Save Strategy
+    document.getElementById("btn-save-settings").addEventListener("click", async () => {
+      haptic("impact");
+      const payload = {
+        trade_mode: currentUser.trade_mode,
+        futures_leverage: currentUser.futures_leverage,
+        order_amount_usdt: currentUser.order_amount_usdt,
+        tp_percent: parseFloat(document.getElementById("slider-tp").value),
+        sl_percent: parseFloat(document.getElementById("slider-sl").value),
+        max_hold_seconds: parseInt(document.getElementById("slider-timeout").value)
+      };
+
+      const res = await api("/api/user/settings", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+
+      if (res.success) {
+        showToast("Strategy parameters saved ✔");
+        loadUserState();
+      } else {
+        showToast("Error saving strategy");
+      }
+    });
+
+    // Validate & Connect API
+    document.getElementById("btn-validate-api").addEventListener("click", async () => {
+      const key = document.getElementById("input-api-key").value.trim();
+      const secret = document.getElementById("input-api-secret").value.trim();
+
+      if (!key || !secret) {
+        showToast("Enter both API Key & Secret");
+        return;
+      }
+
+      haptic("impact");
+      const btn = document.getElementById("btn-validate-api");
+      btn.textContent = "VERIFYING WITH BINANCE...";
+      btn.disabled = true;
+
+      try {
+        const res = await api("/api/user/api-keys", {
+          method: "POST",
+          body: JSON.stringify({ api_key: key, api_secret: secret })
+        });
+
+        if (res.success) {
+          showToast("Binance API Verified & Connected ✔");
+          document.getElementById("input-api-key").value = "";
+          document.getElementById("input-api-secret").value = "";
+          loadUserState();
+        } else {
+          showToast(res.error || "Authentication failed");
+        }
+      } catch (e) {
+        showToast("Connection error");
+      } finally {
+        btn.textContent = "VALIDATE & CONNECT API";
+        btn.disabled = false;
+      }
+    });
+
+    // Active Positions Poller
+    async function loadPositions() {
+      try {
+        const res = await api("/api/trades");
+        if (!res.success) return;
+
+        const openTrades = res.trades.filter(t => t.status === "OPEN");
+        const container = document.getElementById("positions-container");
+        const countTag = document.getElementById("active-positions-count");
+        countTag.textContent = openTrades.length + " OPEN";
+
+        if (openTrades.length === 0) {
+          container.innerHTML = `
+            <div class="empty-box">
+              <div class="icon">⬡</div>
+              <h4>NO OPEN POSITIONS</h4>
+              <p>Scanning Tree News & Upbit notices. When a coin is listed, it will execute and appear here.</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = openTrades.map(t => `
+          <div class="position-item">
+            <div class="pos-head">
+              <span class="pos-ticker">${t.symbol} <small style="color:#9ba1ad">(${t.trade_mode.toUpperCase()})</small></span>
+              <span class="pos-badge ${t.pnl_percent >= 0 ? 'gain' : 'drop'}">
+                ${t.pnl_percent >= 0 ? '+' : ''}${t.pnl_percent.toFixed(2)}%
+              </span>
+            </div>
+            <div class="pos-stats-grid">
+              <div>ENTRY: $${t.buy_price.toFixed(4)}</div>
+              <div>MARK: $${(t.current_price || t.buy_price).toFixed(4)}</div>
+              <div>SIZE: $${t.usdt_spent.toFixed(2)} USDT</div>
+              <div>SIDE: LONG</div>
+            </div>
+            <button class="btn-panic-sell" onclick="panicSell(${t.id})">
+              🚨 SELL AT MARKET (100%)
+            </button>
+          </div>
+        `).join("");
+      } catch (e) {}
+    }
+
+    window.panicSell = async function(tradeId) {
+      haptic("impact");
+      const res = await api("/api/trades/panic-sell", {
+        method: "POST",
+        body: JSON.stringify({ trade_id: tradeId })
+      });
+
+      if (res.success) {
+        showToast("Position closed at market ✔");
+        loadPositions();
+      } else {
+        showToast(res.error || "Failed to close position");
+      }
+    };
+
+    // Upbit Feed
+    async function loadListingsFeed() {
+      try {
+        const res = await api("/api/listings");
+        if (!res.success || res.listings.length === 0) return;
+
+        const latest = res.listings[0];
+        document.getElementById("ann-time").textContent = latest.detected_at || "JUST NOW";
+        document.getElementById("ann-title").textContent = `[${latest.parsed_coin}] ${latest.raw_title}`;
+
+        const list = document.getElementById("listings-stream-list");
+        list.innerHTML = res.listings.map(l => `
+          <div class="log-item">
+            <div>
+              <span class="log-symbol">${l.parsed_coin}</span>
+              <div class="log-sub">${l.raw_title}</div>
+            </div>
+            <div class="log-sub">${l.detected_at}</div>
+          </div>
+        `).join("");
+      } catch (e) {}
+    }
+
+    async function loadTradesLedger() {
+      try {
+        const res = await api("/api/trades");
+        const list = document.getElementById("trades-ledger-list");
+        if (!res.success || res.trades.length === 0) {
+          list.innerHTML = `<div class="empty-box">No closed trades recorded yet.</div>`;
+          return;
+        }
+
+        list.innerHTML = res.trades.map(t => `
+          <div class="log-item">
+            <div>
+              <span class="log-symbol">${t.symbol} (${t.trade_mode.toUpperCase()})</span>
+              <div class="log-sub">Size: $${t.usdt_spent} | Exit: ${t.exit_reason || t.status}</div>
+            </div>
+            <div style="font-family: var(--mono); font-weight:700; color:${t.pnl_percent >= 0 ? 'var(--green)' : 'var(--red)'}">
+              ${t.pnl_percent >= 0 ? '+' : ''}${t.pnl_percent.toFixed(2)}% ($${t.pnl_usdt.toFixed(2)})
+            </div>
+          </div>
+        `).join("");
+      } catch (e) {}
+    }
+
+    // Boot
+    loadUserState();
+    loadPositions();
+    loadListingsFeed();
+    setInterval(loadPositions, 2000);
+    setInterval(loadListingsFeed, 5000);
+  </script>
 </body>
 </html>
