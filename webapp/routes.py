@@ -7,7 +7,10 @@ from database.db import (
     update_user_fields,
     get_user_trades,
     get_recent_listings,
-    get_user_profit_stats
+    get_user_profit_stats,
+    get_active_groups,
+    get_all_users,
+    get_active_traders
 )
 from database.encryption import encrypt_secret, decrypt_secret
 from services.binance_service import binance_service
@@ -46,14 +49,24 @@ async def api_get_user(request: web.Request):
         )
 
     has_api = bool(user.get("binance_api_key"))
-    balances = {"usdt": 0.0, "usdc": 0.0, "total": 0.0}
+    balances = {
+        "usdt": 0.0,
+        "usdc": 0.0,
+        "spot_usdt": 0.0,
+        "spot_usdc": 0.0,
+        "futures_usdt": 0.0,
+        "futures_usdc": 0.0,
+        "total": 0.0,
+        "error": None,
+        "error_code": None
+    }
     if has_api:
         try:
             k = decrypt_secret(user.get("binance_api_key"))
             s = decrypt_secret(user.get("binance_api_secret"))
             balances = await binance_service.get_balances(k, s, is_futures=(user.get("trade_mode") == "futures"))
-        except Exception:
-            pass
+        except Exception as e:
+            balances["error"] = str(e)
 
     stats = await get_user_profit_stats(user_id)
 
@@ -71,8 +84,14 @@ async def api_get_user(request: web.Request):
             "sl_percent": user.get("sl_percent", 5.0),
             "max_hold_seconds": user.get("max_hold_seconds", 60),
             "has_api_keys": has_api,
+            "api_error": balances.get("error"),
+            "api_error_code": balances.get("error_code"),
             "usdt_balance": balances.get("usdt", 0.0),
             "usdc_balance": balances.get("usdc", 0.0),
+            "spot_usdt": balances.get("spot_usdt", 0.0),
+            "spot_usdc": balances.get("spot_usdc", 0.0),
+            "futures_usdt": balances.get("futures_usdt", 0.0),
+            "futures_usdc": balances.get("futures_usdc", 0.0),
             "total_balance": balances.get("total", 0.0),
             "stats": stats
         }
@@ -183,4 +202,33 @@ async def api_get_server_ip(request: web.Request):
     except Exception as e:
         logger.error(f"Failed to fetch outbound IP: {e}")
     return web.json_response({"success": False, "error": "Could not determine IP"})
+
+async def api_get_system_status(request: web.Request):
+    """GET /api/status - Live health, registered groups, and sniper engine metrics."""
+    groups = await get_active_groups()
+    users = await get_all_users()
+    active_traders = await get_active_traders()
+    listings = await get_recent_listings(limit=5)
+
+    outbound_ip = "Unknown"
+    try:
+        session = await binance_service.get_session()
+        async with session.get("https://api.ipify.org?format=json", timeout=3) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                outbound_ip = data.get("ip", "Unknown")
+    except Exception:
+        pass
+
+    return web.json_response({
+        "success": True,
+        "engine": "The Capo Sniper v2.0",
+        "outbound_ip": outbound_ip,
+        "active_groups_count": len(groups),
+        "groups": [{"chat_id": g["chat_id"], "title": g["title"], "chat_type": g["chat_type"]} for g in groups],
+        "registered_users": len(users),
+        "active_snipers": len(active_traders),
+        "recent_listings_count": len(listings)
+    })
+
 

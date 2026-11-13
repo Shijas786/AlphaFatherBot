@@ -21,13 +21,21 @@ async def format_dashboard_text(user: dict) -> str:
             api_key = decrypt_secret(user.get("binance_api_key", ""))
             api_secret = decrypt_secret(user.get("binance_api_secret", ""))
             b = await binance_service.get_balances(api_key, api_secret, is_futures=(trade_mode == "FUTURES"))
-            if b["usdc"] > 0 and b["usdt"] > 0:
-                balance_text = f"${b['total']:,.2f} ({b['usdt']:,.0f} USDT + {b['usdc']:,.0f} USDC)"
-            elif b["usdc"] > 0:
-                balance_text = f"${b['usdc']:,.2f} USDC"
+            if b.get("error"):
+                balance_text = f"⚠️ API Error: {b['error'][:35]}"
+            elif b["total"] > 0:
+                parts = []
+                spot_sum = b.get("spot_usdt", 0.0) + b.get("spot_usdc", 0.0)
+                fut_sum = b.get("futures_usdt", 0.0) + b.get("futures_usdc", 0.0)
+                if spot_sum > 0:
+                    parts.append(f"Spot: ${spot_sum:,.2f}")
+                if fut_sum > 0:
+                    parts.append(f"Futures: ${fut_sum:,.2f}")
+                detail = f" ({' / '.join(parts)})" if parts else ""
+                balance_text = f"${b['total']:,.2f}{detail}"
             else:
-                balance_text = f"${b['usdt']:,.2f} USDT"
-        except Exception:
+                balance_text = "$0.00 (Wallet empty or funds in Funding)"
+        except Exception as e:
             balance_text = "API Key Error"
 
     text = (

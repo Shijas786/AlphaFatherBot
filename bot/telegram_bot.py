@@ -78,20 +78,22 @@ async def track_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TYP
             kb = InlineKeyboardMarkup([
                 [InlineKeyboardButton("⚡ Open Capo Mini App", url=f"https://t.me/{config.TELEGRAM_BOT_USERNAME}/app")]
             ])
+            import html
+            safe_title = html.escape(chat.title or "Telegram Group")
             welcome_text = (
-                "⚡ *THE CAPO SNIPER // LISTING RADAR ACTIVATED*\n"
+                "⚡ <b>THE CAPO SNIPER // LISTING RADAR ACTIVATED</b>\n"
                 "━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"🏛 *Group:* `{chat.title}`\n"
-                "✅ *Status:* Upbit Listing Announcements are now **LIVE**.\n\n"
+                f"🏛 <b>Group:</b> <code>{safe_title}</code>\n"
+                "✅ <b>Status:</b> Upbit Listing Announcements are now <b>LIVE</b>.\n\n"
                 "📡 Every new listing announced by Upbit (KRW / BTC / USDT) will be pushed into this group within milliseconds via our proprietary ultra-low latency WebSocket stream.\n\n"
-                "👉 *Want to snipe listings automatically with real money on Binance?*\n"
+                "👉 <b>Want to snipe listings automatically with real money on Binance?</b>\n"
                 "Tap below to open your personal Capo Terminal:"
             )
             await context.bot.send_message(
                 chat_id=chat.id,
                 text=welcome_text,
                 reply_markup=kb,
-                parse_mode="Markdown"
+                parse_mode="HTML"
             )
         except Exception as e:
             logger.warning(f"Could not send welcome message to group {chat.id}: {e}")
@@ -100,6 +102,70 @@ async def track_my_chat_member(update: Update, context: ContextTypes.DEFAULT_TYP
     elif new_status in ["left", "kicked"]:
         await deactivate_group(chat.id)
         logger.info(f"Bot left/kicked from group {chat.id} ({chat.title}). Alerts deactivated.")
+
+async def group_auto_register_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Passive group observer: auto-register any group where bot sees any message or interaction."""
+    chat = update.effective_chat
+    if chat and chat.type in ["group", "supergroup"]:
+        user = update.effective_user
+        await register_group(
+            chat_id=chat.id,
+            title=chat.title or "Telegram Group",
+            chat_type=chat.type,
+            added_by=user.id if user else None
+        )
+
+async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /alerts command in groups or private chats."""
+    chat = update.effective_chat
+    user = update.effective_user
+    if chat.type in ["group", "supergroup"]:
+        await register_group(
+            chat_id=chat.id,
+            title=chat.title or "Telegram Group",
+            chat_type=chat.type,
+            added_by=user.id if user else None
+        )
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("⚡ Open Capo Mini App", url=f"https://t.me/{config.TELEGRAM_BOT_USERNAME}/app")]
+        ])
+        import html
+        safe_title = html.escape(chat.title or "Telegram Group")
+        text = (
+            "⚡ <b>THE CAPO SNIPER // RADAR STATUS</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🏛 <b>Group:</b> <code>{safe_title}</code>\n"
+            "🟢 <b>Status:</b> Upbit Listing Alerts are <b>ACTIVE</b>\n\n"
+            "📡 Every new Upbit listing notice (KRW / BTC / USDT) will be broadcasted here instantly within milliseconds via our ultra-low latency WebSocket feed.\n\n"
+            "👉 <b>Want to trade automatically on Binance?</b> Tap below:"
+        )
+        await update.message.reply_text(text, reply_markup=kb, parse_mode="HTML")
+    else:
+        await start_command(update, context)
+
+async def test_alert_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Send a test listing alert to verify group delivery: /test_alert [COIN]"""
+    chat = update.effective_chat
+    user = update.effective_user
+    coin = context.args[0].upper() if (context.args and len(context.args) > 0) else "BTC"
+
+    if chat.type in ["group", "supergroup"]:
+        await register_group(
+            chat_id=chat.id,
+            title=chat.title or "Telegram Group",
+            chat_type=chat.type,
+            added_by=user.id if user else None
+        )
+
+    notifier = TelegramNotifier(context.bot)
+    await update.message.reply_text(f"🧪 <i>Firing test Upbit listing alert for <b>${coin}</b>...</i>", parse_mode="HTML")
+    await notifier.broadcast_listing_to_groups(
+        coin=coin,
+        binance_symbol=f"{coin}USDT",
+        raw_title=f"[거래] KRW, BTC, USDT 마켓 디지털 자산 추가 안내 ({coin})",
+        source="CapoTestFeed",
+        latency_ms=15
+    )
 
 def build_telegram_app() -> Application:
     """Build and configure the Telegram application."""
@@ -110,6 +176,9 @@ def build_telegram_app() -> Application:
 
     # Chat Member handler for Groups (triggers when bot is added/removed)
     app.add_handler(ChatMemberHandler(track_my_chat_member, ChatMemberHandler.MY_CHAT_MEMBER))
+
+    # Passive group observer: auto-register any group when a message/activity occurs
+    app.add_handler(MessageHandler(filters.ChatType.GROUPS, group_auto_register_message), group=99)
 
     # Conversation handler for API keys setup
     api_conv_handler = ConversationHandler(
@@ -132,6 +201,8 @@ def build_telegram_app() -> Application:
 
     # Command handlers
     app.add_handler(CommandHandler("start", start_command))
+    app.add_handler(CommandHandler("alerts", alerts_command))
+    app.add_handler(CommandHandler("test_alert", test_alert_command))
     app.add_handler(CommandHandler("simulate_listing", admin_simulate_listing_command))
     app.add_handler(CommandHandler("broadcast", admin_broadcast_command))
     app.add_handler(CommandHandler("stats", admin_stats_command))
@@ -254,11 +325,16 @@ class TelegramNotifier:
 
         logger.info(f"📢 Broadcasting Upbit listing for '{coin}' to {len(groups)} group(s)...")
 
+        import html
+        safe_coin = html.escape(str(coin))
+        safe_title = html.escape(str(raw_title))
+
         if binance_symbol:
-            binance_line = f"🟢 *Binance:* Tradable as `#{binance_symbol}`"
-            btn_text = f"⚡ Snipe #{binance_symbol} on Capo"
+            safe_symbol = html.escape(str(binance_symbol))
+            binance_line = f"🟢 <b>Binance:</b> Tradable as <code>#{safe_symbol}</code>"
+            btn_text = f"⚡ Snipe #{safe_symbol} on Capo"
         else:
-            binance_line = "⚪ *Binance:* Asset not currently listed on Binance USDT"
+            binance_line = "⚪ <b>Binance:</b> Asset not currently listed on Binance USDT"
             btn_text = "⚡ Open Capo Terminal"
 
         app_url = f"https://t.me/{config.TELEGRAM_BOT_USERNAME}/app"
@@ -267,15 +343,15 @@ class TelegramNotifier:
         ])
 
         feed_label = "Capo Core WebSocket" if "Tree" in str(source) else "Capo Direct Feed"
-        text = (
-            "🚨 *NEW UPBIT LISTING ANNOUNCEMENT!*\n"
+        html_text = (
+            "🚨 <b>NEW UPBIT LISTING ANNOUNCEMENT!</b>\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🪙 *Token:* `${coin}`\n"
+            f"🪙 <b>Token:</b> <code>${safe_coin}</code>\n"
             f"{binance_line}\n"
-            f"⏱ *Detection Latency:* `{latency_ms}ms` ({feed_label})\n"
-            f"📰 *Headline:*\n_{raw_title}_\n"
+            f"⏱ <b>Detection Latency:</b> <code>{latency_ms}ms</code> ({feed_label})\n"
+            f"📰 <b>Headline:</b>\n<i>{safe_title}</i>\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "⚡ *The Capo Sniper Engine:* Sub-second listing execution on Binance Spot & Futures."
+            "⚡ <b>The Capo Sniper Engine:</b> Sub-second listing execution on Binance Spot & Futures."
         )
 
         for g in groups:
@@ -283,13 +359,31 @@ class TelegramNotifier:
             try:
                 await self.bot.send_message(
                     chat_id=chat_id,
-                    text=text,
+                    text=html_text,
                     reply_markup=kb,
-                    parse_mode="Markdown"
+                    parse_mode="HTML"
                 )
             except Exception as e:
-                err_str = str(e).lower()
-                logger.warning(f"Failed to send listing alert to group {chat_id}: {e}")
-                if "forbidden" in err_str or "kicked" in err_str or "chat not found" in err_str:
-                    await deactivate_group(chat_id)
+                logger.warning(f"Failed to send HTML listing alert to group {chat_id}: {e}. Retrying plain text...")
+                try:
+                    plain_text = (
+                        f"🚨 NEW UPBIT LISTING ANNOUNCEMENT!\n"
+                        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                        f"Token: ${coin}\n"
+                        f"{'Binance: #' + binance_symbol if binance_symbol else 'Binance: Asset not on Binance USDT'}\n"
+                        f"Detection Latency: {latency_ms}ms ({feed_label})\n"
+                        f"Headline: {raw_title}\n"
+                        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                        f"The Capo Sniper Engine: https://t.me/{config.TELEGRAM_BOT_USERNAME}/app"
+                    )
+                    await self.bot.send_message(
+                        chat_id=chat_id,
+                        text=plain_text,
+                        reply_markup=kb
+                    )
+                except Exception as e2:
+                    err_str = str(e2).lower()
+                    logger.error(f"Failed plain text fallback for group {chat_id}: {e2}")
+                    if "forbidden" in err_str or "kicked" in err_str or "chat not found" in err_str:
+                        await deactivate_group(chat_id)
 

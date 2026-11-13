@@ -99,7 +99,8 @@ function renderTerminal() {
   }
 
   // Metric Boxes
-  document.getElementById("box-balance").textContent = `$${u.usdt_balance.toFixed(2)}`;
+  const totalBal = u.total_balance !== undefined ? u.total_balance : u.usdt_balance;
+  document.getElementById("box-balance").textContent = `$${totalBal.toFixed(2)}`;
   document.getElementById("box-size").textContent = `$${u.order_amount_usdt.toFixed(2)}`;
   document.getElementById("box-market").textContent = u.trade_mode.toUpperCase();
   document.getElementById("box-timeout").textContent = `${u.max_hold_seconds}s`;
@@ -111,20 +112,62 @@ function renderTerminal() {
   const apiBal = document.getElementById("api-summary-balance");
 
   if (u.has_api_keys) {
-    apiInd.textContent = "API Connected ✔";
-    apiInd.style.color = "#ffffff";
-    apiBadge.textContent = "CONNECTED ✔";
-    apiBadge.style.color = "#ffffff";
-    apiVerified.textContent = "YES";
-    apiVerified.style.color = "#ffffff";
-    apiBal.textContent = `$${u.usdt_balance.toFixed(2)} USDT`;
+    if (u.api_error) {
+      if (apiInd) {
+        apiInd.textContent = "API Error ⚠️";
+        apiInd.style.color = "#f87171";
+      }
+      if (apiBadge) {
+        apiBadge.textContent = "ERROR ⚠️";
+        apiBadge.style.color = "#f87171";
+      }
+      if (apiVerified) {
+        apiVerified.textContent = "FAILED";
+        apiVerified.style.color = "#f87171";
+      }
+      if (apiBal) {
+        apiBal.textContent = u.api_error.slice(0, 30);
+        apiBal.style.color = "#f87171";
+      }
+    } else {
+      if (apiInd) {
+        apiInd.textContent = "API Connected ✔";
+        apiInd.style.color = "#ffffff";
+      }
+      if (apiBadge) {
+        apiBadge.textContent = "CONNECTED ✔";
+        apiBadge.style.color = "#ffffff";
+      }
+      if (apiVerified) {
+        apiVerified.textContent = "YES";
+        apiVerified.style.color = "#ffffff";
+      }
+      if (apiBal) {
+        let detail = "";
+        const spotSum = (u.spot_usdt || 0) + (u.spot_usdc || 0);
+        const futSum = (u.futures_usdt || 0) + (u.futures_usdc || 0);
+        if (spotSum > 0 && futSum > 0) {
+          detail = ` (Spot: $${spotSum.toFixed(2)} | Fut: $${futSum.toFixed(2)})`;
+        }
+        apiBal.textContent = `$${totalBal.toFixed(2)}${detail}`;
+        apiBal.style.color = "#ffffff";
+      }
+    }
   } else {
-    apiInd.textContent = "No API Key ✖";
-    apiInd.style.color = "#8e929b";
-    apiBadge.textContent = "DISCONNECTED";
-    apiBadge.style.color = "#8e929b";
-    apiVerified.textContent = "NO";
-    apiBal.textContent = "--";
+    if (apiInd) {
+      apiInd.textContent = "No API Key ✖";
+      apiInd.style.color = "#8e929b";
+    }
+    if (apiBadge) {
+      apiBadge.textContent = "DISCONNECTED";
+      apiBadge.style.color = "#8e929b";
+    }
+    if (apiVerified) {
+      apiVerified.textContent = "NO";
+    }
+    if (apiBal) {
+      apiBal.textContent = "--";
+    }
   }
 
   // Ledger Stats

@@ -13,6 +13,7 @@ class TestUpbitSniper(unittest.TestCase):
             ("[거래] KRW, BTC 마켓 디지털 자산 추가 (TIA)", ["TIA"]),
             ("[거래] KRW 마켓 디지털 자산 추가 안내 (DRIFT, ZERO)", ["DRIFT", "ZERO"]),
             ("[Trade] New Digital Asset (RENDER) Added to KRW Market", ["RENDER"]),
+            ("생텀(SANC) 신규 거래지원 안내 (KRW, BTC, USDT 마켓)", ["SANC"]),
             ("[안내] 입출금 일시 중단 안내", None),  # Not a listing
             ("[유의] 거래지원 종료 안내 (XYZ)", None),  # Delisting, should be ignored
         ]

@@ -51,6 +51,15 @@ class TestWebApp(AioHTTPTestCase):
         self.assertTrue(data["success"])
         self.assertIn("listings", data)
 
+    @unittest_run_loop
+    async def test_api_status_endpoint(self):
+        resp = await self.client.get("/api/status")
+        self.assertEqual(resp.status, 200)
+        data = await resp.json()
+        self.assertTrue(data["success"])
+        self.assertIn("active_groups_count", data)
+        self.assertIn("outbound_ip", data)
+
 if __name__ == "__main__":
     unittest.main()
 

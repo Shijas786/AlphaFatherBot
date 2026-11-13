@@ -895,7 +895,7 @@
             <input type="text" class="text-input" id="trusted-server-ip" value="Fetching Server IP..." readonly style="font-weight: 700; color: #4ade80; cursor: pointer;">
             <button type="button" class="btn-action" id="btn-copy-ip" style="width: auto; margin-top: 0; padding: 11px 16px; white-space: nowrap;">COPY IP</button>
           </div>
-          <span class="field-hint">Paste into Binance under <strong>'Restrict access to trusted IPs only'</strong> to unlock Spot & Futures trading.</span>
+          <span class="field-hint">💡 <strong>IP Whitelist Tip:</strong> For zero interruptions on cloud servers, selecting <strong>'Unrestricted'</strong> on Binance API Management is recommended (Withdrawals are permanently disabled by default for 100% security). If restricting by IP, paste the server IP above.</span>
         </div>
 
         <div class="field-group">
@@ -909,6 +909,19 @@
         </div>
 
         <button class="btn-action" id="btn-validate-api">VALIDATE & CONNECT API</button>
+
+        <!-- Diagnostic Error Banner if API error occurs -->
+        <div id="api-error-banner" style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid #ef4444; border-radius: 6px; padding: 12px; margin-top: 14px; font-size: 11px; line-height: 1.5;">
+          <div style="font-weight: 800; color: #f87171; margin-bottom: 4px;">⚠️ BINANCE CONNECTION WARNING:</div>
+          <div id="api-error-text" style="color: #fca5a5; font-family: var(--mono); word-break: break-all; margin-bottom: 8px;"></div>
+          <div style="color: var(--text-gray);">
+            💡 <strong>Troubleshooting Guide:</strong><br>
+            • <strong>If error code is -2015 ("Invalid API-key, IP, or permissions"):</strong><br>
+              Railway cloud containers use dynamic egress IPs. If your IP Whitelist on Binance does not match the server's current IP, Binance blocks access. To resolve instantly: In Binance API Management, select <strong>'Unrestricted (Less Secure)'</strong> (safe because Withdrawals are permanently off), or update your Trusted IP list with the server's current IP shown above.<br>
+            • <strong>If balance shows $0.00:</strong><br>
+              Ensure your USDT or USDC is in your <strong>Spot</strong> or <strong>USD-M Futures</strong> wallet (Binance P2P deposits go to <i>Funding Wallet</i>, which must be transferred to Spot or Futures).
+          </div>
+        </div>
       </section>
 
       <section class="card">
@@ -1067,27 +1080,60 @@
       const badgeConn = document.getElementById("badge-conn-state");
       const badgeBal = document.getElementById("badge-conn-balance");
       const badgeVer = document.getElementById("badge-conn-verified");
+      const errBanner = document.getElementById("api-error-banner");
+      const errText = document.getElementById("api-error-text");
 
       if (u.has_api_keys) {
-        if (u.usdc_balance > 0 && u.usdt_balance > 0) {
-          statusLabel.textContent = `${u.usdt_balance.toFixed(0)} USDT + ${u.usdc_balance.toFixed(0)} USDC`;
-        } else if (u.usdc_balance > 0) {
-          statusLabel.textContent = `${u.usdc_balance.toFixed(2)} USDC Available`;
+        if (u.api_error) {
+          statusLabel.textContent = "API Error: " + u.api_error.slice(0, 26);
+          statusLabel.style.color = "#f87171";
+          badgeConn.textContent = "API ERROR ⚠️";
+          badgeConn.style.color = "#f87171";
+          badgeBal.textContent = u.api_error;
+          badgeBal.style.color = "#f87171";
+          badgeVer.textContent = "FAILED";
+          badgeVer.style.color = "#f87171";
+          if (errBanner) {
+            errBanner.style.display = "block";
+            if (errText) errText.textContent = u.api_error;
+          }
         } else {
-          statusLabel.textContent = `${u.usdt_balance.toFixed(2)} USDT Available`;
+          if (errBanner) errBanner.style.display = "none";
+          if (u.usdc_balance > 0 && u.usdt_balance > 0) {
+            statusLabel.textContent = `${u.usdt_balance.toFixed(0)} USDT + ${u.usdc_balance.toFixed(0)} USDC`;
+          } else if (u.usdc_balance > 0) {
+            statusLabel.textContent = `${u.usdc_balance.toFixed(2)} USDC Available`;
+          } else {
+            statusLabel.textContent = `${u.usdt_balance.toFixed(2)} USDT Available`;
+          }
+          statusLabel.style.color = "#ffffff";
+          badgeConn.textContent = "CONNECTED ✔";
+          badgeConn.style.color = "#4ade80";
+
+          let detail = "";
+          const spotSum = (u.spot_usdt || 0) + (u.spot_usdc || 0);
+          const futSum = (u.futures_usdt || 0) + (u.futures_usdc || 0);
+          if (spotSum > 0 && futSum > 0) {
+            detail = ` (Spot: $${spotSum.toFixed(2)} | Fut: $${futSum.toFixed(2)})`;
+          } else if (futSum > 0) {
+            detail = ` (Futures)`;
+          } else if (spotSum > 0) {
+            detail = ` (Spot)`;
+          }
+          badgeBal.textContent = `$${totalBal.toFixed(2)}${detail}`;
+          badgeBal.style.color = "#ffffff";
+          badgeVer.textContent = "YES";
+          badgeVer.style.color = "#4ade80";
         }
-        statusLabel.style.color = "#ffffff";
-        badgeConn.textContent = "CONNECTED ✔";
-        badgeConn.style.color = "#4ade80";
-        badgeBal.textContent = `$${totalBal.toFixed(2)} (${u.usdt_balance.toFixed(0)} USDT / ${u.usdc_balance.toFixed(0)} USDC)`;
-        badgeVer.textContent = "YES";
       } else {
+        if (errBanner) errBanner.style.display = "none";
         statusLabel.textContent = "No API Key ✖";
         statusLabel.style.color = "#9ba1ad";
         badgeConn.textContent = "DISCONNECTED";
         badgeConn.style.color = "#9ba1ad";
         badgeBal.textContent = "--";
         badgeVer.textContent = "NO";
+        badgeVer.style.color = "#9ba1ad";
       }
 
       // Sliders & Values

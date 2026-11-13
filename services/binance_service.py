@@ -41,7 +41,7 @@ class BinanceService:
     async def test_credentials(self, api_key: str, api_secret: str, check_futures: bool = False) -> Tuple[bool, str]:
         """Test API key validity and permissions."""
         session = await self.get_session()
-        params = {"timestamp": int(time.time() * 1000), "recvWindow": 5000}
+        params = {"timestamp": int(time.time() * 1000), "recvWindow": 60000}
         params["signature"] = self._sign(api_secret, params)
         headers = {"X-MBX-APIKEY": api_key}
 
@@ -54,48 +54,92 @@ class BinanceService:
                 else:
                     data = await resp.json()
                     msg = data.get("msg", "Failed to authenticate with Binance.")
-                    return False, f"Binance error: {msg}"
+                    code = data.get("code", resp.status)
+                    logger.warning(f"Binance credential test failed: code {code}, msg: {msg}")
+                    return False, f"Binance error ({code}): {msg}"
         except Exception as e:
             logger.error(f"Error testing Binance credentials: {e}")
             return False, f"Connection error: {str(e)}"
 
-    async def get_balances(self, api_key: str, api_secret: str, is_futures: bool = False) -> Dict[str, float]:
-        """Get available free USDT, USDC, and combined USD balance."""
+    async def get_balances(self, api_key: str, api_secret: str, is_futures: bool = False) -> Dict[str, Any]:
+        """Get available free USDT, USDC, and combined USD balance across Spot & Futures."""
         session = await self.get_session()
-        params = {"timestamp": int(time.time() * 1000), "recvWindow": 5000}
-        params["signature"] = self._sign(api_secret, params)
         headers = {"X-MBX-APIKEY": api_key}
 
-        result = {"usdt": 0.0, "usdc": 0.0, "total": 0.0}
+        result = {
+            "spot_usdt": 0.0,
+            "spot_usdc": 0.0,
+            "futures_usdt": 0.0,
+            "futures_usdc": 0.0,
+            "usdt": 0.0,
+            "usdc": 0.0,
+            "total": 0.0,
+            "error": None,
+            "error_code": None
+        }
 
+        # 1. Fetch Spot Balances
         try:
-            if is_futures:
-                url = f"{config.BINANCE_FUTURES_BASE_URL}/fapi/v2/balance"
-                async with session.get(url, params=params, headers=headers) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        for item in data:
-                            asset = item.get("asset")
-                            if asset == "USDT":
-                                result["usdt"] = float(item.get("availableBalance", 0.0))
-                            elif asset == "USDC":
-                                result["usdc"] = float(item.get("availableBalance", 0.0))
-            else:
-                url = f"{config.BINANCE_SPOT_BASE_URL}/api/v3/account"
-                async with session.get(url, params=params, headers=headers) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        for item in data.get("balances", []):
-                            asset = item.get("asset")
-                            if asset == "USDT":
-                                result["usdt"] = float(item.get("free", 0.0))
-                            elif asset == "USDC":
-                                result["usdc"] = float(item.get("free", 0.0))
-
-            result["total"] = result["usdt"] + result["usdc"]
+            params_spot = {"timestamp": int(time.time() * 1000), "recvWindow": 60000}
+            params_spot["signature"] = self._sign(api_secret, params_spot)
+            url_spot = f"{config.BINANCE_SPOT_BASE_URL}/api/v3/account"
+            async with session.get(url_spot, params=params_spot, headers=headers) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    for item in data.get("balances", []):
+                        asset = item.get("asset")
+                        if asset == "USDT":
+                            result["spot_usdt"] = float(item.get("free", 0.0))
+                        elif asset == "USDC":
+                            result["spot_usdc"] = float(item.get("free", 0.0))
+                else:
+                    err_data = await resp.json()
+                    result["error"] = err_data.get("msg", f"HTTP {resp.status}")
+                    result["error_code"] = err_data.get("code")
+                    logger.warning(f"Binance Spot account query error (HTTP {resp.status}): {err_data}")
         except Exception as e:
-            logger.error(f"Error fetching balances: {e}")
+            logger.error(f"Error fetching Spot balances: {e}")
+            result["error"] = str(e)
 
+        # 2. Fetch Futures Balances
+        try:
+            params_fut = {"timestamp": int(time.time() * 1000), "recvWindow": 60000}
+            params_fut["signature"] = self._sign(api_secret, params_fut)
+            url_fut = f"{config.BINANCE_FUTURES_BASE_URL}/fapi/v2/balance"
+            async with session.get(url_fut, params=params_fut, headers=headers) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    for item in data:
+                        asset = item.get("asset")
+                        if asset == "USDT":
+                            result["futures_usdt"] = float(item.get("availableBalance", 0.0))
+                        elif asset == "USDC":
+                            result["futures_usdc"] = float(item.get("availableBalance", 0.0))
+                    # If spot errored but futures worked, clear error if futures is active
+                    if is_futures and result["error"] and resp.status == 200:
+                        result["error"] = None
+                        result["error_code"] = None
+                else:
+                    err_data = await resp.json()
+                    if is_futures or not result["error"]:
+                        result["error"] = err_data.get("msg", f"HTTP {resp.status}")
+                        result["error_code"] = err_data.get("code")
+                    logger.warning(f"Binance Futures balance query error (HTTP {resp.status}): {err_data}")
+        except Exception as e:
+            logger.error(f"Error fetching Futures balances: {e}")
+            if is_futures:
+                result["error"] = str(e)
+
+        # Active market balance
+        if is_futures:
+            result["usdt"] = result["futures_usdt"]
+            result["usdc"] = result["futures_usdc"]
+        else:
+            result["usdt"] = result["spot_usdt"]
+            result["usdc"] = result["spot_usdc"]
+
+        # Combined total available across both trading wallets
+        result["total"] = result["spot_usdt"] + result["spot_usdc"] + result["futures_usdt"] + result["futures_usdc"]
         return result
 
     async def get_balance(self, api_key: str, api_secret: str, is_futures: bool = False) -> float:
@@ -137,7 +181,7 @@ class BinanceService:
             "side": "BUY",
             "type": "MARKET",
             "quoteOrderQty": f"{usdt_amount:.2f}",
-            "recvWindow": 5000,
+            "recvWindow": 60000,
             "timestamp": int(time.time() * 1000)
         }
         params["signature"] = self._sign(api_secret, params)
@@ -193,7 +237,7 @@ class BinanceService:
             "side": "SELL",
             "type": "MARKET",
             "quantity": fmt_qty,
-            "recvWindow": 5000,
+            "recvWindow": 60000,
             "timestamp": int(time.time() * 1000)
         }
         params["signature"] = self._sign(api_secret, params)
@@ -235,7 +279,7 @@ class BinanceService:
         lev_params = {
             "symbol": symbol,
             "leverage": leverage,
-            "recvWindow": 5000,
+            "recvWindow": 60000,
             "timestamp": int(time.time() * 1000)
         }
         lev_params["signature"] = self._sign(api_secret, lev_params)
@@ -261,7 +305,7 @@ class BinanceService:
             "side": "BUY",
             "type": "MARKET",
             "quantity": fmt_qty,
-            "recvWindow": 5000,
+            "recvWindow": 60000,
             "timestamp": int(time.time() * 1000)
         }
         params["signature"] = self._sign(api_secret, params)
@@ -311,7 +355,7 @@ class BinanceService:
             "type": "MARKET",
             "quantity": fmt_qty,
             "reduceOnly": "true",
-            "recvWindow": 5000,
+            "recvWindow": 60000,
             "timestamp": int(time.time() * 1000)
         }
         params["signature"] = self._sign(api_secret, params)
