@@ -14,6 +14,10 @@ class TestUpbitSniper(unittest.TestCase):
             ("[거래] KRW 마켓 디지털 자산 추가 안내 (DRIFT, ZERO)", ["DRIFT", "ZERO"]),
             ("[Trade] New Digital Asset (RENDER) Added to KRW Market", ["RENDER"]),
             ("생텀(SANC) 신규 거래지원 안내 (KRW, BTC, USDT 마켓)", ["SANC"]),
+            ("카바(KAVA) 입출금 일시 중단 안내", None),  # Deposit suspension, NOT a listing!
+            ("오스모시스(OSMO) 입출금 일시 중단 안내", None),  # Deposit suspension, NOT a listing!
+            ("폴리곤에코시스템토큰(POL) 스테이킹 회원 대상 카타나(KAT) 에어드랍 지급 안내", None),  # Airdrop, NOT a listing!
+            ("만트라(MANTRA) 거래지원 종료 안내 (12/14 15:00)", None),  # Delisting, NOT a listing!
             ("[안내] 입출금 일시 중단 안내", None),  # Not a listing
             ("[유의] 거래지원 종료 안내 (XYZ)", None),  # Delisting, should be ignored
         ]

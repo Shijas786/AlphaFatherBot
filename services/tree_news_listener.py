@@ -13,29 +13,69 @@ EXCLUDED_WORDS = {
     "DEPOSIT", "WITHDRAWAL", "MAINTENANCE", "UPDATE", "TRADE", "API", "STAKING"
 }
 
+def is_upbit_listing_title(title: str) -> bool:
+    """
+    Strictly verify if an Upbit notice title is an actual new listing announcement.
+    Rejects deposit/withdrawal suspensions, network upgrades, airdrops, delistings, and routine maintenance.
+    """
+    if not title:
+        return False
+
+    title_lower = title.lower()
+
+    # 1. Non-listing / Maintenance / Suspension negative filters (STRICT DROP)
+    negative_keywords = [
+        "입출금",          # Deposit/Withdrawal
+        "중단",            # Suspension / halt
+        "재개",            # Resume
+        "점검",            # Maintenance
+        "업그레이드",       # Network upgrade
+        "하드포크",         # Hard fork
+        "에어드랍",         # Airdrop
+        "지급",            # Distribution / payout
+        "스냅샷",          # Snapshot
+        "유의",            # Warning / Caution
+        "종료",            # Delist / Termination
+        "제거",            # Removal
+        "변경",            # Change / Modification
+        "안내사항",        # General notice
+        "이벤트",          # Event
+        "수수료",          # Fee
+        "delist", "warning", "caution", "suspension", "maintenance", "upgrade", "halt", "resume", "airdrop"
+    ]
+
+    if any(k in title_lower for k in negative_keywords):
+        return False
+
+    # 2. Positive listing keywords (MUST CONTAIN AT LEAST ONE)
+    positive_listing_keywords = [
+        "신규 거래지원",    # New trading support
+        "거래지원 안내",    # Trading support notice (e.g. 신규 거래지원 안내)
+        "디지털 자산 추가",  # Digital asset addition
+        "마켓 추가",        # Market addition
+        "신규 상장",        # New listing
+        "신규 마켓",        # New market
+        "[거래]",          # [Trade] section
+        "거래 지원",        # Trading support (with space)
+        "listing", "added to", "new digital asset"
+    ]
+
+    return any(k in title_lower for k in positive_listing_keywords)
+
 def parse_upbit_title(title: str) -> Optional[List[str]]:
     """
     Extract token tickers from Upbit listing announcement title.
+    Only extracts if the title is a verified new listing announcement!
     Examples:
       - "[거래] KRW, BTC 마켓 디지털 자산 추가 (TIA)" -> ["TIA"]
       - "[거래] KRW 마켓 디지털 자산 추가 안내 (DRIFT, ZERO)" -> ["DRIFT", "ZERO"]
+      - "생텀(SANC) 신규 거래지원 안내 (KRW, BTC, USDT 마켓)" -> ["SANC"]
       - "[Trade] New Digital Asset (RENDER) Added to KRW Market" -> ["RENDER"]
     """
-    if not title:
+    if not title or not is_upbit_listing_title(title):
         return None
 
-    # Check listing keywords (Korean & English)
-    listing_keywords = ["추가", "신규", "상장", "마켓", "listing", "added", "asset", "trade"]
-    title_lower = title.lower()
-    if not any(k in title_lower for k in listing_keywords):
-        return None
-
-    # Exclude delisting/warning announcements
-    delisting_keywords = ["유의", "종료", "제거", "delist", "warning", "caution", "suspension"]
-    if any(k in title_lower for k in delisting_keywords):
-        return None
-
-    # Match tokens inside parentheses: e.g. (TIA), (DRIFT, ZERO)
+    # Match tokens inside parentheses: e.g. (TIA), (DRIFT, ZERO), 생텀(SANC)
     paren_matches = re.findall(r"\(([^)]+)\)", title)
     found_symbols = []
 
@@ -130,25 +170,27 @@ class TreeNewsListener:
         if not is_upbit:
             return
 
-        logger.info(f"Tree News Upbit alert received: '{title}' (Source: {source})")
+        # CRITICAL FILTER: Must be a verified new listing announcement!
+        # Rejects deposit/withdrawal suspensions (e.g. KAVA, OSMO), network upgrades, delistings, etc.
+        if not is_upbit_listing_title(title):
+            logger.info(f"Skipping non-listing Upbit notice: '{title}'")
+            return
 
-        # 1. Check suggestions provided directly by Tree News
-        symbols = []
-        if "suggestions" in data and isinstance(data["suggestions"], list):
+        logger.info(f"VERIFIED Upbit listing announcement received: '{title}' (Source: {source})")
+
+        # 1. Parse title directly using our strict listing regex
+        symbols = parse_upbit_title(title)
+
+        # 2. Fallback to suggestions ONLY if verified listing didn't extract symbols from title
+        if not symbols and "suggestions" in data and isinstance(data["suggestions"], list):
             for sug in data["suggestions"]:
                 coin = sug.get("coin", "").upper()
                 if coin and coin not in EXCLUDED_WORDS:
                     symbols.append(coin)
 
-        # 2. Parse title directly using our fast regex
-        if not symbols:
-            parsed = parse_upbit_title(title)
-            if parsed:
-                symbols.extend(parsed)
-
         if symbols:
             for symbol in symbols:
-                logger.info(f"TARGET COIN DETECTED: {symbol} from Upbit Announcement!")
+                logger.info(f"🎯 CONFIRMED NEW LISTING: {symbol} from Upbit Announcement!")
                 asyncio.create_task(self._trigger_callback(title, "CapoStream", symbol))
 
     async def _trigger_callback(self, title: str, source: str, symbol: str):

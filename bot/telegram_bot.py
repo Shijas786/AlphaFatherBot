@@ -342,7 +342,7 @@ class TelegramNotifier:
             [InlineKeyboardButton(btn_text, url=app_url)]
         ])
 
-        feed_label = "Capo Core WebSocket" if "Tree" in str(source) else "Capo Direct Feed"
+        feed_label = "Capo Core WebSocket" if ("Tree" in str(source) or "CapoStream" in str(source)) else "Capo Direct Feed"
         html_text = (
             "🚨 <b>NEW UPBIT LISTING ANNOUNCEMENT!</b>\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
