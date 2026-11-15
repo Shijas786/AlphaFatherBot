@@ -41,7 +41,7 @@ async def api_get_user(request: web.Request):
     user_id = tg_user["id"]
     
     user = await get_user(user_id)
-    if not user:
+    if not user or not user.get("solana_wallet_address") or not user.get("evm_wallet_address"):
         user = await create_or_update_user(
             telegram_id=user_id,
             username=tg_user.get("username", ""),
