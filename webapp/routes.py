@@ -70,6 +70,26 @@ async def api_get_user(request: web.Request):
 
     stats = await get_user_profit_stats(user_id)
 
+    # Query live Solana and EVM balances
+    sol_balance = 0.0
+    evm_balance = 0.0
+    sol_addr = user.get("solana_wallet_address", "")
+    evm_addr = user.get("evm_wallet_address", "")
+
+    if sol_addr:
+        try:
+            from services.solana_wallet import get_solana_balance
+            sol_balance = await get_solana_balance(sol_addr)
+        except Exception:
+            pass
+
+    if evm_addr:
+        try:
+            from services.evm_wallet import get_evm_balance
+            evm_balance = await get_evm_balance(evm_addr, network="base")
+        except Exception:
+            pass
+
     return web.json_response({
         "success": True,
         "user": {
@@ -93,6 +113,13 @@ async def api_get_user(request: web.Request):
             "futures_usdt": balances.get("futures_usdt", 0.0),
             "futures_usdc": balances.get("futures_usdc", 0.0),
             "total_balance": balances.get("total", 0.0),
+            # ── DEX Wallets & Balances ──────────────────────────────────────────
+            "solana_wallet_address": sol_addr,
+            "solana_balance": round(sol_balance, 4),
+            "solana_buy_amount_sol": float(user.get("solana_buy_amount_sol", 0.1)),
+            "evm_wallet_address": evm_addr,
+            "evm_balance": round(evm_balance, 4),
+            "evm_buy_amount_eth": float(user.get("evm_buy_amount_eth", 0.05)),
             "stats": stats
         }
     })
@@ -105,7 +132,8 @@ async def api_update_settings(request: web.Request):
 
     allowed_fields = [
         "is_active", "trade_mode", "order_amount_usdt",
-        "futures_leverage", "tp_percent", "sl_percent", "max_hold_seconds"
+        "futures_leverage", "tp_percent", "sl_percent", "max_hold_seconds",
+        "solana_buy_amount_sol", "evm_buy_amount_eth"
     ]
 
     updates = {}

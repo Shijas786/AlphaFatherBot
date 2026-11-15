@@ -167,6 +167,50 @@ async def test_alert_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         latency_ms=15
     )
 
+async def wallet_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handler for /wallet command — display user's Solana and EVM DEX wallets."""
+    chat = update.effective_chat
+    user = update.effective_user
+    if not chat or not user:
+        return
+
+    db_user = await create_or_update_user(user.id, user.username or "", user.first_name or "")
+    sol_addr = db_user.get("solana_wallet_address", "")
+    evm_addr = db_user.get("evm_wallet_address", "")
+
+    sol_bal = 0.0
+    evm_bal = 0.0
+
+    if sol_addr:
+        try:
+            from services.solana_wallet import get_solana_balance
+            sol_bal = await get_solana_balance(sol_addr)
+        except Exception:
+            pass
+
+    if evm_addr:
+        try:
+            from services.evm_wallet import get_evm_balance
+            evm_bal = await get_evm_balance(evm_addr, network="base")
+        except Exception:
+            pass
+
+    text = (
+        f"💼 <b>YOUR CAPO DEX SNIPER WALLETS</b>\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🟣 <b>SOLANA (Jupiter DEX)</b>\n"
+        f"Address:\n<code>{sol_addr or 'Generating...'}</code>\n"
+        f"Balance: <code>{sol_bal:.4f} SOL</code>\n\n"
+        f"🔵 <b>EVM (Base / Ethereum / BSC)</b>\n"
+        f"Address:\n<code>{evm_addr or 'Generating...'}</code>\n"
+        f"Balance: <code>{evm_bal:.4f} ETH</code> (Base)\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"⚡ <i>Auto-Fallback Rule: If an Upbit listing is NOT on Binance, the bot snipes the official contract instantly on DEX using these wallets!</i>"
+    )
+
+    await update.message.reply_text(text, parse_mode="HTML")
+
+
 def build_telegram_app() -> Application:
     """Build and configure the Telegram application."""
     if not config.TELEGRAM_BOT_TOKEN:
@@ -201,6 +245,7 @@ def build_telegram_app() -> Application:
 
     # Command handlers
     app.add_handler(CommandHandler("start", start_command))
+    app.add_handler(CommandHandler("wallet", wallet_command))
     app.add_handler(CommandHandler("alerts", alerts_command))
     app.add_handler(CommandHandler("test_alert", test_alert_command))
     app.add_handler(CommandHandler("simulate_listing", admin_simulate_listing_command))

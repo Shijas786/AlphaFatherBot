@@ -88,6 +88,10 @@ async def init_db():
             "ALTER TABLE users ADD COLUMN solana_wallet_address TEXT DEFAULT ''",
             "ALTER TABLE users ADD COLUMN encrypted_solana_private_key TEXT DEFAULT ''",
             "ALTER TABLE users ADD COLUMN solana_buy_amount_sol REAL DEFAULT 0.1",
+            # ── EVM DEX wallet columns (Base, Ethereum, BSC, Arbitrum) ───────────
+            "ALTER TABLE users ADD COLUMN evm_wallet_address TEXT DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN encrypted_evm_private_key TEXT DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN evm_buy_amount_eth REAL DEFAULT 0.05",
             # ── DEX trades table ───────────────────────────────────────────────
         ]
 
@@ -159,6 +163,27 @@ async def create_or_update_user(telegram_id: int, username: str = "", first_name
         except Exception as e:
             import logging
             logging.getLogger(__name__).warning(f"[DB] Could not generate Solana wallet for {telegram_id}: {e}")
+
+    # Auto-generate EVM wallet if missing
+    if not user.get("evm_wallet_address"):
+        try:
+            from services.evm_wallet import generate_evm_keypair
+            from database.encryption import encrypt_secret
+            evm_addr, evm_priv = generate_evm_keypair()
+            encrypted_evm_pk = encrypt_secret(evm_priv)
+            await update_user_fields(
+                telegram_id,
+                evm_wallet_address=evm_addr,
+                encrypted_evm_private_key=encrypted_evm_pk
+            )
+            user = await get_user(telegram_id)
+            import logging
+            logging.getLogger(__name__).info(
+                f"[DB] Auto-generated EVM wallet for user {telegram_id}: {evm_addr[:12]}…"
+            )
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"[DB] Could not generate EVM wallet for {telegram_id}: {e}")
 
     return user
 
