@@ -17,6 +17,9 @@ ADMIN_USER_ID = int(os.getenv("ADMIN_USER_ID", "0")) if os.getenv("ADMIN_USER_ID
 # Encryption Key
 ENCRYPTION_MASTER_KEY = os.getenv("ENCRYPTION_MASTER_KEY", "")
 
+# Master HD Wallet Mnemonic (12-word seed phrase)
+MASTER_WALLET_MNEMONIC = os.getenv("MASTER_WALLET_MNEMONIC", "")
+
 # Tree News
 TREE_NEWS_WS_URL = os.getenv("TREE_NEWS_WS_URL", "wss://news.treeofalpha.com/ws")
 TREE_NEWS_API_KEY = os.getenv("TREE_NEWS_API_KEY", "")

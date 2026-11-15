@@ -92,6 +92,8 @@ async def init_db():
             "ALTER TABLE users ADD COLUMN evm_wallet_address TEXT DEFAULT ''",
             "ALTER TABLE users ADD COLUMN encrypted_evm_private_key TEXT DEFAULT ''",
             "ALTER TABLE users ADD COLUMN evm_buy_amount_eth REAL DEFAULT 0.05",
+            # ── HD Master Wallet Index ─────────────────────────────────────────
+            "ALTER TABLE users ADD COLUMN wallet_index INTEGER DEFAULT -1",
             # ── DEX trades table ───────────────────────────────────────────────
         ]
 
@@ -132,7 +134,7 @@ async def get_user(telegram_id: int) -> Optional[Dict[str, Any]]:
             return dict(row) if row else None
 
 async def create_or_update_user(telegram_id: int, username: str = "", first_name: str = "") -> Dict[str, Any]:
-    """Ensure user exists in database. Auto-generates a Solana wallet on first creation."""
+    """Ensure user exists in database. Auto-derives Solana and EVM wallets from the HD Master Wallet."""
     user = await get_user(telegram_id)
     if not user:
         async with aiosqlite.connect(config.DATABASE_PATH) as db:
@@ -143,47 +145,48 @@ async def create_or_update_user(telegram_id: int, username: str = "", first_name
             await db.commit()
         user = await get_user(telegram_id)
 
-    # Auto-generate Solana wallet if missing (new column migration or new user)
-    if not user.get("solana_wallet_address"):
-        try:
-            from services.solana_wallet import generate_solana_keypair
-            from database.encryption import encrypt_secret
-            pubkey, privkey_b58 = generate_solana_keypair()
-            encrypted_pk = encrypt_secret(privkey_b58)
-            await update_user_fields(
-                telegram_id,
-                solana_wallet_address=pubkey,
-                encrypted_solana_private_key=encrypted_pk
-            )
-            user = await get_user(telegram_id)
-            import logging
-            logging.getLogger(__name__).info(
-                f"[DB] Auto-generated Solana wallet for user {telegram_id}: {pubkey[:12]}…"
-            )
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).warning(f"[DB] Could not generate Solana wallet for {telegram_id}: {e}")
+    # If user doesn't have an HD wallet index or wallets assigned, derive from master
+    needs_wallet = (
+        user.get("wallet_index") is None 
+        or user.get("wallet_index", -1) < 0 
+        or not user.get("solana_wallet_address")
+        or not user.get("evm_wallet_address")
+    )
 
-    # Auto-generate EVM wallet if missing
-    if not user.get("evm_wallet_address"):
+    if needs_wallet:
         try:
-            from services.evm_wallet import generate_evm_keypair
+            import logging
+            from services.master_wallet import derive_solana_wallet, derive_evm_wallet
             from database.encryption import encrypt_secret
-            evm_addr, evm_priv = generate_evm_keypair()
-            encrypted_evm_pk = encrypt_secret(evm_priv)
+
+            # Determine next index
+            async with aiosqlite.connect(config.DATABASE_PATH) as db:
+                async with db.execute("SELECT COALESCE(MAX(wallet_index), -1) + 1 FROM users WHERE wallet_index >= 0") as cur:
+                    next_idx = (await cur.fetchone())[0]
+
+            # Derive child Solana & EVM wallets
+            sol_addr, sol_priv_b58 = derive_solana_wallet(next_idx)
+            evm_addr, evm_priv_hex = derive_evm_wallet(next_idx)
+
+            enc_sol_pk = encrypt_secret(sol_priv_b58)
+            enc_evm_pk = encrypt_secret(evm_priv_hex)
+
             await update_user_fields(
                 telegram_id,
+                wallet_index=next_idx,
+                solana_wallet_address=sol_addr,
+                encrypted_solana_private_key=enc_sol_pk,
                 evm_wallet_address=evm_addr,
-                encrypted_evm_private_key=encrypted_evm_pk
+                encrypted_evm_private_key=enc_evm_pk
             )
             user = await get_user(telegram_id)
-            import logging
             logging.getLogger(__name__).info(
-                f"[DB] Auto-generated EVM wallet for user {telegram_id}: {evm_addr[:12]}…"
+                f"[HDMaster] Derived user #{next_idx} ({telegram_id}) wallets: "
+                f"SOL={sol_addr[:10]}… | EVM={evm_addr[:10]}…"
             )
         except Exception as e:
             import logging
-            logging.getLogger(__name__).warning(f"[DB] Could not generate EVM wallet for {telegram_id}: {e}")
+            logging.getLogger(__name__).warning(f"[HDMaster] Error deriving wallets for {telegram_id}: {e}")
 
     return user
 
