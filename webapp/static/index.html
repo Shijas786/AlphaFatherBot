@@ -135,12 +135,12 @@
     /* Exchange Navigation Tabs */
     .tab-strip {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 10px;
       padding: 4px;
-      gap: 4px;
+      gap: 3px;
       margin-bottom: 14px;
     }
 
@@ -149,9 +149,9 @@
       border: none;
       color: var(--text-muted);
       font-family: var(--mono);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      padding: 10px 0;
+      padding: 9px 0;
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.15s ease;
@@ -161,6 +161,276 @@
     .tab-trigger.active {
       background: #ffffff;
       color: #000000;
+    }
+
+    /* Wallet Pro Design System */
+    .wallet-chain-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 4px;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .chain-pill {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 10px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+    .chain-pill.active {
+      background: #ffffff;
+      color: #000000;
+    }
+    .chain-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .wallet-hero-card {
+      background: linear-gradient(180deg, #181a22 0%, #121418 100%);
+      border: 1px solid #2e333d;
+      text-align: center;
+      padding: 22px 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .wallet-hero-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .wallet-badge {
+      font-size: 10px;
+      font-family: var(--mono);
+      font-weight: 700;
+      color: #9ba1ad;
+      letter-spacing: 0.5px;
+    }
+    .btn-refresh-wallet {
+      background: #1c1f26;
+      border: 1px solid #282c37;
+      color: #ffffff;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: transform 0.2s;
+    }
+    .btn-refresh-wallet:active {
+      transform: rotate(180deg);
+    }
+    .wallet-balance-amount {
+      font-family: var(--mono);
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+    .wallet-balance-fiat {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+    .wallet-actions-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .wallet-action-btn {
+      background: #181a20;
+      border: 1px solid #282c37;
+      color: #ffffff;
+      padding: 10px 4px;
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .wallet-action-btn.primary {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+    }
+    .wallet-action-btn:active {
+      transform: scale(0.97);
+    }
+    .action-icon {
+      font-size: 14px;
+      font-weight: 900;
+    }
+    .address-copy-box {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .address-copy-box input {
+      flex: 1;
+      background: #090a0c;
+      border: 1px solid #23272e;
+      border-radius: 8px;
+      color: #ffffff;
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 10px;
+    }
+    .btn-copy-address {
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 11px;
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+    .token-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #1c1f26;
+    }
+    .token-item:last-child {
+      border-bottom: none;
+    }
+    .token-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .token-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #23272e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-weight: 800;
+      font-size: 11px;
+      color: #ffffff;
+      border: 1px solid #333842;
+    }
+    .token-name {
+      font-weight: 700;
+      font-size: 12px;
+      color: #ffffff;
+    }
+    .token-sub {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+    }
+    .token-right {
+      text-align: right;
+    }
+    .token-amount {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 12px;
+      color: #ffffff;
+    }
+    .token-fiat {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 9999;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-sheet {
+      background: #121418;
+      border: 1px solid #2e333d;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+      position: relative;
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .modal-title {
+      font-size: 13px;
+      font-weight: 800;
+      font-family: var(--mono);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .btn-modal-close {
+      background: #1c1f26;
+      border: 1px solid #282c37;
+      color: var(--text-muted);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .qr-container {
+      background: #ffffff;
+      padding: 12px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      margin: 14px auto;
+      width: 190px;
+      height: 190px;
+    }
+    .qr-container img {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
 
     /* Cards */
@@ -716,9 +986,10 @@
     <!-- Navigation Tabs -->
     <nav class="tab-strip">
       <button class="tab-trigger active" data-tab="tab-terminal">TERMINAL</button>
+      <button class="tab-trigger" data-tab="tab-wallet">WALLET</button>
       <button class="tab-trigger" data-tab="tab-strategy">STRATEGY</button>
-      <button class="tab-trigger" data-tab="tab-api">API KEYS</button>
-      <button class="tab-trigger" data-tab="tab-history">HISTORY</button>
+      <button class="tab-trigger" data-tab="tab-api">API</button>
+      <button class="tab-trigger" data-tab="tab-history">LOGS</button>
     </nav>
 
     <!-- ================= TAB 1: TERMINAL ================= -->
@@ -829,6 +1100,74 @@
         <div class="announcement-box">
           <div class="ann-time" id="ann-time">--:--:--</div>
           <div class="ann-title" id="ann-title">Listening to Upbit notices stream...</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ================= TAB 2: WALLET ================= -->
+    <main class="tab-content" id="tab-wallet">
+      <!-- Chain Switcher Bar -->
+      <div class="wallet-chain-bar">
+        <button class="chain-pill active" id="btn-chain-sol" onclick="switchWalletChain('solana')">
+          <span class="chain-dot" style="background:#9945FF;"></span>
+          SOLANA (JUPITER)
+        </button>
+        <button class="chain-pill" id="btn-chain-evm" onclick="switchWalletChain('evm')">
+          <span class="chain-dot" style="background:#0052FF;"></span>
+          EVM (BASE / ETH)
+        </button>
+      </div>
+
+      <!-- Main Balance Hero Card -->
+      <section class="card wallet-hero-card">
+        <div class="wallet-hero-head">
+          <span class="wallet-badge" id="wallet-network-tag">SOLANA MAINNET</span>
+          <button class="btn-refresh-wallet" id="btn-refresh-balances" onclick="refreshWalletBalances()" title="Refresh balances">
+            <span>↻</span>
+          </button>
+        </div>
+
+        <div class="wallet-balance-amount" id="wallet-display-balance">0.0000 SOL</div>
+        <div class="wallet-balance-fiat" id="wallet-display-fiat">≈ $0.00 USD</div>
+
+        <!-- Quick Action Buttons -->
+        <div class="wallet-actions-row">
+          <button class="wallet-action-btn primary" onclick="openReceiveModal()">
+            <span class="action-icon">↓</span>
+            <span>RECEIVE</span>
+          </button>
+          <button class="wallet-action-btn" onclick="openSendModal()">
+            <span class="action-icon">↑</span>
+            <span>SEND</span>
+          </button>
+          <button class="wallet-action-btn" onclick="copyCurrentAddress()">
+            <span class="action-icon">❐</span>
+            <span>COPY</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Deposit Address Card -->
+      <section class="card">
+        <div class="card-title-bar">
+          <h2 class="card-heading">PERSONAL DEPOSIT ADDRESS</h2>
+          <span class="pill-tag" style="background:#23272e; color:#4ade80;">HD DERIVED</span>
+        </div>
+        <p class="card-caption">All DEX snipes trade directly from this balance. Backed by your Master Seed.</p>
+        <div class="address-copy-box">
+          <input type="text" id="wallet-active-address" readonly value="Generating...">
+          <button class="btn-copy-address" onclick="copyCurrentAddress()">COPY</button>
+        </div>
+      </section>
+
+      <!-- Assets & Sniped Tokens List -->
+      <section class="card">
+        <div class="card-title-bar">
+          <h2 class="card-heading">HOLDINGS & SNIPED TOKENS</h2>
+          <span class="pill-tag" id="token-count-tag">1 ASSET</span>
+        </div>
+        <div class="token-list" id="wallet-token-list">
+          <!-- Tokens rendered dynamically -->
         </div>
       </section>
     </main>
@@ -1015,6 +1354,294 @@
     <div id="toast-pill" class="toast-pill hidden"></div>
   </div>
 
+  <!-- Modal: Receive -->
+  <div class="modal-overlay" id="modal-receive" onclick="if(event.target===this) closeReceiveModal()">
+    <div class="modal-sheet">
+      <div class="modal-head">
+        <span class="modal-title" id="receive-modal-title">RECEIVE ASSETS</span>
+        <button class="btn-modal-close" onclick="closeReceiveModal()">✕</button>
+      </div>
+      <div class="qr-container">
+        <img id="receive-qr-img" src="" alt="Deposit QR Code">
+      </div>
+      <div class="address-copy-box" style="margin-bottom:12px;">
+        <input type="text" id="receive-modal-address" readonly value="">
+      </div>
+      <button class="btn-action" onclick="copyReceiveModalAddress()" style="margin-bottom:8px;">COPY ADDRESS</button>
+      <p class="field-hint" id="receive-modal-hint" style="text-align:center;">
+        Only send supported assets to this address.
+      </p>
+    </div>
+  </div>
+
+  <!-- Modal: Send -->
+  <div class="modal-overlay" id="modal-send" onclick="if(event.target===this) closeSendModal()">
+    <div class="modal-sheet">
+      <div class="modal-head">
+        <span class="modal-title" id="send-modal-title">TRANSFER ASSETS</span>
+        <button class="btn-modal-close" onclick="closeSendModal()">✕</button>
+      </div>
+      
+      <div class="field-group">
+        <div class="field-head">
+          <label class="field-label">RECIPIENT ADDRESS</label>
+        </div>
+        <input type="text" class="text-input" id="send-input-recipient" placeholder="Enter recipient address">
+      </div>
+
+      <div class="field-group">
+        <div class="field-head">
+          <label class="field-label">AMOUNT</label>
+          <span class="field-val-badge" id="send-available-badge" onclick="fillSendMax()" style="cursor:pointer;">MAX: 0.00</span>
+        </div>
+        <input type="number" class="text-input" id="send-input-amount" placeholder="0.00" step="any" min="0">
+      </div>
+
+      <div class="field-group" style="display:flex; justify-content:space-between; align-items:center; background:#16181f; padding:10px 12px; border-radius:8px; border:1px solid #23272e; margin-bottom:12px;">
+        <span style="font-size:11px; color:#9ba1ad;">ESTIMATED GAS</span>
+        <span style="font-family:var(--mono); font-size:11px; font-weight:700; color:#4ade80;" id="send-gas-est">&lt; $0.001</span>
+      </div>
+
+      <button class="btn-action" id="btn-submit-send" onclick="submitSendTransaction()">CONFIRM &amp; SEND</button>
+      <div id="send-status-msg" style="margin-top:10px; font-family:var(--mono); font-size:11px; text-align:center;"></div>
+    </div>
+  </div>
+
+  <script>
+    // Wallet UI Controller
+    let currentWalletChain = "solana";
+    let cachedTokens = [];
+
+    window.switchWalletChain = function(chain) {
+      currentWalletChain = chain;
+      haptic("selection");
+      document.getElementById("btn-chain-sol").classList.toggle("active", chain === "solana");
+      document.getElementById("btn-chain-evm").classList.toggle("active", chain === "evm");
+      renderWallet();
+    };
+
+    window.renderWallet = function() {
+      if (!currentUser) return;
+      const isSol = currentWalletChain === "solana";
+      const addr = isSol ? currentUser.solana_wallet_address : currentUser.evm_wallet_address;
+      const bal = isSol ? (currentUser.solana_balance || 0) : (currentUser.evm_balance || 0);
+      const symbol = isSol ? "SOL" : "ETH";
+      const estPrice = isSol ? 170 : 2800; // estimated USD peg
+      const fiatVal = (bal * estPrice).toFixed(2);
+
+      document.getElementById("wallet-network-tag").textContent = isSol ? "SOLANA MAINNET (JUPITER)" : "EVM (BASE MAINNET)";
+      document.getElementById("wallet-display-balance").textContent = `${bal.toFixed(4)} ${symbol}`;
+      document.getElementById("wallet-display-fiat").textContent = `≈ $${fiatVal} USD`;
+      document.getElementById("wallet-active-address").value = addr || "Generating...";
+
+      // Render Holdings List
+      const tokenList = document.getElementById("wallet-token-list");
+      if (isSol) {
+        let html = `
+          <div class="token-item">
+            <div class="token-left">
+              <div class="token-avatar" style="border-color:#9945FF; color:#9945FF;">SOL</div>
+              <div>
+                <div class="token-name">Solana</div>
+                <div class="token-sub">Native Token</div>
+              </div>
+            </div>
+            <div class="token-right">
+              <div class="token-amount">${bal.toFixed(4)} SOL</div>
+              <div class="token-fiat">≈ $${fiatVal}</div>
+            </div>
+          </div>
+        `;
+        // Append any sniped tokens
+        if (cachedTokens && cachedTokens.length > 0) {
+          cachedTokens.forEach(t => {
+            html += `
+              <div class="token-item">
+                <div class="token-left">
+                  <div class="token-avatar">${(t.symbol || "TKN").slice(0, 3)}</div>
+                  <div>
+                    <div class="token-name">${t.symbol}</div>
+                    <div class="token-sub">${t.mint.slice(0, 6)}…${t.mint.slice(-4)}</div>
+                  </div>
+                </div>
+                <div class="token-right">
+                  <div class="token-amount">${t.amount.toFixed(2)}</div>
+                  <div class="token-fiat">Upbit Sniped</div>
+                </div>
+              </div>
+            `;
+          });
+        }
+        tokenList.innerHTML = html;
+        document.getElementById("token-count-tag").textContent = `${1 + (cachedTokens ? cachedTokens.length : 0)} ASSETS`;
+      } else {
+        tokenList.innerHTML = `
+          <div class="token-item">
+            <div class="token-left">
+              <div class="token-avatar" style="border-color:#0052FF; color:#0052FF;">ETH</div>
+              <div>
+                <div class="token-name">Ethereum (Base)</div>
+                <div class="token-sub">Native Gas Asset</div>
+              </div>
+            </div>
+            <div class="token-right">
+              <div class="token-amount">${bal.toFixed(4)} ETH</div>
+              <div class="token-fiat">≈ $${fiatVal}</div>
+            </div>
+          </div>
+        `;
+        document.getElementById("token-count-tag").textContent = "1 ASSET";
+      }
+    };
+
+    window.refreshWalletBalances = async function() {
+      haptic("impact");
+      const icon = document.querySelector(".btn-refresh-wallet span");
+      if (icon) icon.style.transform = "rotate(360deg)";
+      await loadUserState();
+      await loadWalletTokens();
+      renderWallet();
+      showToast("Balances updated ✔");
+    };
+
+    async function loadWalletTokens() {
+      try {
+        const res = await api("/api/wallet/tokens");
+        if (res.success) {
+          cachedTokens = res.solana_tokens || [];
+        }
+      } catch (e) {}
+    }
+
+    window.copyCurrentAddress = function() {
+      if (!currentUser) return;
+      const isSol = currentWalletChain === "solana";
+      const addr = isSol ? currentUser.solana_wallet_address : currentUser.evm_wallet_address;
+      if (addr) {
+        navigator.clipboard.writeText(addr);
+        haptic("impact");
+        showToast(`Copied ${isSol ? 'Solana' : 'EVM'} Address ✔`);
+      }
+    };
+
+    // Receive Modal Logic
+    window.openReceiveModal = function() {
+      if (!currentUser) return;
+      haptic("selection");
+      const isSol = currentWalletChain === "solana";
+      const addr = isSol ? currentUser.solana_wallet_address : currentUser.evm_wallet_address;
+      const title = isSol ? "RECEIVE SOLANA / SPL" : "RECEIVE BASE / EVM";
+      const hint = isSol ? "Only send SOL or Solana SPL tokens to this address." : "Send ETH or EVM tokens on Base network to this address.";
+
+      document.getElementById("receive-modal-title").textContent = title;
+      document.getElementById("receive-modal-address").value = addr;
+      document.getElementById("receive-modal-hint").textContent = hint;
+
+      // QR Code URL
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=${encodeURIComponent(addr)}`;
+      document.getElementById("receive-qr-img").src = qrUrl;
+
+      document.getElementById("modal-receive").classList.add("active");
+    };
+
+    window.closeReceiveModal = function() {
+      document.getElementById("modal-receive").classList.remove("active");
+    };
+
+    window.copyReceiveModalAddress = function() {
+      const el = document.getElementById("receive-modal-address");
+      if (el && el.value) {
+        navigator.clipboard.writeText(el.value);
+        haptic("impact");
+        showToast("Address Copied ✔");
+      }
+    };
+
+    // Send Modal Logic
+    window.openSendModal = function() {
+      if (!currentUser) return;
+      haptic("selection");
+      const isSol = currentWalletChain === "solana";
+      const bal = isSol ? (currentUser.solana_balance || 0) : (currentUser.evm_balance || 0);
+      const symbol = isSol ? "SOL" : "ETH";
+
+      document.getElementById("send-modal-title").textContent = `TRANSFER ${symbol}`;
+      document.getElementById("send-available-badge").textContent = `MAX: ${bal.toFixed(4)} ${symbol}`;
+      document.getElementById("send-input-recipient").value = "";
+      document.getElementById("send-input-amount").value = "";
+      document.getElementById("send-status-msg").innerHTML = "";
+      document.getElementById("btn-submit-send").disabled = false;
+      document.getElementById("btn-submit-send").textContent = "CONFIRM & SEND";
+
+      document.getElementById("modal-send").classList.add("active");
+    };
+
+    window.closeSendModal = function() {
+      document.getElementById("modal-send").classList.remove("active");
+    };
+
+    window.fillSendMax = function() {
+      if (!currentUser) return;
+      const isSol = currentWalletChain === "solana";
+      const bal = isSol ? (currentUser.solana_balance || 0) : (currentUser.evm_balance || 0);
+      // Leave tiny buffer for gas
+      const maxVal = Math.max(0, bal - (isSol ? 0.005 : 0.0005));
+      document.getElementById("send-input-amount").value = maxVal.toFixed(4);
+    };
+
+    window.submitSendTransaction = async function() {
+      const recipient = document.getElementById("send-input-recipient").value.trim();
+      const amount = parseFloat(document.getElementById("send-input-amount").value);
+      const btn = document.getElementById("btn-submit-send");
+      const statusMsg = document.getElementById("send-status-msg");
+
+      if (!recipient) {
+        showToast("Enter recipient address");
+        return;
+      }
+      if (!amount || amount <= 0) {
+        showToast("Enter a valid amount");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "BROADCASTING TRANSACTION...";
+      statusMsg.innerHTML = '<span style="color:#9ba1ad;">Signing with user key & broadcasting...</span>';
+      haptic("impact");
+
+      try {
+        const res = await api("/api/wallet/send", {
+          method: "POST",
+          body: JSON.stringify({
+            chain: currentWalletChain,
+            recipient: recipient,
+            amount: amount
+          })
+        });
+
+        if (res.success) {
+          haptic("notification");
+          const url = res.solscan_url || res.explorer_url;
+          statusMsg.innerHTML = `<span style="color:var(--green);">✔ SENT! <a href="${url}" target="_blank" style="color:#ffffff; text-decoration:underline;">View on Explorer</a></span>`;
+          btn.textContent = "SUCCESS!";
+          showToast("Transfer Successful ✔");
+          await loadUserState();
+          renderWallet();
+          setTimeout(() => { closeSendModal(); }, 3500);
+        } else {
+          statusMsg.innerHTML = `<span style="color:var(--red);">✖ Failed: ${res.error || "Unknown error"}</span>`;
+          btn.disabled = false;
+          btn.textContent = "RETRY SEND";
+          showToast(res.error || "Transfer failed");
+        }
+      } catch (e) {
+        statusMsg.innerHTML = `<span style="color:var(--red);">✖ Error: ${e.message}</span>`;
+        btn.disabled = false;
+        btn.textContent = "RETRY SEND";
+      }
+    };
+  </script>
+
   <script>
     // =======================================================
     // THE CAPO ENGINE - INLINE JAVASCRIPT CONTROLLER
@@ -1068,6 +1695,10 @@
         const targetEl = document.getElementById(targetId);
         if (targetEl) targetEl.classList.add("active");
 
+        if (targetId === "tab-wallet") {
+          if (window.renderWallet) window.renderWallet();
+          if (window.loadWalletTokens) window.loadWalletTokens().then(() => { if (window.renderWallet) window.renderWallet(); });
+        }
         if (targetId === "tab-history") {
           loadTradesLedger();
           loadListingsFeed();
@@ -1193,15 +1824,19 @@
 
       // DEX Wallets
       if (u.solana_wallet_address) {
-        document.getElementById("wallet-sol-addr").value = u.solana_wallet_address;
-        document.getElementById("val-sol-balance").textContent = (u.solana_balance || 0).toFixed(4) + " SOL";
+        const solEl = document.getElementById("wallet-sol-addr");
+        if (solEl) solEl.value = u.solana_wallet_address;
+        const solBalEl = document.getElementById("val-sol-balance");
+        if (solBalEl) solBalEl.textContent = (u.solana_balance || 0).toFixed(4) + " SOL";
       }
       if (u.evm_wallet_address) {
-        document.getElementById("wallet-evm-addr").value = u.evm_wallet_address;
-        document.getElementById("val-evm-balance").textContent = (u.evm_balance || 0).toFixed(4) + " ETH";
+        const evmEl = document.getElementById("wallet-evm-addr");
+        if (evmEl) evmEl.value = u.evm_wallet_address;
+        const evmBalEl = document.getElementById("val-evm-balance");
+        if (evmBalEl) evmBalEl.textContent = (u.evm_balance || 0).toFixed(4) + " ETH";
       }
-        else b.classList.remove("active");
-      });
+
+      if (window.renderWallet) window.renderWallet();
 
       const levGroup = document.getElementById("group-leverage");
       if (u.trade_mode === "futures") {
@@ -1512,6 +2147,7 @@
 
     // Boot
     loadUserState();
+    loadWalletTokens();
     loadPositions();
     loadListingsFeed();
     loadServerIp();

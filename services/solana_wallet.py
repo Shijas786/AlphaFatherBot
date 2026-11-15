@@ -2,62 +2,50 @@
 Solana Per-User Wallet Manager
 ==============================
 Generates, encrypts, stores and retrieves Solana wallets for each bot user.
-Uses `solders` (Rust-based, fast) for Ed25519 keypair generation.
-Private keys are encrypted using the same Fernet/ENCRYPTION_MASTER_KEY
-infrastructure as Binance API keys.
+Uses `solders` (Rust-based, fast) for Ed25519 keypair generation and signing.
+Private keys are encrypted using Fernet / ENCRYPTION_MASTER_KEY.
 """
 
 import logging
 import base64
 import base58
-import struct
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List, Dict, Any
 import aiohttp
 
 logger = logging.getLogger(__name__)
 
 # ─── Solana constants ─────────────────────────────────────────────────────────
 SOL_MINT = "So11111111111111111111111111111111111111112"
+TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 LAMPORTS_PER_SOL = 1_000_000_000
 DEFAULT_SOLANA_RPC = "https://api.mainnet-beta.solana.com"
 
-# ─── Import solders (installed as dependency) ─────────────────────────────────
 try:
     from solders.keypair import Keypair
     from solders.pubkey import Pubkey
+    from solders.system_program import TransferParams, transfer as sol_transfer
+    from solders.transaction import Transaction
+    from solders.message import Message
+    from solders.hash import Hash
     _SOLDERS_AVAILABLE = True
 except ImportError:
     _SOLDERS_AVAILABLE = False
-    logger.warning("[SolanaWallet] solders not available — wallet generation disabled")
+    logger.warning("[SolanaWallet] solders not available — wallet features disabled")
 
 
 def generate_solana_keypair() -> Tuple[str, str]:
-    """
-    Generate a fresh Solana keypair.
-
-    Returns:
-        (public_key_str, private_key_base58)
-        public_key_str:    Base58 wallet address (44 chars)
-        private_key_base58: Base58-encoded 64-byte secret key (for storage)
-    """
+    """Generate fresh keypair -> (pubkey, privkey_b58)."""
     if not _SOLDERS_AVAILABLE:
-        raise RuntimeError("solders package is not installed. Run: pip install solders>=0.21.0")
-
+        raise RuntimeError("solders package is not installed")
     kp = Keypair()
     pubkey = str(kp.pubkey())
-
-    # solders stores the secret key as a 64-byte array (seed + pubkey)
-    secret_bytes = bytes(kp)          # 64 bytes: 32-byte seed || 32-byte pubkey
+    secret_bytes = bytes(kp)
     private_key_b58 = base58.b58encode(secret_bytes).decode("utf-8")
-
     return pubkey, private_key_b58
 
 
 def keypair_from_private_key(private_key_b58: str):
-    """
-    Reconstruct a solders Keypair from stored Base58 private key.
-    Used during signing (swap execution).
-    """
+    """Reconstruct a solders Keypair from stored Base58 private key."""
     if not _SOLDERS_AVAILABLE:
         raise RuntimeError("solders not available")
     secret_bytes = base58.b58decode(private_key_b58)
@@ -65,16 +53,13 @@ def keypair_from_private_key(private_key_b58: str):
 
 
 def get_public_key_from_private(private_key_b58: str) -> str:
-    """Derive the public key (wallet address) from an encrypted private key."""
+    """Derive public key (wallet address) from private key."""
     kp = keypair_from_private_key(private_key_b58)
     return str(kp.pubkey())
 
 
 async def get_solana_balance(wallet_address: str, rpc_url: str = DEFAULT_SOLANA_RPC) -> float:
-    """
-    Query the SOL balance (in SOL, not lamports) for a wallet address.
-    Uses the Solana JSON-RPC `getBalance` method.
-    """
+    """Query SOL balance for a wallet address."""
     payload = {
         "jsonrpc": "2.0",
         "id": 1,
@@ -93,14 +78,13 @@ async def get_solana_balance(wallet_address: str, rpc_url: str = DEFAULT_SOLANA_
                 lamports = data.get("result", {}).get("value", 0)
                 return lamports / LAMPORTS_PER_SOL
     except Exception as e:
-        logger.error(f"[SolanaWallet] getBalance failed for {wallet_address[:8]}…: {e}")
+        logger.error(f"[SolanaWallet] getBalance failed: {e}")
         return 0.0
 
 
-async def get_spl_token_balance(wallet_address: str, mint_address: str, rpc_url: str = DEFAULT_SOLANA_RPC) -> float:
+async def get_user_spl_tokens(wallet_address: str, rpc_url: str = DEFAULT_SOLANA_RPC) -> List[Dict[str, Any]]:
     """
-    Query the balance of a specific SPL token for a wallet.
-    Returns the UI amount (human-readable, e.g. 1.5 SANC).
+    Retrieve all SPL token accounts owned by this wallet with positive balances.
     """
     payload = {
         "jsonrpc": "2.0",
@@ -108,32 +92,117 @@ async def get_spl_token_balance(wallet_address: str, mint_address: str, rpc_url:
         "method": "getTokenAccountsByOwner",
         "params": [
             wallet_address,
-            {"mint": mint_address},
+            {"programId": TOKEN_PROGRAM_ID},
             {"encoding": "jsonParsed", "commitment": "confirmed"}
         ]
     }
+    tokens = []
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 rpc_url,
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=5),
+                timeout=aiohttp.ClientTimeout(total=6),
                 headers={"Content-Type": "application/json"}
             ) as resp:
                 data = await resp.json()
                 accounts = (data.get("result") or {}).get("value", [])
-                if not accounts:
-                    return 0.0
-                amount = (
-                    accounts[0]
-                    .get("account", {})
-                    .get("data", {})
-                    .get("parsed", {})
-                    .get("info", {})
-                    .get("tokenAmount", {})
-                    .get("uiAmount", 0.0)
-                )
-                return float(amount or 0.0)
+                for acc in accounts:
+                    info = acc.get("account", {}).get("data", {}).get("parsed", {}).get("info", {})
+                    token_amount = info.get("tokenAmount", {})
+                    ui_amount = float(token_amount.get("uiAmount") or 0.0)
+                    if ui_amount > 0:
+                        mint = info.get("mint", "")
+                        tokens.append({
+                            "mint": mint,
+                            "symbol": mint[:4] + "…" + mint[-4:],  # Fallback symbol
+                            "amount": ui_amount,
+                            "decimals": token_amount.get("decimals", 6)
+                        })
     except Exception as e:
-        logger.error(f"[SolanaWallet] getTokenAccountsByOwner failed: {e}")
-        return 0.0
+        logger.error(f"[SolanaWallet] get_user_spl_tokens failed: {e}")
+    return tokens
+
+
+async def send_sol(
+    sender_priv_b58: str,
+    to_address: str,
+    sol_amount: float,
+    rpc_url: str = DEFAULT_SOLANA_RPC
+) -> Dict[str, Any]:
+    """
+    Send SOL from user's wallet to an external recipient address.
+    """
+    if not _SOLDERS_AVAILABLE:
+        return {"success": False, "error": "solders library not available"}
+
+    try:
+        sender_kp = keypair_from_private_key(sender_priv_b58)
+        sender_pub = sender_kp.pubkey()
+        recipient_pub = Pubkey.from_string(to_address)
+        lamports = int(sol_amount * LAMPORTS_PER_SOL)
+
+        if lamports <= 0:
+            return {"success": False, "error": "Invalid SOL amount"}
+
+        # 1. Fetch recent blockhash
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                rpc_url,
+                json={
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "getLatestBlockhash",
+                    "params": [{"commitment": "confirmed"}]
+                },
+                timeout=aiohttp.ClientTimeout(total=5)
+            ) as r:
+                res = await r.json()
+                bh_str = res.get("result", {}).get("value", {}).get("blockhash")
+                if not bh_str:
+                    return {"success": False, "error": "Failed to get recent blockhash from Solana RPC"}
+                blockhash = Hash.from_string(bh_str)
+
+            # 2. Build transfer instruction & sign transaction
+            ix = sol_transfer(TransferParams(
+                from_pubkey=sender_pub,
+                to_pubkey=recipient_pub,
+                lamports=lamports
+            ))
+            msg = Message([ix], sender_pub)
+            tx = Transaction([sender_kp], msg, blockhash)
+            tx_b64 = base64.b64encode(bytes(tx)).decode("utf-8")
+
+            # 3. Broadcast to Solana RPC
+            async with session.post(
+                rpc_url,
+                json={
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "sendTransaction",
+                    "params": [
+                        tx_b64,
+                        {
+                            "encoding": "base64",
+                            "skipPreflight": False,
+                            "preflightCommitment": "confirmed"
+                        }
+                    ]
+                },
+                timeout=aiohttp.ClientTimeout(total=15)
+            ) as r:
+                send_res = await r.json()
+                if "error" in send_res:
+                    err_msg = send_res["error"].get("message", str(send_res["error"]))
+                    return {"success": False, "error": err_msg}
+                sig = send_res.get("result")
+                return {
+                    "success": True,
+                    "signature": sig,
+                    "solscan_url": f"https://solscan.io/tx/{sig}",
+                    "amount_sol": sol_amount,
+                    "recipient": to_address
+                }
+    except Exception as e:
+        logger.error(f"[SolanaWallet] send_sol failed: {e}", exc_info=True)
+        return {"success": False, "error": str(e)}

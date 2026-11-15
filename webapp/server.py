@@ -10,7 +10,9 @@ from webapp.routes import (
     api_panic_sell,
     api_get_listings,
     api_get_server_ip,
-    api_get_system_status
+    api_get_system_status,
+    api_send_wallet_funds,
+    api_get_wallet_tokens
 )
 
 logger = logging.getLogger(__name__)
@@ -49,6 +51,8 @@ def create_webapp() -> web.Application:
     app.router.add_get("/api/listings", api_get_listings)
     app.router.add_get("/api/ip", api_get_server_ip)
     app.router.add_get("/api/status", api_get_system_status)
+    app.router.add_post("/api/wallet/send", api_send_wallet_funds)
+    app.router.add_get("/api/wallet/tokens", api_get_wallet_tokens)
 
     # Static assets
     app.router.add_get("/", serve_index)

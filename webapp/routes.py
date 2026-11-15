@@ -259,4 +259,66 @@ async def api_get_system_status(request: web.Request):
         "recent_listings_count": len(listings)
     })
 
+async def api_send_wallet_funds(request: web.Request):
+    """POST /api/wallet/send - Send SOL or ETH to an external address."""
+    tg_user = get_auth_user(request)
+    user_id = tg_user["id"]
+    data = await request.json()
+
+    chain = (data.get("chain") or "solana").lower()
+    recipient = data.get("recipient", "").strip()
+    amount = float(data.get("amount", 0.0))
+
+    if not recipient:
+        return web.json_response({"success": False, "error": "Recipient address is required"}, status=400)
+    if amount <= 0:
+        return web.json_response({"success": False, "error": "Amount must be greater than zero"}, status=400)
+
+    user = await get_user(user_id)
+    if not user:
+        return web.json_response({"success": False, "error": "User not found"}, status=404)
+
+    if chain == "solana":
+        enc_pk = user.get("encrypted_solana_private_key", "")
+        if not enc_pk:
+            return web.json_response({"success": False, "error": "No Solana wallet found for user"}, status=400)
+        priv_b58 = decrypt_secret(enc_pk)
+        from services.solana_wallet import send_sol
+        res = await send_sol(priv_b58, recipient, amount)
+        return web.json_response(res)
+
+    elif chain in ("evm", "base", "ethereum", "bsc"):
+        enc_pk = user.get("encrypted_evm_private_key", "")
+        if not enc_pk:
+            return web.json_response({"success": False, "error": "No EVM wallet found for user"}, status=400)
+        priv_hex = decrypt_secret(enc_pk)
+        from services.evm_wallet import send_evm_native
+        res = await send_evm_native(priv_hex, recipient, amount, network="base")
+        return web.json_response(res)
+
+    return web.json_response({"success": False, "error": f"Unsupported chain: {chain}"}, status=400)
+
+async def api_get_wallet_tokens(request: web.Request):
+    """GET /api/wallet/tokens - Get list of SPL and ERC-20 tokens held by user."""
+    tg_user = get_auth_user(request)
+    user_id = tg_user["id"]
+    user = await get_user(user_id)
+    if not user:
+        return web.json_response({"success": True, "solana_tokens": [], "evm_tokens": []})
+
+    sol_addr = user.get("solana_wallet_address", "")
+    sol_tokens = []
+    if sol_addr:
+        try:
+            from services.solana_wallet import get_user_spl_tokens
+            sol_tokens = await get_user_spl_tokens(sol_addr)
+        except Exception:
+            pass
+
+    return web.json_response({
+        "success": True,
+        "solana_tokens": sol_tokens,
+        "evm_tokens": []
+    })
+
 
