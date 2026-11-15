@@ -2308,17 +2308,24 @@
           return;
         }
 
-        list.innerHTML = res.trades.map(t => `
+        list.innerHTML = res.trades.map(t => {
+          const isDex = String(t.trade_mode || "").toLowerCase().includes("dex");
+          const sizeLabel = isDex ? `${(t.sol_spent || t.usdt_spent || 0).toFixed(3)} SOL` : `$${(t.usdt_spent || 0).toFixed(2)}`;
+          const pnlVal = t.pnl_percent || 0;
+          const pnlSign = pnlVal >= 0 ? '+' : '';
+          const pnlExtra = isDex ? '' : ` ($${(t.pnl_usdt || 0).toFixed(2)})`;
+          return `
           <div class="log-item">
             <div>
-              <span class="log-symbol">${t.symbol} (${t.trade_mode.toUpperCase()})</span>
-              <div class="log-sub">Size: $${t.usdt_spent} | Exit: ${t.exit_reason || t.status}</div>
+              <span class="log-symbol">${t.symbol} (${(t.trade_mode || 'SPOT').toUpperCase()})</span>
+              <div class="log-sub">Size: ${sizeLabel} | Exit: ${t.exit_reason || t.status}</div>
             </div>
-            <div style="font-family: var(--mono); font-weight:700; color:${t.pnl_percent >= 0 ? 'var(--green)' : 'var(--red)'}">
-              ${t.pnl_percent >= 0 ? '+' : ''}${t.pnl_percent.toFixed(2)}% ($${t.pnl_usdt.toFixed(2)})
+            <div style="font-family: var(--mono); font-weight:700; color:${pnlVal >= 0 ? 'var(--green)' : 'var(--red)'}">
+              ${pnlSign}${pnlVal.toFixed(2)}%${pnlExtra}
             </div>
           </div>
-        `).join("");
+        `;
+        }).join("");
       } catch (e) {}
     }
 

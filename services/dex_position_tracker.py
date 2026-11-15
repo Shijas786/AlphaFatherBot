@@ -10,7 +10,8 @@ import time
 import logging
 from typing import Dict, Any, Optional, Callable
 import aiohttp
-from services.dex_swapper import execute_jupiter_sell, JUPITER_QUOTE_URL, SOL_MINT, LAMPORTS_PER_SOL, _HEADERS
+from services.dex_swapper import execute_jupiter_sell, get_spl_raw_balance, JUPITER_QUOTE_URL, SOL_MINT, LAMPORTS_PER_SOL, _HEADERS
+from database.db import close_dex_trade
 
 logger = logging.getLogger(__name__)
 
@@ -67,10 +68,21 @@ class DEXPositionTracker:
         max_hold_secs = int(user.get("max_hold_seconds", 90))
 
         start_time = time.time()
+        wallet_address = user.get("solana_wallet_address", "")
         logger.info(f"[DEXTracker] Monitoring {symbol} for user {user_id} (TP: +{tp_pct}%, SL: -{sl_pct}%, Timeout: {max_hold_secs}s)")
 
-        # Rough token raw amount (assumes 6 decimals)
-        raw_token_amount = int(tokens_received * 1_000_000)
+        # Query on-chain SPL token balance to get exact token amount regardless of decimals (6, 8, 9, etc.)
+        raw_token_amount = 0
+        for _ in range(6):
+            if wallet_address:
+                raw_token_amount, _ = await get_spl_raw_balance(wallet_address, token_mint)
+                if raw_token_amount > 0:
+                    break
+            await asyncio.sleep(1.0)
+
+        # Fallback if on-chain RPC indexer is slightly delayed
+        if raw_token_amount <= 0:
+            raw_token_amount = int(tokens_received * 1_000_000)
 
         while True:
             await asyncio.sleep(2.5)
@@ -105,6 +117,20 @@ class DEXPositionTracker:
         # Execute Auto-Sell via Jupiter
         logger.info(f"[DEXTracker] Triggering auto-exit for {symbol}: {exit_reason}")
         res = await execute_jupiter_sell(user, token_mint, percentage=1.0)
+        sol_received = float(res.get("sol_received", current_sol_val) or 0.0)
+
+        # Update DEX trade status in SQLite database
+        try:
+            await close_dex_trade(
+                dex_trade_id=dex_trade_id,
+                sol_received=sol_received,
+                pnl_percent=pnl_pct,
+                exit_reason=exit_reason,
+                exit_signature=res.get("signature", ""),
+                status="CLOSED" if res.get("success") else "FAILED_EXIT"
+            )
+        except Exception as e:
+            logger.error(f"[DEXTracker] Error updating dex_trade in database: {e}")
 
         if self.telegram_notifier:
             try:
@@ -115,7 +141,7 @@ class DEXPositionTracker:
                     f"━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"🪙 <b>Token:</b> #{symbol}\n"
                     f"💸 <b>Entry:</b> <code>{entry_sol_spent:.4f} SOL</code>\n"
-                    f"💰 <b>Exit:</b> <code>{res.get('sol_received', current_sol_val):.4f} SOL</code>\n"
+                    f"💰 <b>Exit:</b> <code>{sol_received:.4f} SOL</code>\n"
                     f"📈 <b>PnL:</b> <code>{sign}{pnl_pct:.2f}%</code>\n"
                     f"📌 <b>Reason:</b> <code>{exit_reason}</code>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━\n"

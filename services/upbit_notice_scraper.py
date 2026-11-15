@@ -63,16 +63,17 @@ class UpbitNoticeScraper:
 
             symbols = parse_upbit_title(title)
             if symbols:
+                notice_url = f"https://www.upbit.com/service_center/notice?id={nid}"
                 for symbol in symbols:
-                    logger.info(f"TARGET COIN FOUND (Direct Upbit): {symbol}")
-                    asyncio.create_task(self._trigger_callback(title, "UpbitDirect", symbol))
+                    logger.info(f"TARGET COIN FOUND (Direct Upbit): {symbol} (URL: {notice_url})")
+                    asyncio.create_task(self._trigger_callback(title, "UpbitDirect", symbol, notice_url))
 
-    async def _trigger_callback(self, title: str, source: str, symbol: str):
+    async def _trigger_callback(self, title: str, source: str, symbol: str, notice_url: str = ""):
         try:
             if asyncio.iscoroutinefunction(self.on_listing_detected):
-                await self.on_listing_detected(title, source, symbol, "", "")
+                await self.on_listing_detected(title, source, symbol, notice_url, "")
             else:
-                self.on_listing_detected(title, source, symbol, "", "")
+                self.on_listing_detected(title, source, symbol, notice_url, "")
         except Exception as e:
             logger.error(f"Error in direct Upbit notice callback: {e}")
 

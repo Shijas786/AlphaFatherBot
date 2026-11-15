@@ -129,7 +129,7 @@ async def _build_swap_transaction(
         "quoteResponse":        quote_response,
         "userPublicKey":        user_public_key,
         "wrapAndUnwrapSol":     True,
-        "computeUnitPriceMicroLamports": 50_000,  # Priority fee: ~0.00005 SOL
+        "computeUnitPriceMicroLamports": 100_000,  # Priority fee: ~0.0001 SOL for high-speed listing block inclusion
         "asLegacyTransaction":  False,
     }
     try:
@@ -181,7 +181,7 @@ async def _sign_and_send_transaction(
         signed_bytes = bytes(signed_tx)
         tx_b64_signed = base64.b64encode(signed_bytes).decode("utf-8")
 
-        # Send via RPC
+        # Send via RPC (skipPreflight=True for sub-second execution during listing spikes)
         payload = {
             "jsonrpc": "2.0",
             "id": 1,
@@ -190,9 +190,9 @@ async def _sign_and_send_transaction(
                 tx_b64_signed,
                 {
                     "encoding": "base64",
-                    "skipPreflight": False,
-                    "preflightCommitment": "confirmed",
-                    "maxRetries": 3,
+                    "skipPreflight": True,
+                    "preflightCommitment": "processed",
+                    "maxRetries": 5,
                 }
             ]
         }

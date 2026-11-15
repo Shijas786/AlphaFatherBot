@@ -72,11 +72,10 @@ def _extract_contracts_from_text(text: str) -> Dict[str, list]:
 
 
 def _extract_uuid_from_url(url: str) -> Optional[str]:
-    """Pull the notice UUID from an Upbit notice URL."""
-    m = re.search(
-        r'[?&]id=([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})',
-        url, re.IGNORECASE
-    )
+    """Pull the notice ID or UUID from an Upbit notice URL (supports both numeric IDs and UUIDs)."""
+    if not url:
+        return None
+    m = re.search(r'[?&]id=([0-9a-zA-Z_-]+)', url)
     return m.group(1) if m else None
 
 

@@ -116,10 +116,10 @@ async def api_get_user(request: web.Request):
             # ── DEX Wallets & Balances ──────────────────────────────────────────
             "solana_wallet_address": sol_addr,
             "solana_balance": round(sol_balance, 4),
-            "solana_buy_amount_sol": float(user.get("solana_buy_amount_sol", 0.1)),
+            "solana_buy_amount_sol": float(user.get("solana_buy_amount_sol") or 0.1),
             "evm_wallet_address": evm_addr,
             "evm_balance": round(evm_balance, 4),
-            "evm_buy_amount_eth": float(user.get("evm_buy_amount_eth", 0.05)),
+            "evm_buy_amount_eth": float(user.get("evm_buy_amount_eth") or 0.05),
             "stats": stats
         }
     })
@@ -187,9 +187,10 @@ async def api_get_trades(request: web.Request):
 
     # For any open trade, calculate live real-time price & PnL
     for t in trades:
-        if t.get("status") == "OPEN":
+        mode = str(t.get("trade_mode", "")).lower()
+        if t.get("status") == "OPEN" and not mode.startswith("dex"):
             symbol = t["symbol"]
-            is_futures = (t.get("trade_mode") == "futures")
+            is_futures = (mode == "futures")
             buy_price = float(t.get("buy_price", 0.0))
             if buy_price > 0:
                 current_p = await binance_service.get_symbol_price(symbol, is_futures=is_futures)

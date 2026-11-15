@@ -94,7 +94,11 @@ async def init_db():
             "ALTER TABLE users ADD COLUMN evm_buy_amount_eth REAL DEFAULT 0.05",
             # ── HD Master Wallet Index ─────────────────────────────────────────
             "ALTER TABLE users ADD COLUMN wallet_index INTEGER DEFAULT -1",
-            # ── DEX trades table ───────────────────────────────────────────────
+            # ── DEX trades table updates ───────────────────────────────────────
+            "ALTER TABLE dex_trades ADD COLUMN exit_reason TEXT DEFAULT ''",
+            "ALTER TABLE dex_trades ADD COLUMN sol_received REAL DEFAULT 0.0",
+            "ALTER TABLE dex_trades ADD COLUMN pnl_percent REAL DEFAULT 0.0",
+            "ALTER TABLE dex_trades ADD COLUMN exit_signature TEXT DEFAULT ''",
         ]
 
         # Create DEX trades table if not exists
@@ -221,6 +225,27 @@ async def record_dex_trade(
         ))
         await db.commit()
         return cursor.lastrowid
+
+async def close_dex_trade(
+    dex_trade_id: int,
+    sol_received: float,
+    pnl_percent: float,
+    exit_reason: str,
+    exit_signature: str = "",
+    status: str = "CLOSED"
+):
+    """Update a DEX trade upon exit/sell."""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        await db.execute("""
+            UPDATE dex_trades
+            SET sol_received = ?,
+                pnl_percent = ?,
+                exit_reason = ?,
+                exit_signature = ?,
+                status = ?
+            WHERE id = ?
+        """, (sol_received, pnl_percent, exit_reason, exit_signature, status, dex_trade_id))
+        await db.commit()
 
 async def update_user_fields(telegram_id: int, **kwargs):
     """Update arbitrary user settings."""
@@ -405,16 +430,36 @@ async def get_global_profit_sharing_summary() -> Dict[str, Any]:
             "top_earning_users": [dict(r) for r in top_users]
         }
 
-async def get_user_trades(user_id: int, limit: int = 10) -> List[Dict[str, Any]]:
-    """Get recent trades for a user."""
+async def get_user_trades(user_id: int, limit: int = 15) -> List[Dict[str, Any]]:
+    """Get recent trades (both Binance & DEX) for a user."""
     async with aiosqlite.connect(config.DATABASE_PATH) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute(
             "SELECT * FROM trades WHERE user_id = ? ORDER BY id DESC LIMIT ?",
             (user_id, limit)
         ) as cursor:
-            rows = await cursor.fetchall()
-            return [dict(r) for r in rows]
+            cex_rows = [dict(r) for r in await cursor.fetchall()]
+
+        # Also fetch recent DEX trades
+        try:
+            async with db.execute(
+                "SELECT * FROM dex_trades WHERE user_id = ? ORDER BY id DESC LIMIT ?",
+                (user_id, limit)
+            ) as cursor:
+                dex_rows = []
+                for r in await cursor.fetchall():
+                    d = dict(r)
+                    d["trade_mode"] = f"dex_{d.get('network', 'solana')}"
+                    d["usdt_spent"] = d.get("sol_spent", 0.0)
+                    d["buy_price"] = 0.0
+                    d["pnl_usdt"] = 0.0
+                    dex_rows.append(d)
+        except Exception:
+            dex_rows = []
+
+        all_trades = cex_rows + dex_rows
+        all_trades.sort(key=lambda t: str(t.get("created_at") or ""), reverse=True)
+        return all_trades[:limit]
 
 async def get_recent_listings(limit: int = 10) -> List[Dict[str, Any]]:
     """Retrieve recent Upbit listing notices."""

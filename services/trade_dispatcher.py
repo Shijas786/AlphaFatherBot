@@ -162,7 +162,7 @@ class TradeDispatcher:
     ):
         user_id = user["telegram_id"]
         trade_mode = user.get("trade_mode", "spot")
-        order_amount = float(user.get("order_amount_usdt", 50.0))
+        order_amount = float(user.get("order_amount_usdt") or 50.0)
 
         try:
             api_key = decrypt_secret(user.get("binance_api_key", ""))
@@ -266,7 +266,7 @@ class TradeDispatcher:
             logger.info(f"[DEX] Network '{network}' not yet supported for user {user_id}. Skipping.")
             return
 
-        sol_amount = float(user.get("solana_buy_amount_sol", 0.1))
+        sol_amount = float(user.get("solana_buy_amount_sol") or 0.1)
 
         # Check wallet is provisioned
         wallet_address = user.get("solana_wallet_address", "")
