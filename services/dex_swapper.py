@@ -36,8 +36,8 @@ SOL_MINT          = "So11111111111111111111111111111111111111112"
 DEXSCREENER_URL   = "https://api.dexscreener.com/latest/dex/tokens/"
 
 # ─── Defaults ─────────────────────────────────────────────────────────────────
-DEFAULT_SLIPPAGE_BPS   = 300    # 3%
-MIN_LIQUIDITY_USD      = 5_000  # Skip if pool < $5k
+DEFAULT_SLIPPAGE_BPS   = getattr(config, "DEX_SLIPPAGE_BPS", 1500)  # 15% slippage buffer for listing pumps
+MIN_LIQUIDITY_USD      = 3_000  # Low threshold
 
 _HEADERS = {"Content-Type": "application/json", "Accept": "application/json"}
 
@@ -274,15 +274,9 @@ async def execute_jupiter_swap(
 
     out_amount_raw = int(quote.get("outAmount", 0))
     price_impact   = float(quote.get("priceImpactPct", 0))
+    logger.info(f"[DEXSwapper] Quote price impact: {price_impact:.2f}% (executing sniper swap)")
 
-    # ── 3. Safety check: reject if price impact > 15%
-    if price_impact > 15.0:
-        return {
-            "success": False,
-            "error": f"Price impact too high: {price_impact:.1f}% — skipping to protect user funds"
-        }
-
-    # ── 4. Build swap transaction
+    # ── 3. Build swap transaction
     tx_b64 = await _build_swap_transaction(quote, wallet_address)
     if not tx_b64:
         return {"success": False, "error": "Failed to build swap transaction from Jupiter"}
