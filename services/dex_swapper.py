@@ -304,3 +304,114 @@ async def execute_jupiter_swap(
         "liquidity_usd":    liquidity,
         "latency_ms":       latency_ms,
     }
+
+
+async def get_spl_raw_balance(wallet_address: str, token_mint: str, rpc_url: str = DEFAULT_SOLANA_RPC):
+    """Get (raw_amount_int, decimals) for an SPL token owned by wallet."""
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getTokenAccountsByOwner",
+        "params": [
+            wallet_address,
+            {"mint": token_mint},
+            {"encoding": "jsonParsed", "commitment": "confirmed"}
+        ]
+    }
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                rpc_url,
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=5),
+                headers={"Content-Type": "application/json"}
+            ) as resp:
+                data = await resp.json()
+                accounts = (data.get("result") or {}).get("value", [])
+                if not accounts:
+                    return 0, 6
+                acc_info = accounts[0].get("account", {}).get("data", {}).get("parsed", {}).get("info", {}).get("tokenAmount", {})
+                raw_amt = int(acc_info.get("amount", "0"))
+                decimals = int(acc_info.get("decimals", 6))
+                return raw_amt, decimals
+    except Exception as e:
+        logger.error(f"[DEXSwapper] Failed to get raw token balance: {e}")
+        return 0, 6
+
+
+async def execute_jupiter_sell(
+    user: Dict[str, Any],
+    token_mint: str,
+    percentage: float = 1.0,
+    slippage_bps: int = DEFAULT_SLIPPAGE_BPS,
+) -> Dict[str, Any]:
+    """
+    Swap token back to SOL (Exit position / Take Profit).
+    """
+    start_time = time.time()
+    wallet_address = user.get("solana_wallet_address", "")
+    encrypted_pk   = user.get("encrypted_solana_private_key", "")
+    rpc_url = getattr(config, "SOLANA_RPC_URL", DEFAULT_SOLANA_RPC)
+
+    if not wallet_address or not encrypted_pk:
+        return {"success": False, "error": "User Solana wallet not configured"}
+
+    # 1. Fetch exact raw token balance
+    raw_balance, decimals = await get_spl_raw_balance(wallet_address, token_mint, rpc_url)
+    if raw_balance <= 0:
+        return {"success": False, "error": "Zero token balance to sell"}
+
+    sell_raw_amount = int(raw_balance * percentage)
+    if sell_raw_amount <= 0:
+        return {"success": False, "error": "Sell amount too small"}
+
+    # 2. Get quote to swap Token -> SOL
+    params = {
+        "inputMint":   token_mint,
+        "outputMint":  SOL_MINT,
+        "amount":      sell_raw_amount,
+        "slippageBps": slippage_bps,
+        "onlyDirectRoutes": "false",
+        "asLegacyTransaction": "false",
+    }
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                JUPITER_QUOTE_URL,
+                params=params,
+                headers=_HEADERS,
+                timeout=aiohttp.ClientTimeout(total=6)
+            ) as resp:
+                if resp.status != 200:
+                    text = await resp.text()
+                    return {"success": False, "error": f"Jupiter sell quote failed: {text[:150]}"}
+                quote = await resp.json()
+    except Exception as e:
+        return {"success": False, "error": f"Quote error: {str(e)}"}
+
+    sol_out_lamports = int(quote.get("outAmount", 0))
+    sol_out = sol_out_lamports / LAMPORTS_PER_SOL
+
+    # 3. Build swap transaction
+    tx_b64 = await _build_swap_transaction(quote, wallet_address)
+    if not tx_b64:
+        return {"success": False, "error": "Failed to build sell transaction"}
+
+    # 4. Sign and send
+    private_key_b58 = decrypt_secret(encrypted_pk)
+    sig = await _sign_and_send_transaction(tx_b64, private_key_b58, rpc_url)
+    private_key_b58 = ""
+
+    if not sig:
+        return {"success": False, "error": "Solana network transaction failed"}
+
+    latency_ms = int((time.time() - start_time) * 1000)
+    return {
+        "success": True,
+        "signature": sig,
+        "solscan_url": f"https://solscan.io/tx/{sig}",
+        "tokens_sold": sell_raw_amount / (10 ** decimals),
+        "sol_received": sol_out,
+        "latency_ms": latency_ms
+    }

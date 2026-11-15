@@ -51,6 +51,8 @@ async def main():
     trade_dispatcher.set_telegram_buy_notifier(notifier.notify_buy)
     trade_dispatcher.set_group_broadcaster(notifier.broadcast_listing_to_groups)
     position_tracker.set_telegram_notifier(notifier.notify_exit)
+    from services.dex_position_tracker import dex_position_tracker
+    dex_position_tracker.set_telegram_notifier(lambda uid, msg: app.bot.send_message(chat_id=uid, text=msg, parse_mode="HTML"))
 
     # 5. Define Centralized Listing Callback
     async def on_listing_announcement(title: str, source: str, coin: str, notice_url: str = "", body_text: str = ""):

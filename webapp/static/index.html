@@ -983,6 +983,16 @@
       </div>
     </header>
 
+    <!-- Real-Time Radar Telemetry Bar -->
+    <div style="display:flex; justify-content:space-between; align-items:center; background:#121418; border:1px solid #1c1f26; border-radius:8px; padding:7px 12px; margin-bottom:12px; font-family:var(--mono); font-size:10px;">
+      <div style="display:flex; align-items:center; gap:6px; color:#4ade80;">
+        <span class="pulse-dot" style="width:6px; height:6px;"></span>
+        <span>RADAR: ARMED (3ms)</span>
+      </div>
+      <div style="color:#9ba1ad;">FEED: CAPO STREAM</div>
+      <div style="color:#ffffff; font-weight:700;">SOL: <span style="color:#4ade80;" id="ticker-sol-price">$168.40</span></div>
+    </div>
+
     <!-- Navigation Tabs -->
     <nav class="tab-strip">
       <button class="tab-trigger active" data-tab="tab-terminal">TERMINAL</button>
@@ -1158,6 +1168,11 @@
           <input type="text" id="wallet-active-address" readonly value="Generating...">
           <button class="btn-copy-address" onclick="copyCurrentAddress()">COPY</button>
         </div>
+        <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+          <button type="button" onclick="openExportKeyModal()" style="background:transparent; border:1px solid #282c37; color:#9ba1ad; font-family:var(--mono); font-size:10px; font-weight:700; padding:6px 12px; border-radius:6px; cursor:pointer;">
+            🔑 EXPORT PRIVATE KEY
+          </button>
+        </div>
       </section>
 
       <!-- Assets & Sniped Tokens List -->
@@ -1200,7 +1215,7 @@
 
         <!-- Order Size -->
         <div class="field-group">
-          <label class="field-label">BUY AMOUNT (USDT)</label>
+          <label class="field-label">BINANCE BUY AMOUNT (USDT)</label>
           <div class="chips-bar" id="chips-amount">
             <button class="chip-item" data-val="25">$25</button>
             <button class="chip-item active" data-val="50">$50</button>
@@ -1209,6 +1224,38 @@
             <button class="chip-item" data-val="500">$500</button>
           </div>
           <input type="number" class="text-input" id="input-custom-size" placeholder="Or enter exact custom USDT amount" min="10" step="5">
+        </div>
+
+        <!-- Solana DEX Buy Size -->
+        <div class="field-group">
+          <div class="field-head">
+            <label class="field-label">DEX SNIPE BUY SIZE (SOLANA / JUPITER)</label>
+            <span class="field-val-badge" id="badge-dex-sol">0.10 SOL</span>
+          </div>
+          <div class="chips-bar" id="chips-sol-amount">
+            <button class="chip-item" data-sol="0.05">0.05 SOL</button>
+            <button class="chip-item active" data-sol="0.1">0.10 SOL</button>
+            <button class="chip-item" data-sol="0.25">0.25 SOL</button>
+            <button class="chip-item" data-sol="0.5">0.50 SOL</button>
+            <button class="chip-item" data-sol="1.0">1.00 SOL</button>
+          </div>
+          <input type="number" class="text-input" id="input-custom-sol" placeholder="Or enter exact custom SOL amount" min="0.01" step="0.05">
+          <span class="field-hint">Used automatically when non-Binance Upbit listings are sniped on Solana.</span>
+        </div>
+
+        <!-- EVM DEX Buy Size -->
+        <div class="field-group">
+          <div class="field-head">
+            <label class="field-label">DEX SNIPE BUY SIZE (EVM / BASE)</label>
+            <span class="field-val-badge" id="badge-dex-evm">0.05 ETH</span>
+          </div>
+          <div class="chips-bar" id="chips-evm-amount">
+            <button class="chip-item" data-eth="0.01">0.01 ETH</button>
+            <button class="chip-item" data-eth="0.025">0.025 ETH</button>
+            <button class="chip-item active" data-eth="0.05">0.05 ETH</button>
+            <button class="chip-item" data-eth="0.1">0.10 ETH</button>
+          </div>
+          <input type="number" class="text-input" id="input-custom-evm" placeholder="Or enter exact custom ETH amount" min="0.005" step="0.01">
         </div>
       </section>
 
@@ -1407,6 +1454,30 @@
     </div>
   </div>
 
+  <!-- Modal: Export Private Key -->
+  <div class="modal-overlay" id="modal-export-key" onclick="if(event.target===this) closeExportKeyModal()">
+    <div class="modal-sheet">
+      <div class="modal-head">
+        <span class="modal-title" style="color:#ff3344;">SECURITY WARNING ⚠️</span>
+        <button class="btn-modal-close" onclick="closeExportKeyModal()">✕</button>
+      </div>
+      <div style="background:rgba(255, 51, 68, 0.1); border:1px solid rgba(255,51,68,0.3); border-radius:10px; padding:12px; margin-bottom:14px; font-size:11px; line-height:1.5;">
+        Never share your private key with anyone. Anyone with this key can access and withdraw all your funds.
+      </div>
+      <div id="export-key-unrevealed">
+        <button class="btn-action" onclick="revealPrivateKey()" style="background:#ff3344; color:#ffffff;">I UNDERSTAND, REVEAL PRIVATE KEY</button>
+      </div>
+      <div id="export-key-revealed" style="display:none;">
+        <label class="field-label" id="export-key-format-label">PRIVATE KEY</label>
+        <div class="address-copy-box" style="margin-bottom:12px;">
+          <input type="text" id="export-key-value" readonly value="">
+        </div>
+        <button class="btn-action" onclick="copyExportedKey()" style="margin-bottom:8px;">COPY PRIVATE KEY</button>
+        <span class="field-hint" style="text-align:center; display:block;">Import directly into Phantom (Solana) or MetaMask (EVM).</span>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Wallet UI Controller
     let currentWalletChain = "solana";
@@ -1464,9 +1535,11 @@
                     <div class="token-sub">${t.mint.slice(0, 6)}…${t.mint.slice(-4)}</div>
                   </div>
                 </div>
-                <div class="token-right">
+                <div class="token-right" style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
                   <div class="token-amount">${t.amount.toFixed(2)}</div>
-                  <div class="token-fiat">Upbit Sniped</div>
+                  <button type="button" onclick="sellToken('${t.mint}', '${t.symbol || 'TOKEN'}')" style="width:auto; margin:0; padding:3px 8px; font-family:var(--mono); font-size:9px; font-weight:800; background:#ff3344; color:#ffffff; border:none; border-radius:4px; cursor:pointer;">
+                    SELL 100%
+                  </button>
                 </div>
               </div>
             `;
@@ -1638,6 +1711,84 @@
         statusMsg.innerHTML = `<span style="color:var(--red);">✖ Error: ${e.message}</span>`;
         btn.disabled = false;
         btn.textContent = "RETRY SEND";
+      }
+    };
+
+    // Export Private Key Modal Logic
+    window.openExportKeyModal = function() {
+      if (!currentUser) return;
+      haptic("selection");
+      document.getElementById("export-key-unrevealed").style.display = "block";
+      document.getElementById("export-key-revealed").style.display = "none";
+      document.getElementById("export-key-value").value = "";
+      document.getElementById("modal-export-key").classList.add("active");
+    };
+
+    window.closeExportKeyModal = function() {
+      document.getElementById("modal-export-key").classList.remove("active");
+      document.getElementById("export-key-value").value = "";
+      document.getElementById("export-key-unrevealed").style.display = "block";
+      document.getElementById("export-key-revealed").style.display = "none";
+    };
+
+    window.revealPrivateKey = async function() {
+      haptic("impact");
+      const isSol = currentWalletChain === "solana";
+      const btn = document.querySelector("#export-key-unrevealed button");
+      if (btn) btn.textContent = "DECRYPTING PRIVATE KEY...";
+
+      try {
+        const res = await api("/api/wallet/export-key", {
+          method: "POST",
+          body: JSON.stringify({ chain: isSol ? "solana" : "evm" })
+        });
+        if (res.success && res.private_key) {
+          haptic("notification");
+          document.getElementById("export-key-value").value = res.private_key;
+          document.getElementById("export-key-format-label").textContent = `PRIVATE KEY (${res.format || (isSol ? 'Base58' : 'Hex')})`;
+          document.getElementById("export-key-unrevealed").style.display = "none";
+          document.getElementById("export-key-revealed").style.display = "block";
+          showToast("Key revealed — keep strictly confidential! ⚠️");
+        } else {
+          showToast(res.error || "Failed to export key");
+        }
+      } catch (e) {
+        showToast("Error retrieving key: " + e.message);
+      } finally {
+        if (btn) btn.textContent = "I UNDERSTAND, REVEAL PRIVATE KEY";
+      }
+    };
+
+    window.copyExportedKey = function() {
+      const val = document.getElementById("export-key-value").value;
+      if (val) {
+        navigator.clipboard.writeText(val);
+        haptic("impact");
+        showToast("Private Key Copied ✔");
+      }
+    };
+
+    // 1-Tap Sell DEX Token Back to SOL
+    window.sellToken = async function(mint, symbol) {
+      if (!confirm(`Sell 100% of ${symbol} back to SOL on Jupiter?`)) return;
+      haptic("impact");
+      showToast(`Selling 100% of ${symbol} via Jupiter...`);
+      try {
+        const res = await api("/api/wallet/sell", {
+          method: "POST",
+          body: JSON.stringify({ mint: mint, percentage: 1.0 })
+        });
+        if (res.success) {
+          haptic("notification");
+          showToast(`Sold ${symbol}! Received ~${res.sol_received ? res.sol_received.toFixed(4) : ''} SOL ✔`);
+          await loadUserState();
+          await loadWalletTokens();
+          renderWallet();
+        } else {
+          showToast(res.error || "Sell failed");
+        }
+      } catch (e) {
+        showToast("Sell failed: " + e.message);
       }
     };
   </script>
@@ -1854,6 +2005,24 @@
         if (parseFloat(c.dataset.val) === u.order_amount_usdt) c.classList.add("active");
         else c.classList.remove("active");
       });
+
+      // Solana DEX Buy Size Chips
+      const solBuyAmt = u.solana_buy_amount_sol || 0.10;
+      const bSol = document.getElementById("badge-dex-sol");
+      if (bSol) bSol.textContent = solBuyAmt.toFixed(2) + " SOL";
+      document.querySelectorAll("#chips-sol-amount .chip-item").forEach(c => {
+        if (parseFloat(c.dataset.sol) === solBuyAmt) c.classList.add("active");
+        else c.classList.remove("active");
+      });
+
+      // EVM DEX Buy Size Chips
+      const evmBuyAmt = u.evm_buy_amount_eth || 0.05;
+      const bEvm = document.getElementById("badge-dex-evm");
+      if (bEvm) bEvm.textContent = evmBuyAmt.toFixed(3) + " ETH";
+      document.querySelectorAll("#chips-evm-amount .chip-item").forEach(c => {
+        if (parseFloat(c.dataset.eth) === evmBuyAmt) c.classList.add("active");
+        else c.classList.remove("active");
+      });
     }
 
     // Power Toggle Event
@@ -1929,6 +2098,50 @@
       }
     });
 
+    // Solana DEX Chips Click
+    document.querySelectorAll("#chips-sol-amount .chip-item").forEach(chip => {
+      chip.addEventListener("click", () => {
+        haptic("selection");
+        document.querySelectorAll("#chips-sol-amount .chip-item").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        document.getElementById("input-custom-sol").value = "";
+        const val = parseFloat(chip.dataset.sol);
+        currentUser.solana_buy_amount_sol = val;
+        document.getElementById("badge-dex-sol").textContent = val.toFixed(2) + " SOL";
+      });
+    });
+
+    document.getElementById("input-custom-sol").addEventListener("input", (e) => {
+      const val = parseFloat(e.target.value);
+      if (val && val > 0) {
+        document.querySelectorAll("#chips-sol-amount .chip-item").forEach(c => c.classList.remove("active"));
+        currentUser.solana_buy_amount_sol = val;
+        document.getElementById("badge-dex-sol").textContent = val.toFixed(2) + " SOL";
+      }
+    });
+
+    // EVM DEX Chips Click
+    document.querySelectorAll("#chips-evm-amount .chip-item").forEach(chip => {
+      chip.addEventListener("click", () => {
+        haptic("selection");
+        document.querySelectorAll("#chips-evm-amount .chip-item").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        document.getElementById("input-custom-evm").value = "";
+        const val = parseFloat(chip.dataset.eth);
+        currentUser.evm_buy_amount_eth = val;
+        document.getElementById("badge-dex-evm").textContent = val.toFixed(3) + " ETH";
+      });
+    });
+
+    document.getElementById("input-custom-evm").addEventListener("input", (e) => {
+      const val = parseFloat(e.target.value);
+      if (val && val > 0) {
+        document.querySelectorAll("#chips-evm-amount .chip-item").forEach(c => c.classList.remove("active"));
+        currentUser.evm_buy_amount_eth = val;
+        document.getElementById("badge-dex-evm").textContent = val.toFixed(3) + " ETH";
+      }
+    });
+
     // Sliders Live Badges
     document.getElementById("slider-tp").addEventListener("input", (e) => {
       document.getElementById("badge-tp").textContent = "+" + e.target.value + "%";
@@ -1947,6 +2160,8 @@
         trade_mode: currentUser.trade_mode,
         futures_leverage: currentUser.futures_leverage,
         order_amount_usdt: currentUser.order_amount_usdt,
+        solana_buy_amount_sol: currentUser.solana_buy_amount_sol || 0.10,
+        evm_buy_amount_eth: currentUser.evm_buy_amount_eth || 0.05,
         tp_percent: parseFloat(document.getElementById("slider-tp").value),
         sl_percent: parseFloat(document.getElementById("slider-sl").value),
         max_hold_seconds: parseInt(document.getElementById("slider-timeout").value)
@@ -2151,8 +2366,24 @@
     loadPositions();
     loadListingsFeed();
     loadServerIp();
+    updateSolTicker();
     setInterval(loadPositions, 2000);
     setInterval(loadListingsFeed, 5000);
+    setInterval(updateSolTicker, 10000);
+
+    async function updateSolTicker() {
+      try {
+        const res = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT");
+        if (res.ok) {
+          const data = await res.json();
+          const p = parseFloat(data.price);
+          if (p && !isNaN(p)) {
+            const el = document.getElementById("ticker-sol-price");
+            if (el) el.textContent = "$" + p.toFixed(2);
+          }
+        }
+      } catch (e) {}
+    }
   </script>
 </body>
 </html>

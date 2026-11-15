@@ -296,7 +296,7 @@ class TradeDispatcher:
         total_latency_ms = int((time.time() - announcement_start_time) * 1000)
 
         # Record in DB
-        await record_dex_trade(
+        trade_id = await record_dex_trade(
             user_id=user_id,
             symbol=coin,
             network=network,
@@ -311,6 +311,21 @@ class TradeDispatcher:
             status="FILLED" if result.get("success") else "FAILED",
             error_msg=result.get("error", ""),
         )
+
+        # Launch automated DEX Smart Exit Tracker (Auto TP/SL/Timeout)
+        if result.get("success"):
+            try:
+                from services.dex_position_tracker import dex_position_tracker
+                dex_position_tracker.start_tracking(
+                    dex_trade_id=trade_id,
+                    user=user,
+                    token_mint=contract,
+                    symbol=coin,
+                    entry_sol_spent=sol_amount,
+                    tokens_received=result.get("out_tokens_approx", 0.0)
+                )
+            except Exception as e:
+                logger.error(f"[DEX] Failed to launch DEX position tracker: {e}")
 
         # Telegram notification
         if self.telegram_buy_notifier:

@@ -321,4 +321,66 @@ async def api_get_wallet_tokens(request: web.Request):
         "evm_tokens": []
     })
 
+async def api_sell_wallet_token(request: web.Request):
+    """POST /api/wallet/sell - 1-Tap sell DEX tokens back to SOL via Jupiter."""
+    tg_user = get_auth_user(request)
+    user_id = tg_user["id"]
+    data = await request.json()
+
+    mint = data.get("mint", "").strip()
+    pct = float(data.get("percentage", 1.0))
+
+    if not mint:
+        return web.json_response({"success": False, "error": "Token mint address is required"}, status=400)
+
+    user = await get_user(user_id)
+    if not user:
+        return web.json_response({"success": False, "error": "User not found"}, status=404)
+
+    try:
+        from services.dex_swapper import execute_jupiter_sell
+        res = await execute_jupiter_sell(user, mint, percentage=pct)
+        return web.json_response(res)
+    except Exception as e:
+        logger.error(f"Error in api_sell_wallet_token: {e}", exc_info=True)
+        return web.json_response({"success": False, "error": str(e)}, status=500)
+
+async def api_export_private_key(request: web.Request):
+    """POST /api/wallet/export-key - Reveal user's private key for self-custody import."""
+    tg_user = get_auth_user(request)
+    user_id = tg_user["id"]
+    data = await request.json()
+    chain = (data.get("chain") or "solana").lower()
+
+    user = await get_user(user_id)
+    if not user:
+        return web.json_response({"success": False, "error": "User not found"}, status=404)
+
+    if chain == "solana":
+        enc_pk = user.get("encrypted_solana_private_key", "")
+        if not enc_pk:
+            return web.json_response({"success": False, "error": "No Solana wallet found"}, status=400)
+        priv = decrypt_secret(enc_pk)
+        return web.json_response({
+            "success": True,
+            "chain": "solana",
+            "address": user.get("solana_wallet_address", ""),
+            "private_key": priv,
+            "format": "Base58 (Import directly into Phantom / Solflare)"
+        })
+    elif chain in ("evm", "base", "ethereum"):
+        enc_pk = user.get("encrypted_evm_private_key", "")
+        if not enc_pk:
+            return web.json_response({"success": False, "error": "No EVM wallet found"}, status=400)
+        priv = decrypt_secret(enc_pk)
+        return web.json_response({
+            "success": True,
+            "chain": "evm",
+            "address": user.get("evm_wallet_address", ""),
+            "private_key": "0x" + priv if not priv.startswith("0x") else priv,
+            "format": "Hex (Import directly into MetaMask / Rabby)"
+        })
+
+    return web.json_response({"success": False, "error": f"Invalid chain: {chain}"}, status=400)
+
 
