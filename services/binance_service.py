@@ -14,6 +14,10 @@ class BinanceService:
     def __init__(self):
         self._session: Optional[aiohttp.ClientSession] = None
 
+    @property
+    def proxy(self) -> Optional[str]:
+        return getattr(config, "BINANCE_PROXY_URL", None) or None
+
     async def get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
             # High-performance TCP connector with persistent connection pool & keep-alive
@@ -48,7 +52,7 @@ class BinanceService:
         url = f"{config.BINANCE_FUTURES_BASE_URL}/fapi/v2/account" if check_futures else f"{config.BINANCE_SPOT_BASE_URL}/api/v3/account"
 
         try:
-            async with session.get(url, params=params, headers=headers) as resp:
+            async with session.get(url, params=params, headers=headers, proxy=self.proxy) as resp:
                 if resp.status == 200:
                     return True, "API Key successfully validated!"
                 else:
@@ -83,7 +87,7 @@ class BinanceService:
             params_spot = {"timestamp": int(time.time() * 1000), "recvWindow": 60000}
             params_spot["signature"] = self._sign(api_secret, params_spot)
             url_spot = f"{config.BINANCE_SPOT_BASE_URL}/api/v3/account"
-            async with session.get(url_spot, params=params_spot, headers=headers) as resp:
+            async with session.get(url_spot, params=params_spot, headers=headers, proxy=self.proxy) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     for item in data.get("balances", []):
@@ -106,7 +110,7 @@ class BinanceService:
             params_fut = {"timestamp": int(time.time() * 1000), "recvWindow": 60000}
             params_fut["signature"] = self._sign(api_secret, params_fut)
             url_fut = f"{config.BINANCE_FUTURES_BASE_URL}/fapi/v2/balance"
-            async with session.get(url_fut, params=params_fut, headers=headers) as resp:
+            async with session.get(url_fut, params=params_fut, headers=headers, proxy=self.proxy) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     for item in data:
@@ -156,7 +160,7 @@ class BinanceService:
             else f"{config.BINANCE_SPOT_BASE_URL}/api/v3/ticker/price?symbol={symbol}"
         )
         try:
-            async with session.get(url) as resp:
+            async with session.get(url, proxy=self.proxy) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     return float(data.get("price", 0.0))
@@ -190,7 +194,7 @@ class BinanceService:
         url = f"{config.BINANCE_SPOT_BASE_URL}/api/v3/order"
         start_time = time.time()
         try:
-            async with session.post(url, data=params, headers=headers) as resp:
+            async with session.post(url, data=params, headers=headers, proxy=self.proxy) as resp:
                 latency_ms = int((time.time() - start_time) * 1000)
                 data = await resp.json()
                 if resp.status == 200:
@@ -245,7 +249,7 @@ class BinanceService:
 
         url = f"{config.BINANCE_SPOT_BASE_URL}/api/v3/order"
         try:
-            async with session.post(url, data=params, headers=headers) as resp:
+            async with session.post(url, data=params, headers=headers, proxy=self.proxy) as resp:
                 data = await resp.json()
                 if resp.status == 200:
                     executed_qty = float(data.get("executedQty", 0.0))
@@ -284,7 +288,7 @@ class BinanceService:
         }
         lev_params["signature"] = self._sign(api_secret, lev_params)
         try:
-            await session.post(f"{config.BINANCE_FUTURES_BASE_URL}/fapi/v1/leverage", data=lev_params, headers=headers)
+            await session.post(f"{config.BINANCE_FUTURES_BASE_URL}/fapi/v1/leverage", data=lev_params, headers=headers, proxy=self.proxy)
         except Exception as e:
             logger.warning(f"Failed to set leverage for {symbol}: {e}")
 
@@ -313,7 +317,7 @@ class BinanceService:
         start_time = time.time()
         url = f"{config.BINANCE_FUTURES_BASE_URL}/fapi/v1/order"
         try:
-            async with session.post(url, data=params, headers=headers) as resp:
+            async with session.post(url, data=params, headers=headers, proxy=self.proxy) as resp:
                 latency_ms = int((time.time() - start_time) * 1000)
                 data = await resp.json()
                 if resp.status == 200:
@@ -363,7 +367,7 @@ class BinanceService:
 
         url = f"{config.BINANCE_FUTURES_BASE_URL}/fapi/v1/order"
         try:
-            async with session.post(url, data=params, headers=headers) as resp:
+            async with session.post(url, data=params, headers=headers, proxy=self.proxy) as resp:
                 data = await resp.json()
                 if resp.status == 200:
                     avg_price = float(data.get("avgPrice", 0.0))

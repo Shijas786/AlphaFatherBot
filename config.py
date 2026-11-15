@@ -27,9 +27,10 @@ MASTER_WALLET_MNEMONIC = os.getenv(
 TREE_NEWS_WS_URL = os.getenv("TREE_NEWS_WS_URL", "wss://news.treeofalpha.com/ws")
 TREE_NEWS_API_KEY = os.getenv("TREE_NEWS_API_KEY", "")
 
-# Binance URLs
+# Binance URLs & Static Proxy
 BINANCE_SPOT_BASE_URL = os.getenv("BINANCE_SPOT_BASE_URL", "https://api.binance.com")
 BINANCE_FUTURES_BASE_URL = os.getenv("BINANCE_FUTURES_BASE_URL", "https://fapi.binance.com")
+BINANCE_PROXY_URL = os.getenv("BINANCE_PROXY_URL", "http://mncnbxht:vborty6p7gkt@64.137.10.153:5803")
 
 # Database Path
 db_env = os.getenv("DATABASE_PATH", "data/bot.db")

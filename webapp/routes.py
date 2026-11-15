@@ -223,7 +223,7 @@ async def api_get_server_ip(request: web.Request):
     """GET /api/ip - Get server outbound IP for Binance trusted IP whitelist."""
     try:
         session = await binance_service.get_session()
-        async with session.get("https://api.ipify.org?format=json", timeout=3) as resp:
+        async with session.get("https://api.ipify.org?format=json", proxy=binance_service.proxy, timeout=5) as resp:
             if resp.status == 200:
                 data = await resp.json()
                 return web.json_response({"success": True, "ip": data.get("ip")})
@@ -241,7 +241,7 @@ async def api_get_system_status(request: web.Request):
     outbound_ip = "Unknown"
     try:
         session = await binance_service.get_session()
-        async with session.get("https://api.ipify.org?format=json", timeout=3) as resp:
+        async with session.get("https://api.ipify.org?format=json", proxy=binance_service.proxy, timeout=5) as resp:
             if resp.status == 200:
                 data = await resp.json()
                 outbound_ip = data.get("ip", "Unknown")
