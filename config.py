@@ -33,7 +33,8 @@ BINANCE_FUTURES_BASE_URL = os.getenv("BINANCE_FUTURES_BASE_URL", "https://fapi.b
 BINANCE_PROXY_URL = os.getenv("BINANCE_PROXY_URL", "http://mncnbxht:vborty6p7gkt@64.137.10.153:5803")
 
 # Database Path
-db_env = os.getenv("DATABASE_PATH", "data/bot.db")
+default_db = "/data/bot.db" if os.path.isdir("/data") and os.access("/data", os.W_OK) else "data/bot.db"
+db_env = os.getenv("DATABASE_PATH", default_db)
 if os.path.isabs(db_env):
     DATABASE_PATH = Path(db_env)
 else:
