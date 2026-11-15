@@ -83,8 +83,34 @@ async def init_db():
             "ALTER TABLE users ADD COLUMN total_fees_due_usdt REAL DEFAULT 0.0",
             "ALTER TABLE trades ADD COLUMN fee_rate REAL DEFAULT 0.10",
             "ALTER TABLE trades ADD COLUMN fee_usdt REAL DEFAULT 0.0",
-            "ALTER TABLE trades ADD COLUMN fee_status TEXT DEFAULT 'CALCULATED'"
+            "ALTER TABLE trades ADD COLUMN fee_status TEXT DEFAULT 'CALCULATED'",
+            # ── Solana DEX wallet columns ──────────────────────────────────────
+            "ALTER TABLE users ADD COLUMN solana_wallet_address TEXT DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN encrypted_solana_private_key TEXT DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN solana_buy_amount_sol REAL DEFAULT 0.1",
+            # ── DEX trades table ───────────────────────────────────────────────
         ]
+
+        # Create DEX trades table if not exists
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS dex_trades (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                symbol TEXT NOT NULL,
+                network TEXT NOT NULL,
+                contract_address TEXT NOT NULL,
+                tx_signature TEXT DEFAULT '',
+                sol_spent REAL DEFAULT 0.0,
+                tokens_received REAL DEFAULT 0.0,
+                price_impact_pct REAL DEFAULT 0.0,
+                liquidity_usd REAL DEFAULT 0.0,
+                contract_source TEXT DEFAULT '',
+                latency_ms INTEGER DEFAULT 0,
+                status TEXT DEFAULT 'PENDING',
+                error_msg TEXT DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         for m in migrations:
             try:
                 await db.execute(m)
@@ -102,7 +128,7 @@ async def get_user(telegram_id: int) -> Optional[Dict[str, Any]]:
             return dict(row) if row else None
 
 async def create_or_update_user(telegram_id: int, username: str = "", first_name: str = "") -> Dict[str, Any]:
-    """Ensure user exists in database."""
+    """Ensure user exists in database. Auto-generates a Solana wallet on first creation."""
     user = await get_user(telegram_id)
     if not user:
         async with aiosqlite.connect(config.DATABASE_PATH) as db:
@@ -112,7 +138,61 @@ async def create_or_update_user(telegram_id: int, username: str = "", first_name
             """, (telegram_id, username or "", first_name or ""))
             await db.commit()
         user = await get_user(telegram_id)
+
+    # Auto-generate Solana wallet if missing (new column migration or new user)
+    if not user.get("solana_wallet_address"):
+        try:
+            from services.solana_wallet import generate_solana_keypair
+            from database.encryption import encrypt_secret
+            pubkey, privkey_b58 = generate_solana_keypair()
+            encrypted_pk = encrypt_secret(privkey_b58)
+            await update_user_fields(
+                telegram_id,
+                solana_wallet_address=pubkey,
+                encrypted_solana_private_key=encrypted_pk
+            )
+            user = await get_user(telegram_id)
+            import logging
+            logging.getLogger(__name__).info(
+                f"[DB] Auto-generated Solana wallet for user {telegram_id}: {pubkey[:12]}…"
+            )
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"[DB] Could not generate Solana wallet for {telegram_id}: {e}")
+
     return user
+
+
+async def record_dex_trade(
+    user_id: int,
+    symbol: str,
+    network: str,
+    contract_address: str,
+    tx_signature: str = "",
+    sol_spent: float = 0.0,
+    tokens_received: float = 0.0,
+    price_impact_pct: float = 0.0,
+    liquidity_usd: float = 0.0,
+    contract_source: str = "",
+    latency_ms: int = 0,
+    status: str = "PENDING",
+    error_msg: str = "",
+) -> int:
+    """Record a DEX trade in the dex_trades table. Returns the new row ID."""
+    async with aiosqlite.connect(config.DATABASE_PATH) as db:
+        cursor = await db.execute("""
+            INSERT INTO dex_trades
+                (user_id, symbol, network, contract_address, tx_signature,
+                 sol_spent, tokens_received, price_impact_pct, liquidity_usd,
+                 contract_source, latency_ms, status, error_msg)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            user_id, symbol, network, contract_address, tx_signature,
+            sol_spent, tokens_received, price_impact_pct, liquidity_usd,
+            contract_source, latency_ms, status, error_msg
+        ))
+        await db.commit()
+        return cursor.lastrowid
 
 async def update_user_fields(telegram_id: int, **kwargs):
     """Update arbitrary user settings."""

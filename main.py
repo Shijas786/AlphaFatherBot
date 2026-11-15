@@ -53,9 +53,14 @@ async def main():
     position_tracker.set_telegram_notifier(notifier.notify_exit)
 
     # 5. Define Centralized Listing Callback
-    async def on_listing_announcement(title: str, source: str, coin: str):
+    async def on_listing_announcement(title: str, source: str, coin: str, notice_url: str = "", body_text: str = ""):
         logger.info(f"==> NEW LISTING DETECTED via {source}: {coin} - '{title}'")
-        await trade_dispatcher.handle_listing(raw_title=title, source=source, coin=coin)
+        if notice_url:
+            logger.info(f"    Notice URL: {notice_url}")
+        await trade_dispatcher.handle_listing(
+            raw_title=title, source=source, coin=coin,
+            notice_url=notice_url, body_text=body_text
+        )
 
     # 6. Initialize Listeners
     tree_news_listener = TreeNewsListener(on_listing_announcement)

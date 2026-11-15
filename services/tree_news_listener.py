@@ -99,9 +99,9 @@ def parse_upbit_title(title: str) -> Optional[List[str]]:
 
 
 class TreeNewsListener:
-    def __init__(self, on_listing_detected: Callable[[str, str, str], None]):
+    def __init__(self, on_listing_detected: Callable[[str, str, str, str], None]):
         """
-        :param on_listing_detected: Callback function (raw_title, source, coin_symbol)
+        :param on_listing_detected: Callback function (raw_title, source, coin_symbol, notice_url)
         """
         self.on_listing_detected = on_listing_detected
         self.running = False
@@ -148,6 +148,22 @@ class TreeNewsListener:
         title = data.get("title", "")
         source = data.get("source", "")
 
+        # Extract notice URL from Tree News message (used for contract extraction)
+        notice_url = (
+            data.get("url")
+            or data.get("link")
+            or data.get("notice_url")
+            or ""
+        )
+
+        # Try to get body text directly from Tree News payload
+        body_text = (
+            data.get("body")
+            or data.get("content")
+            or data.get("description")
+            or ""
+        )
+
         # Check duplicate
         if news_id and news_id in self.processed_ids:
             return
@@ -171,17 +187,20 @@ class TreeNewsListener:
             return
 
         # CRITICAL FILTER: Must be a verified new listing announcement!
-        # Rejects deposit/withdrawal suspensions (e.g. KAVA, OSMO), network upgrades, delistings, etc.
         if not is_upbit_listing_title(title):
             logger.info(f"Skipping non-listing Upbit notice: '{title}'")
             return
 
         logger.info(f"VERIFIED Upbit listing announcement received: '{title}' (Source: {source})")
+        if notice_url:
+            logger.info(f"Notice URL: {notice_url}")
+        if body_text:
+            logger.debug(f"Body text preview: {body_text[:200]}")
 
         # 1. Parse title directly using our strict listing regex
-        symbols = parse_upbit_title(title)
+        symbols = parse_upbit_title(title) or []
 
-        # 2. Fallback to suggestions ONLY if verified listing didn't extract symbols from title
+        # 2. Fallback to suggestions ONLY if title parsing failed
         if not symbols and "suggestions" in data and isinstance(data["suggestions"], list):
             for sug in data["suggestions"]:
                 coin = sug.get("coin", "").upper()
@@ -191,14 +210,16 @@ class TreeNewsListener:
         if symbols:
             for symbol in symbols:
                 logger.info(f"🎯 CONFIRMED NEW LISTING: {symbol} from Upbit Announcement!")
-                asyncio.create_task(self._trigger_callback(title, "CapoStream", symbol))
+                asyncio.create_task(
+                    self._trigger_callback(title, "CapoStream", symbol, notice_url, body_text)
+                )
 
-    async def _trigger_callback(self, title: str, source: str, symbol: str):
+    async def _trigger_callback(self, title: str, source: str, symbol: str, notice_url: str = "", body_text: str = ""):
         try:
             if asyncio.iscoroutinefunction(self.on_listing_detected):
-                await self.on_listing_detected(title, source, symbol)
+                await self.on_listing_detected(title, source, symbol, notice_url, body_text)
             else:
-                self.on_listing_detected(title, source, symbol)
+                self.on_listing_detected(title, source, symbol, notice_url, body_text)
         except Exception as e:
             logger.error(f"Error executing listing callback for {symbol}: {e}")
 

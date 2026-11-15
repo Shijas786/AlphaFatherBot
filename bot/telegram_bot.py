@@ -237,21 +237,59 @@ class TelegramNotifier:
         self.bot = bot
 
     async def notify_buy(self, user_id: int, data: dict):
-        """Notify user that a listing order was executed."""
+        """Notify user that a listing order was executed (Binance or DEX)."""
+        is_dex = data.get("dex", False)
+
         if data.get("failed"):
+            symbol = data.get("symbol", "?")
+            prefix = "🔴 DEX SWAP FAILED" if is_dex else "⚠️ ORDER EXECUTION FAILED"
             text = (
-                f"⚠️ *ORDER EXECUTION FAILED*\n"
+                f"❌ *{prefix}*\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"🪙 *Symbol:* `{data['symbol']}`\n"
-                f"⏱ *Detection Latency:* `{data.get('latency_ms', 0)}ms`\n"
-                f"❌ *Error:* `{data.get('error', 'Unknown')}`"
+                f"🪙 *Token:* `{symbol}`\n"
+                f"⏱ *Latency:* `{data.get('latency_ms', 0)}ms`\n"
+                f"❌ *Reason:* {data.get('error', 'Unknown error')}"
             )
             try:
                 await self.bot.send_message(chat_id=user_id, text=text, parse_mode="Markdown")
             except Exception as e:
-                logger.error(f"Failed to send buy fail notification: {e}")
+                logger.error(f"Failed to send failure notification: {e}")
             return
 
+        # ── DEX buy notification ───────────────────────────────────────────────
+        if is_dex:
+            symbol   = data.get("symbol", "?")
+            network  = data.get("network", "SOLANA")
+            sol_in   = data.get("sol_spent", data.get("in_sol", 0.0))
+            tokens   = data.get("out_tokens_approx", 0)
+            impact   = data.get("price_impact_pct", 0.0)
+            sig      = data.get("signature", "")
+            url      = data.get("solscan_url", f"https://solscan.io/tx/{sig}" if sig else "")
+            latency  = data.get("latency_ms", 0)
+            contract = data.get("contract", "")[:16] + "…" if data.get("contract") else ""
+
+            text = (
+                f"⚡ *DEX SNIPE EXECUTED!*\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"🪙 *Token:* `#{symbol}`\n"
+                f"⛓ *Chain:* `{network}`\n"
+                f"💸 *SOL Spent:* `{sol_in:.4f} SOL`\n"
+                f"📦 *Tokens Received:* `~{tokens:,.2f} {symbol}`\n"
+                f"📉 *Price Impact:* `{impact:.2f}%`\n"
+                f"⏱ *Total Latency:* `{latency}ms`\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"🔗 [View on Solscan]({url})"
+            )
+            try:
+                await self.bot.send_message(
+                    chat_id=user_id, text=text,
+                    parse_mode="Markdown", disable_web_page_preview=True
+                )
+            except Exception as e:
+                logger.error(f"Failed to send DEX buy notification: {e}")
+            return
+
+        # ── Binance buy notification ───────────────────────────────────────────
         trade_id = data["trade_id"]
         symbol = data["symbol"]
         price = data["buy_price"]

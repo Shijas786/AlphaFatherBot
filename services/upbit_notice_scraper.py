@@ -70,9 +70,9 @@ class UpbitNoticeScraper:
     async def _trigger_callback(self, title: str, source: str, symbol: str):
         try:
             if asyncio.iscoroutinefunction(self.on_listing_detected):
-                await self.on_listing_detected(title, source, symbol)
+                await self.on_listing_detected(title, source, symbol, "", "")
             else:
-                self.on_listing_detected(title, source, symbol)
+                self.on_listing_detected(title, source, symbol, "", "")
         except Exception as e:
             logger.error(f"Error in direct Upbit notice callback: {e}")
 
