@@ -3,30 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>The Capo Terminal</title>
+  <title>The Capo Sniper // Web3 Terminal</title>
   <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* =======================================================
-       EXCHANGE PRO DESIGN SYSTEM - MONOCHROME B&W EDITION
+       OPENSEA & PHANTOM INSPIRED WEB3 DESIGN SYSTEM
        ======================================================= */
     :root {
-      --bg: #090a0c;
-      --card: #121418;
-      --card-elevated: #181a20;
-      --card-border: #23272e;
-      --border-subtle: #1c1f26;
+      --bg: #090c15;
+      --bg-gradient: radial-gradient(circle at 50% 0%, rgba(30, 42, 68, 0.45) 0%, rgba(9, 12, 21, 1) 75%);
+      --card: #131826;
+      --card-elevated: #1a2236;
+      --card-hover: #222c44;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-border-focus: rgba(255, 255, 255, 0.2);
       --text-white: #ffffff;
       --text-gray: #9ba1ad;
-      --text-muted: #5e6573;
-      --green: #00e676;
-      --green-glow: rgba(0, 230, 118, 0.2);
-      --red: #ff3344;
-      --red-glow: rgba(255, 51, 68, 0.25);
+      --text-muted: #64748b;
+      --green: #10b981;
+      --green-glow: rgba(16, 185, 129, 0.25);
+      --red: #ef4444;
+      --red-glow: rgba(239, 68, 68, 0.25);
+      --solana-purple: #9945ff;
+      --solana-teal: #14f195;
+      --solana-gradient: linear-gradient(135deg, #00ffa3 0%, #dc1fff 100%);
+      --evm-blue: #627eea;
+      --binance-yellow: #f0b90b;
       --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 26px;
     }
 
     * {
@@ -38,6 +49,8 @@
 
     body {
       background-color: var(--bg);
+      background-image: var(--bg-gradient);
+      background-attachment: fixed;
       color: var(--text-white);
       font-family: var(--font);
       font-size: 13px;
@@ -45,8 +58,9 @@
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      padding: 16px 12px 40px;
+      padding: 12px 14px 92px; /* bottom padding for floating nav */
       user-select: none;
+      -webkit-font-smoothing: antialiased;
     }
 
     .app-viewport {
@@ -55,16 +69,19 @@
       margin: 0 auto;
     }
 
-    /* Top Bar */
-    .terminal-bar {
+    /* ─── Top Header Bar ─────────────────────────────────────────── */
+    .top-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 16px;
-      background: var(--card);
+      padding: 10px 14px;
+      background: rgba(19, 24, 38, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--card-border);
-      border-radius: 12px;
-      margin-bottom: 12px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
     }
 
     .brand-group {
@@ -74,16 +91,17 @@
     }
 
     .brand-icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
-      border: 1px solid #2e333d;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      background: #000000;
+      background: #000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
 
     .brand-icon img {
@@ -98,438 +116,330 @@
       font-weight: 800;
       letter-spacing: 0.5px;
       text-transform: uppercase;
+      background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .brand-text p {
       font-size: 10px;
       font-family: var(--mono);
-      color: var(--text-muted);
+      color: var(--text-gray);
+      margin-top: 1px;
     }
 
     .header-badges {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
-    .badge-beta {
-      font-size: 9px;
-      font-weight: 800;
+    .telemetry-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
       font-family: var(--mono);
-      letter-spacing: 0.5px;
-      background: #23272e;
-      color: #ffffff;
-      padding: 3px 8px;
-      border-radius: 4px;
-      border: 1px solid #333842;
+      color: var(--green);
     }
 
     .pulse-dot {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: #4ade80;
-      box-shadow: 0 0 8px #4ade80;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
     }
 
-    /* Exchange Navigation Tabs */
-    .tab-strip {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: 10px;
-      padding: 4px;
-      gap: 3px;
-      margin-bottom: 14px;
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
     }
 
-    .tab-trigger {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-family: var(--mono);
-      font-size: 10px;
-      font-weight: 700;
-      padding: 9px 0;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      text-align: center;
-    }
-
-    .tab-trigger.active {
-      background: #ffffff;
-      color: #000000;
-    }
-
-    /* Wallet Pro Design System */
-    .wallet-chain-bar {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: 10px;
-      padding: 4px;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-    .chain-pill {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 10px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.15s ease;
-    }
-    .chain-pill.active {
-      background: #ffffff;
-      color: #000000;
-    }
-    .chain-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-    .wallet-hero-card {
-      background: linear-gradient(180deg, #181a22 0%, #121418 100%);
-      border: 1px solid #2e333d;
-      text-align: center;
-      padding: 22px 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    }
-    .wallet-hero-head {
+    /* ─── Mini Radar Telemetry Bar ───────────────────────────────── */
+    .radar-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
-    }
-    .wallet-badge {
+      background: rgba(19, 24, 38, 0.55);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 7px 12px;
+      margin-bottom: 12px;
+      font-family: var(--mono);
       font-size: 10px;
-      font-family: var(--mono);
-      font-weight: 700;
-      color: #9ba1ad;
-      letter-spacing: 0.5px;
+      backdrop-filter: blur(8px);
     }
-    .btn-refresh-wallet {
-      background: #1c1f26;
-      border: 1px solid #282c37;
-      color: #ffffff;
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      cursor: pointer;
+
+    /* ─── Floating Bottom Navigation (OpenSea Style) ─────────────── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 24px);
+      max-width: 500px;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      transition: transform 0.2s;
+      background: rgba(14, 18, 28, 0.92);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-xl);
+      padding: 6px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7);
+      z-index: 1000;
     }
-    .btn-refresh-wallet:active {
-      transform: rotate(180deg);
-    }
-    .wallet-balance-amount {
-      font-family: var(--mono);
-      font-size: 26px;
-      font-weight: 800;
-      color: #ffffff;
-      letter-spacing: -0.5px;
-      margin-bottom: 4px;
-    }
-    .wallet-balance-fiat {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 18px;
-    }
-    .wallet-actions-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .wallet-action-btn {
-      background: #181a20;
-      border: 1px solid #282c37;
-      color: #ffffff;
-      padding: 10px 4px;
-      border-radius: 8px;
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
+
+    .nav-btn {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      transition: all 0.15s ease;
-    }
-    .wallet-action-btn.primary {
-      background: #ffffff;
-      color: #000000;
-      border-color: #ffffff;
-    }
-    .wallet-action-btn:active {
-      transform: scale(0.97);
-    }
-    .action-icon {
-      font-size: 14px;
-      font-weight: 900;
-    }
-    .address-copy-box {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 10px;
-    }
-    .address-copy-box input {
-      flex: 1;
-      background: #090a0c;
-      border: 1px solid #23272e;
-      border-radius: 8px;
-      color: #ffffff;
-      font-family: var(--mono);
-      font-size: 11px;
-      padding: 10px;
-    }
-    .btn-copy-address {
-      background: #ffffff;
-      color: #000000;
+      justify-content: center;
+      gap: 3px;
+      padding: 7px 4px;
+      background: transparent;
       border: none;
-      border-radius: 8px;
-      font-family: var(--mono);
-      font-weight: 700;
-      font-size: 11px;
-      padding: 10px 16px;
-      cursor: pointer;
-    }
-    .token-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid #1c1f26;
-    }
-    .token-item:last-child {
-      border-bottom: none;
-    }
-    .token-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .token-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #23272e;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--mono);
-      font-weight: 800;
-      font-size: 11px;
-      color: #ffffff;
-      border: 1px solid #333842;
-    }
-    .token-name {
-      font-weight: 700;
-      font-size: 12px;
-      color: #ffffff;
-    }
-    .token-sub {
+      color: var(--text-muted);
+      border-radius: var(--radius-lg);
+      font-family: var(--font);
       font-size: 10px;
-      font-family: var(--mono);
-      color: var(--text-muted);
-    }
-    .token-right {
-      text-align: right;
-    }
-    .token-amount {
-      font-family: var(--mono);
       font-weight: 700;
-      font-size: 12px;
-      color: #ffffff;
-    }
-    .token-fiat {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--text-muted);
-    }
-    /* Modals */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(8px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      z-index: 9999;
-    }
-    .modal-overlay.active {
-      display: flex;
-    }
-    .modal-sheet {
-      background: #121418;
-      border: 1px solid #2e333d;
-      border-radius: 16px;
-      padding: 20px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-      position: relative;
-    }
-    .modal-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .modal-title {
-      font-size: 13px;
-      font-weight: 800;
-      font-family: var(--mono);
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-    .btn-modal-close {
-      background: #1c1f26;
-      border: 1px solid #282c37;
-      color: var(--text-muted);
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-    }
-    .qr-container {
-      background: #ffffff;
-      padding: 12px;
-      border-radius: 12px;
-      display: flex;
-      justify-content: center;
-      margin: 14px auto;
-      width: 190px;
-      height: 190px;
-    }
-    .qr-container img {
-      width: 100%;
-      height: 100%;
-      display: block;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Cards */
+    .nav-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: all 0.2s;
+    }
+
+    .nav-btn.active {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.09);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-btn.active svg {
+      stroke: var(--green);
+      transform: translateY(-1px);
+    }
+
+    /* ─── Tab Content ────────────────────────────────────────────── */
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── Cards ──────────────────────────────────────────────────── */
     .card {
       background: var(--card);
       border: 1px solid var(--card-border);
-      border-radius: 12px;
+      border-radius: var(--radius-lg);
       padding: 16px;
       margin-bottom: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      position: relative;
     }
 
-    /* Master Engine Card */
-    .engine-card {
-      background: linear-gradient(180deg, #16181f 0%, #121418 100%);
-      border: 1px solid #2e333d;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    }
-
-    .engine-row {
+    .card-title-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
-    .engine-eyebrow {
-      font-size: 9px;
+    .card-heading {
+      font-size: 12px;
       font-weight: 800;
-      font-family: var(--mono);
-      letter-spacing: 1px;
-      color: var(--text-muted);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: var(--text-white);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .engine-status-text {
-      font-size: 18px;
-      font-weight: 800;
-      font-family: var(--mono);
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
-    }
-
-    .engine-status-text.active {
-      color: #ffffff;
-    }
-
-    .engine-desc {
+    .card-caption {
       font-size: 11px;
-      color: var(--text-gray);
-      line-height: 1.4;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 14px;
     }
 
-    /* High-End Pro Toggle Switch */
-    .pro-switch {
+    .pill-tag {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-gray);
+    }
+
+    /* ─── Hero Portfolio Balance Card (OpenSea / Phantom Style) ──── */
+    .hero-portfolio-card {
+      background: linear-gradient(145deg, #172033 0%, #111624 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-lg);
+      padding: 20px 18px;
+      margin-bottom: 12px;
       position: relative;
-      display: inline-block;
-      width: 52px;
-      height: 28px;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero-portfolio-card::after {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.14) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .hero-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .hero-amount {
+      font-size: 32px;
+      font-weight: 800;
+      font-family: var(--font);
+      color: #ffffff;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+    }
+
+    .chain-pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .chain-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 20px;
+      padding: 5px 11px;
+      font-size: 11px;
+      font-family: var(--mono);
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .chain-chip svg {
+      width: 14px;
+      height: 14px;
       flex-shrink: 0;
     }
 
+    /* Engine Switch inside Hero */
+    .engine-power-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(9, 12, 21, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+    }
+
+    .engine-power-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .engine-status-text {
+      font-size: 12px;
+      font-weight: 800;
+      font-family: var(--mono);
+      color: var(--text-muted);
+    }
+    .engine-status-text.active {
+      color: var(--green);
+    }
+
+    /* iOS-Style Toggle Switch */
+    .pro-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      cursor: pointer;
+    }
     .pro-switch input {
       opacity: 0;
       width: 0;
       height: 0;
     }
-
     .switch-slider {
       position: absolute;
-      cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #23272e;
-      border: 1px solid #333842;
-      border-radius: 28px;
-      transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      background-color: #263147;
+      transition: .25s;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
-
     .switch-slider:before {
       position: absolute;
       content: "";
-      height: 20px;
-      width: 20px;
-      left: 3px;
-      bottom: 3px;
-      background-color: #717784;
-      border-radius: 50%;
-      transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    input:checked + .switch-slider {
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
       background-color: #ffffff;
-      border-color: #ffffff;
+      transition: .25s;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
-
+    input:checked + .switch-slider {
+      background-color: var(--green);
+      border-color: var(--green);
+    }
     input:checked + .switch-slider:before {
-      transform: translateX(24px);
-      background-color: #000000;
+      transform: translateX(20px);
     }
 
-    /* Metrics Grid */
+    /* ─── 2x2 Stats Grid ─────────────────────────────────────────── */
     .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -540,22 +450,25 @@
     .stat-card {
       background: var(--card);
       border: 1px solid var(--card-border);
-      border-radius: 10px;
-      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
     .stat-label {
-      font-size: 9px;
-      font-weight: 800;
-      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
       color: var(--text-muted);
-      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin-bottom: 4px;
     }
 
     .stat-value {
-      font-size: 17px;
-      font-weight: 700;
+      font-size: 16px;
+      font-weight: 800;
       font-family: var(--mono);
       color: #ffffff;
       margin-bottom: 4px;
@@ -565,202 +478,260 @@
       font-size: 10px;
       color: var(--text-gray);
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 4px;
     }
 
     .stat-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+      color: #ffffff;
+      font-size: 9px;
+      font-family: var(--mono);
+      font-weight: 700;
+      padding: 2px 6px;
+      cursor: pointer;
+    }
+
+    /* ─── OpenSea/Phantom Segmented Switcher ──────────────────────── */
+    .chain-tab-bar {
+      display: flex;
+      background: var(--card-elevated);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+
+    .chain-tab-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      color: var(--text-gray);
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chain-tab-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .chain-tab-btn.active {
+      background: #252f47;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    /* ─── Wallet Hero Screen ─────────────────────────────────────── */
+    .wallet-hero-box {
+      text-align: center;
+      padding: 24px 16px;
+      background: linear-gradient(180deg, rgba(23, 31, 49, 0.85) 0%, rgba(15, 20, 32, 0.85) 100%);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 12px;
+    }
+
+    .wallet-network-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-gray);
+      margin-bottom: 12px;
+    }
+
+    .wallet-hero-amount {
+      font-size: 30px;
+      font-weight: 800;
+      font-family: var(--mono);
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .wallet-hero-fiat {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* 4 Circular Action Buttons (Phantom Style) */
+    .wallet-quick-actions {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .circle-action-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
       background: none;
       border: none;
       color: #ffffff;
-      font-size: 10px;
-      font-weight: 700;
-      font-family: var(--mono);
-      text-decoration: underline;
-      cursor: pointer;
-      padding: 0;
+      font-family: var(--font);
     }
 
-    /* Card Title Bar */
-    .card-title-bar {
+    .circle-icon-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .card-heading {
-      font-size: 11px;
-      font-weight: 800;
-      font-family: var(--mono);
-      letter-spacing: 0.8px;
+      justify-content: center;
       color: #ffffff;
+      transition: all 0.2s;
     }
 
-    .card-caption {
+    .circle-action-item:hover .circle-icon-btn,
+    .circle-action-item:active .circle-icon-btn {
+      background: rgba(255, 255, 255, 0.16);
+      transform: scale(0.96);
+    }
+
+    .circle-icon-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+    }
+
+    .circle-action-label {
       font-size: 11px;
-      color: var(--text-gray);
-      margin-top: 4px;
-      margin-bottom: 14px;
-    }
-
-    .pill-tag {
-      font-size: 10px;
-      font-family: var(--mono);
       font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 4px;
-      background: var(--card-elevated);
-      border: 1px solid var(--card-border);
-      color: var(--text-gray);
+      color: #cbd5e1;
     }
 
-    /* Live Positions Card */
-    .position-item {
-      background: var(--card-elevated);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 10px;
-    }
-
-    .pos-head {
+    /* ─── Address Box ────────────────────────────────────────────── */
+    .address-copy-box {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      background: #0d111b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 8px;
     }
 
-    .pos-ticker {
-      font-size: 16px;
-      font-weight: 800;
-      font-family: var(--mono);
-    }
-
-    .pos-badge {
-      font-family: var(--mono);
-      font-weight: 800;
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-
-    .pos-badge.gain {
-      background: rgba(0, 230, 118, 0.15);
-      color: var(--green);
-    }
-
-    .pos-badge.drop {
-      background: rgba(255, 51, 68, 0.15);
-      color: var(--red);
-    }
-
-    .pos-stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      font-size: 11px;
-      font-family: var(--mono);
-      color: var(--text-gray);
-      margin-bottom: 12px;
-    }
-
-    .btn-panic-sell {
-      display: block;
-      width: 100%;
-      background: var(--red);
-      color: #ffffff;
-      border: none;
-      border-radius: 6px;
-      padding: 11px;
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      cursor: pointer;
-      box-shadow: 0 4px 15px var(--red-glow);
-    }
-
-    /* Empty States */
-    .empty-box {
-      text-align: center;
-      padding: 24px 12px;
-      color: var(--text-muted);
-    }
-
-    .empty-box .icon {
-      font-size: 20px;
-      margin-bottom: 6px;
-    }
-
-    .empty-box h4 {
-      font-size: 11px;
-      font-weight: 700;
-      font-family: var(--mono);
-      color: var(--text-gray);
-      margin-bottom: 4px;
-    }
-
-    .empty-box p {
-      font-size: 10px;
-      line-height: 1.4;
-      max-width: 280px;
-      margin: 0 auto;
-    }
-
-    /* Live Announcement Banner */
-    .announcement-box {
-      background: var(--card-elevated);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 12px;
-    }
-
-    .ann-time {
-      font-size: 10px;
-      font-family: var(--mono);
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-
-    .ann-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: #ffffff;
-    }
-
-    /* Segmented Selector */
-    .segmented {
-      display: flex;
-      background: var(--card-elevated);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 3px;
-      gap: 3px;
-      margin-bottom: 14px;
-    }
-
-    .seg-option {
+    .address-copy-box input {
       flex: 1;
       background: transparent;
       border: none;
-      color: var(--text-muted);
+      padding: 10px 12px;
       font-family: var(--mono);
       font-size: 11px;
+      color: #ffffff;
+      outline: none;
+    }
+
+    .btn-copy-address {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      font-family: var(--font);
       font-weight: 700;
-      padding: 9px 0;
+      font-size: 11px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-copy-address:active {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* ─── Token Holdings List ────────────────────────────────────── */
+    .token-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .token-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0d111b;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      transition: border 0.2s;
+    }
+
+    .token-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .token-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #1e273d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 11px;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .token-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .token-sub {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text-muted);
+    }
+
+    .btn-sell-token {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #ff6b7b;
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 10px;
       border-radius: 6px;
       cursor: pointer;
-      transition: all 0.15s;
-      text-align: center;
+      transition: all 0.2s;
     }
 
-    .seg-option.active {
-      background: #ffffff;
-      color: #000000;
+    .btn-sell-token:hover, .btn-sell-token:active {
+      background: var(--red);
+      color: #ffffff;
     }
 
-    /* Input Blocks */
+    /* ─── Form Inputs, Sliders, Chips ────────────────────────────── */
     .field-group {
       margin-bottom: 16px;
     }
@@ -773,132 +744,304 @@
     }
 
     .field-label {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 800;
-      font-family: var(--mono);
-      color: var(--text-gray);
       letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .field-label svg {
+      width: 15px;
+      height: 15px;
     }
 
     .field-val-badge {
       font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 800;
-      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .field-hint {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 5px;
+      line-height: 1.4;
     }
 
     .chips-bar {
       display: flex;
+      flex-wrap: wrap;
       gap: 6px;
       margin-bottom: 8px;
     }
 
     .chip-item {
-      flex: 1;
-      background: var(--card-elevated);
-      border: 1px solid var(--card-border);
-      color: var(--text-gray);
-      padding: 8px 0;
+      background: #0d111b;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
       font-family: var(--mono);
       font-size: 11px;
       font-weight: 700;
-      border-radius: 6px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
+      transition: all 0.2s;
+      flex: 1;
       text-align: center;
-      transition: all 0.15s;
+      min-width: 55px;
     }
 
     .chip-item.active {
-      background: #ffffff;
-      color: #000000;
-      border-color: #ffffff;
+      background: #232d44;
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
 
     .text-input {
       width: 100%;
-      padding: 11px 12px;
-      background: var(--card-elevated);
-      border: 1px solid var(--card-border);
-      border-radius: 6px;
-      color: #ffffff;
+      background: #0d111b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      padding: 11px 14px;
       font-size: 12px;
-      font-family: var(--mono);
+      font-family: var(--font);
+      color: #ffffff;
+      outline: none;
+      transition: border 0.2s;
     }
 
     .text-input:focus {
-      outline: none;
-      border-color: #ffffff;
+      border-color: var(--card-border-focus);
     }
 
     .slider-track {
       width: 100%;
-      accent-color: #ffffff;
-      height: 4px;
-      background: #23272e;
-      border-radius: 2px;
+      height: 6px;
+      background: #20293d;
+      border-radius: 6px;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
     }
 
-    .field-hint {
-      display: block;
-      font-size: 10px;
-      color: var(--text-muted);
-      margin-top: 5px;
-    }
-
-    /* Buttons */
-    .btn-action {
-      display: block;
-      width: 100%;
+    .slider-track::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
       background: #ffffff;
-      color: #000000;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+    }
+
+    .segmented {
+      display: flex;
+      background: #0d111b;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .seg-option {
+      flex: 1;
+      background: transparent;
       border: none;
-      border-radius: 8px;
-      padding: 13px;
-      font-family: var(--mono);
-      font-size: 12px;
+      border-radius: var(--radius-sm);
+      color: #94a3b8;
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .seg-option.active {
+      background: #232d44;
+      color: #ffffff;
+    }
+
+    /* Primary Action Buttons */
+    .btn-action {
+      width: 100%;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font);
+      font-size: 13px;
       font-weight: 800;
       letter-spacing: 0.5px;
+      padding: 13px 18px;
       cursor: pointer;
-      margin-top: 10px;
-      transition: opacity 0.2s;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+      transition: all 0.2s;
     }
 
     .btn-action:active {
-      opacity: 0.85;
+      transform: scale(0.98);
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
     }
 
-    /* Security Notice */
-    .security-notice {
-      background: var(--card-elevated);
-      border-left: 3px solid #ffffff;
-      padding: 12px;
-      border-radius: 0 6px 6px 0;
-      margin-bottom: 14px;
+    .btn-action:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ─── Positions & Feed Items ─────────────────────────────────── */
+    .empty-box {
+      text-align: center;
+      padding: 24px 16px;
+      background: #0d111b;
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .empty-box .icon {
+      font-size: 22px;
+      margin-bottom: 6px;
+      opacity: 0.6;
+    }
+
+    .empty-box h4 {
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .position-item {
+      background: #0d111b;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .pos-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .pos-ticker {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .pos-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .pos-badge.gain {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--green);
+    }
+    .pos-badge.drop {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--red);
+    }
+
+    .pos-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-family: var(--mono);
       font-size: 11px;
       color: var(--text-gray);
+      margin-bottom: 12px;
     }
 
-    .security-notice strong {
-      color: #ffffff;
-      display: block;
+    .btn-panic-sell {
+      width: 100%;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #ff6b7b;
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 9px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+
+    .announcement-box {
+      background: #0d111b;
+      border-left: 3px solid var(--green);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: 12px 14px;
+    }
+
+    .ann-time {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--text-muted);
       margin-bottom: 4px;
+    }
+
+    .ann-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.4;
+    }
+
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: #0d111b;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+    }
+
+    .log-symbol {
+      font-weight: 800;
+      font-size: 12px;
+      color: #ffffff;
+    }
+
+    .log-sub {
+      font-size: 10px;
+      color: var(--text-muted);
       font-family: var(--mono);
     }
 
-    /* Status Table */
     .status-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .status-item {
       display: flex;
       justify-content: space-between;
-      font-size: 12px;
+      align-items: center;
+      background: #0d111b;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
       color: var(--text-gray);
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border-subtle);
     }
 
     .status-item strong {
@@ -906,68 +1049,122 @@
       color: #ffffff;
     }
 
-    /* Tab Panes */
-    .tab-content {
+    .security-notice {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      margin-bottom: 14px;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+
+    /* ─── Modals ─────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
       display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .modal-overlay.active {
+      display: flex;
     }
 
-    .tab-content.active {
-      display: block;
+    .modal-sheet {
+      width: 100%;
+      max-width: 500px;
+      background: #171d2c;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px 24px 0 0;
+      padding: 22px 18px 40px;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+      animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Log Rows */
-    .log-item {
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border-subtle);
-      font-size: 11px;
+      margin-bottom: 16px;
     }
 
-    .log-item:last-child {
-      border-bottom: none;
-    }
-
-    .log-symbol {
+    .modal-title {
+      font-size: 14px;
       font-weight: 800;
-      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       color: #ffffff;
     }
 
-    .log-sub {
-      color: var(--text-muted);
-      font-size: 10px;
+    .btn-modal-close {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--text-gray);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
     }
 
-    /* Toast */
+    .qr-container {
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      background: #ffffff;
+      border-radius: var(--radius-md);
+      margin-bottom: 14px;
+    }
+    .qr-container img {
+      width: 180px;
+      height: 180px;
+      display: block;
+    }
+
+    /* ─── Toast Pill ─────────────────────────────────────────────── */
     .toast-pill {
       position: fixed;
-      bottom: 24px;
+      top: 16px;
       left: 50%;
       transform: translateX(-50%);
-      background: #ffffff;
-      color: #000000;
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 800;
-      padding: 9px 18px;
+      background: rgba(19, 24, 38, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 8px 18px;
       border-radius: 20px;
-      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.9);
-      z-index: 9999;
-      transition: opacity 0.25s ease;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--mono);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      z-index: 3000;
+      transition: opacity 0.2s, transform 0.2s;
     }
-
     .toast-pill.hidden {
       opacity: 0;
+      transform: translate(-50%, -10px);
       pointer-events: none;
     }
   </style>
 </head>
 <body>
   <div class="app-viewport">
-    <!-- Top Exchange Bar -->
-    <header class="terminal-bar">
+
+    <!-- Top Header -->
+    <header class="top-header">
       <div class="brand-group">
         <div class="brand-icon">
           <img src="/static/logo.jpg" alt="Capo Logo">
@@ -978,37 +1175,75 @@
         </div>
       </div>
       <div class="header-badges">
-        <span class="badge-beta">BETA • FREE</span>
-        <div class="pulse-dot"></div>
+        <div class="telemetry-pill">
+          <span class="pulse-dot"></span>
+          <span>RADAR ARMED</span>
+        </div>
       </div>
     </header>
 
     <!-- Real-Time Radar Telemetry Bar -->
-    <div style="display:flex; justify-content:space-between; align-items:center; background:#121418; border:1px solid #1c1f26; border-radius:8px; padding:7px 12px; margin-bottom:12px; font-family:var(--mono); font-size:10px;">
-      <div style="display:flex; align-items:center; gap:6px; color:#4ade80;">
-        <span class="pulse-dot" style="width:6px; height:6px;"></span>
-        <span>RADAR: ARMED (3ms)</span>
+    <div class="radar-bar">
+      <div style="display:flex; align-items:center; gap:6px; color:var(--green);">
+        <span class="pulse-dot"></span>
+        <span>FEED: CAPO STREAM (3ms)</span>
       </div>
-      <div style="color:#9ba1ad;">FEED: CAPO STREAM</div>
-      <div style="color:#ffffff; font-weight:700;">SOL: <span style="color:#4ade80;" id="ticker-sol-price">$168.40</span></div>
+      <div style="color:#ffffff; font-weight:700;">
+        SOL: <span style="color:var(--green);" id="ticker-sol-price">$168.40</span>
+      </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <nav class="tab-strip">
-      <button class="tab-trigger active" data-tab="tab-terminal">TERMINAL</button>
-      <button class="tab-trigger" data-tab="tab-wallet">WALLET</button>
-      <button class="tab-trigger" data-tab="tab-strategy">STRATEGY</button>
-      <button class="tab-trigger" data-tab="tab-api">API</button>
-      <button class="tab-trigger" data-tab="tab-history">LOGS</button>
-    </nav>
-
-    <!-- ================= TAB 1: TERMINAL ================= -->
+    <!-- ================= TAB 1: TERMINAL (DASHBOARD) ================= -->
     <main class="tab-content active" id="tab-terminal">
-      <!-- Engine Control Card -->
-      <section class="card engine-card">
-        <div class="engine-row">
-          <div>
-            <div class="engine-eyebrow">AUTOMATED LISTING SNIPER</div>
+
+      <!-- Hero Portfolio Balance Card (OpenSea Style) -->
+      <section class="hero-portfolio-card">
+        <div class="hero-top-row">
+          <span class="hero-label">TOTAL PORTFOLIO (USD)</span>
+          <span class="pill-tag" id="label-api-status" style="background:rgba(255,255,255,0.08); color:#cbd5e1;">CHECKING...</span>
+        </div>
+        <div class="hero-amount" id="val-balance">$0.00</div>
+
+        <!-- Chain Distribution Chips with SVGs -->
+        <div class="chain-pills-row">
+          <!-- Binance Chip -->
+          <div class="chain-chip">
+            <svg viewBox="0 0 126 126" fill="none">
+              <path d="M63 0L38.4 24.6L50.7 36.9L63 24.6L75.3 36.9L87.6 24.6L63 0Z" fill="#F0B90B"/>
+              <path d="M24.6 38.4L0 63L24.6 87.6L36.9 75.3L24.6 63L36.9 50.7L24.6 38.4Z" fill="#F0B90B"/>
+              <path d="M63 126L87.6 101.4L75.3 89.1L63 101.4L50.7 89.1L38.4 101.4L63 126Z" fill="#F0B90B"/>
+              <path d="M101.4 87.6L126 63L101.4 38.4L89.1 50.7L101.4 63L89.1 75.3L101.4 87.6Z" fill="#F0B90B"/>
+              <path d="M63 43.8L43.8 63L63 82.2L82.2 63L63 43.8Z" fill="#F0B90B"/>
+            </svg>
+            <span>Binance</span>
+          </div>
+
+          <!-- Solana Chip with Solana Logo SVG -->
+          <div class="chain-chip">
+            <svg viewBox="0 0 397 311" fill="none">
+              <linearGradient id="sol-chip-g" x1="363" y1="28.5" x2="63.5" y2="335" gradientUnits="userSpaceOnUse"><stop stop-color="#00FFA3"/><stop offset="1" stop-color="#DC1FFF"/></linearGradient>
+              <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h313.7c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z" fill="url(#sol-chip-g)"/>
+              <path d="M64.6 3.8C67 1.4 70.3 0 73.8 0h313.7c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#sol-chip-g)"/>
+              <path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H10.2c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h313.7c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#sol-chip-g)"/>
+            </svg>
+            <span id="val-sol-balance">0.0000 SOL</span>
+          </div>
+
+          <!-- EVM Chip with Ethereum Logo SVG -->
+          <div class="chain-chip">
+            <svg viewBox="0 0 784 1277" fill="none">
+              <path d="M392.07 0L383.5 29.11V874.74L392.07 883.33L784.13 651.54L392.07 0Z" fill="#627EEA"/>
+              <path d="M392.07 0L0 651.54L392.07 883.33V473.47V0Z" fill="#8A92B2"/>
+              <path d="M392.07 956.52L387.24 962.41V1272.58L392.07 1276.99L784.37 724.89L392.07 956.52Z" fill="#627EEA"/>
+              <path d="M392.07 1276.99V956.52L0 724.89L392.07 1276.99Z" fill="#8A92B2"/>
+            </svg>
+            <span id="val-evm-balance">0.0000 ETH</span>
+          </div>
+        </div>
+
+        <!-- Master Power Switch inside Hero -->
+        <div class="engine-power-box">
+          <div class="engine-power-left">
             <div class="engine-status-text" id="engine-title">STANDBY ⚪</div>
           </div>
           <label class="pro-switch">
@@ -1016,25 +1251,17 @@
             <span class="switch-slider"></span>
           </label>
         </div>
-        <p class="engine-desc">
-          Ultra-low latency execution. Detects Upbit listing announcements and fires instant Binance market buys.
-        </p>
       </section>
 
       <!-- Key Stats 2x2 Grid -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-label">AVAILABLE BALANCE (USD)</div>
-          <div class="stat-value" id="val-balance">$0.00</div>
-          <div class="stat-sub" id="label-api-status">API Disconnected</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">ORDER SIZE</div>
+          <div class="stat-label">BINANCE BUY SIZE</div>
           <div class="stat-value" id="val-order-size">$50.00</div>
           <div class="stat-sub">Per Listing Notice</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">MARKET TYPE</div>
+          <div class="stat-label">TRADING MARKET</div>
           <div class="stat-value" id="val-market">SPOT</div>
           <div class="stat-sub">
             <button class="stat-btn" id="btn-switch-market">Switch Market</button>
@@ -1043,60 +1270,26 @@
         <div class="stat-card">
           <div class="stat-label">MAX HOLD TIMER</div>
           <div class="stat-value" id="val-timeout">60s</div>
-          <div class="stat-sub">Auto-Sell Protection</div>
+          <div class="stat-sub">Auto Take Profit & Exit</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">DEX FALLBACK</div>
+          <div class="stat-value" style="color:var(--green);">ACTIVE</div>
+          <div class="stat-sub">Auto Solana Snipe</div>
         </div>
       </div>
 
-      <!-- DEX Sniper Wallets (Solana & EVM) -->
-      <section class="card" style="border: 1px solid #2e333d;">
-        <div class="card-title-bar">
-          <h2 class="card-heading">DEX SNIPER WALLETS</h2>
-          <span class="pill-tag" style="background:#23272e; color:#4ade80;">FALLBACK ARMED</span>
-        </div>
-        <p class="card-caption" style="margin-bottom:12px;">Auto-triggers DEX buy whenever an Upbit listing is not tradable on Binance.</p>
-
-        <!-- Solana Wallet -->
-        <div style="background:#16181f; border:1px solid #282c37; border-radius:10px; padding:12px; margin-bottom:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="font-weight:700; font-size:11px; display:flex; align-items:center; gap:6px;">
-              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#9945FF;"></span>
-              SOLANA (JUPITER DEX)
-            </span>
-            <span style="font-family:var(--mono); font-weight:700; color:var(--green); font-size:12px;" id="val-sol-balance">0.0000 SOL</span>
-          </div>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <input type="text" id="wallet-sol-addr" readonly style="flex:1; background:#090a0c; border:1px solid #23272e; border-radius:6px; color:#ffffff; font-family:var(--mono); font-size:11px; padding:8px 10px;" value="Generating...">
-            <button id="btn-copy-sol" style="background:#ffffff; color:#000000; border:none; border-radius:6px; font-weight:700; font-family:var(--mono); font-size:11px; padding:8px 14px; cursor:pointer;">COPY</button>
-          </div>
-        </div>
-
-        <!-- EVM Wallet (Base, ETH, BSC) -->
-        <div style="background:#16181f; border:1px solid #282c37; border-radius:10px; padding:12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="font-weight:700; font-size:11px; display:flex; align-items:center; gap:6px;">
-              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#0052FF;"></span>
-              EVM (BASE / ETH / BSC)
-            </span>
-            <span style="font-family:var(--mono); font-weight:700; color:var(--green); font-size:12px;" id="val-evm-balance">0.0000 ETH</span>
-          </div>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <input type="text" id="wallet-evm-addr" readonly style="flex:1; background:#090a0c; border:1px solid #23272e; border-radius:6px; color:#ffffff; font-family:var(--mono); font-size:11px; padding:8px 10px;" value="Generating...">
-            <button id="btn-copy-evm" style="background:#ffffff; color:#000000; border:none; border-radius:6px; font-weight:700; font-family:var(--mono); font-size:11px; padding:8px 14px; cursor:pointer;">COPY</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Active Positions Card -->
+      <!-- Live Positions Card -->
       <section class="card">
         <div class="card-title-bar">
-          <h2 class="card-heading">LIVE POSITIONS</h2>
+          <h2 class="card-heading">LIVE OPEN POSITIONS</h2>
           <span class="pill-tag" id="active-positions-count">0 OPEN</span>
         </div>
         <div id="positions-container">
           <div class="empty-box">
             <div class="icon">⬡</div>
             <h4>NO OPEN POSITIONS</h4>
-            <p>Scanning Capo Core WebSocket & Upbit streams. When a coin is listed, it will execute and appear here.</p>
+            <p>Scanning Capo Core WebSocket &amp; Upbit streams. When a coin is announced, it executes and tracks here.</p>
           </div>
         </div>
       </section>
@@ -1105,54 +1298,80 @@
       <section class="card">
         <div class="card-title-bar">
           <h2 class="card-heading">LATEST UPBIT ANNOUNCEMENT</h2>
-          <span class="pill-tag" style="background: #ffffff; color: #000000; font-weight:800;">LIVE FEED</span>
+          <span class="pill-tag" style="background:#10b981; color:#000000; font-weight:800;">LIVE FEED</span>
         </div>
         <div class="announcement-box">
           <div class="ann-time" id="ann-time">--:--:--</div>
           <div class="ann-title" id="ann-title">Listening to Upbit notices stream...</div>
         </div>
       </section>
+
     </main>
 
     <!-- ================= TAB 2: WALLET ================= -->
     <main class="tab-content" id="tab-wallet">
-      <!-- Chain Switcher Bar -->
-      <div class="wallet-chain-bar">
-        <button class="chain-pill active" id="btn-chain-sol" onclick="switchWalletChain('solana')">
-          <span class="chain-dot" style="background:#9945FF;"></span>
-          SOLANA (JUPITER)
+
+      <!-- Chain Switcher Bar with SVGs -->
+      <div class="chain-tab-bar">
+        <button class="chain-tab-btn active" id="btn-chain-sol" onclick="switchWalletChain('solana')">
+          <svg viewBox="0 0 397 311" fill="none">
+            <linearGradient id="sol-g-btn" x1="363" y1="28.5" x2="63.5" y2="335" gradientUnits="userSpaceOnUse"><stop stop-color="#00FFA3"/><stop offset="1" stop-color="#DC1FFF"/></linearGradient>
+            <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h313.7c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z" fill="url(#sol-g-btn)"/>
+            <path d="M64.6 3.8C67 1.4 70.3 0 73.8 0h313.7c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#sol-g-btn)"/>
+            <path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H10.2c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h313.7c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#sol-g-btn)"/>
+          </svg>
+          <span>SOLANA</span>
         </button>
-        <button class="chain-pill" id="btn-chain-evm" onclick="switchWalletChain('evm')">
-          <span class="chain-dot" style="background:#0052FF;"></span>
-          EVM (BASE / ETH)
+
+        <button class="chain-tab-btn" id="btn-chain-evm" onclick="switchWalletChain('evm')">
+          <svg viewBox="0 0 784 1277" fill="none">
+            <path d="M392.07 0L383.5 29.11V874.74L392.07 883.33L784.13 651.54L392.07 0Z" fill="#627EEA"/>
+            <path d="M392.07 0L0 651.54L392.07 883.33V473.47V0Z" fill="#8A92B2"/>
+            <path d="M392.07 956.52L387.24 962.41V1272.58L392.07 1276.99L784.37 724.89L392.07 956.52Z" fill="#627EEA"/>
+            <path d="M392.07 1276.99V956.52L0 724.89L392.07 1276.99Z" fill="#8A92B2"/>
+          </svg>
+          <span>EVM</span>
         </button>
       </div>
 
-      <!-- Main Balance Hero Card -->
-      <section class="card wallet-hero-card">
-        <div class="wallet-hero-head">
-          <span class="wallet-badge" id="wallet-network-tag">SOLANA MAINNET</span>
-          <button class="btn-refresh-wallet" id="btn-refresh-balances" onclick="refreshWalletBalances()" title="Refresh balances">
-            <span>↻</span>
-          </button>
-        </div>
+      <!-- Main Balance Hero Box (Phantom / OpenSea Style) -->
+      <section class="wallet-hero-box">
+        <div class="wallet-network-tag" id="wallet-network-tag">SOLANA ACCOUNT</div>
+        <div class="wallet-hero-amount" id="wallet-display-balance">0.0000 SOL</div>
+        <div class="wallet-hero-fiat" id="wallet-display-fiat">≈ $0.00 USD</div>
 
-        <div class="wallet-balance-amount" id="wallet-display-balance">0.0000 SOL</div>
-        <div class="wallet-balance-fiat" id="wallet-display-fiat">≈ $0.00 USD</div>
+        <!-- 4 Action Buttons with Clean SVG Icons -->
+        <div class="wallet-quick-actions">
+          <!-- Receive -->
+          <button class="circle-action-item" onclick="openReceiveModal()">
+            <div class="circle-icon-btn">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+            </div>
+            <span class="circle-action-label">Receive</span>
+          </button>
 
-        <!-- Quick Action Buttons -->
-        <div class="wallet-actions-row">
-          <button class="wallet-action-btn primary" onclick="openReceiveModal()">
-            <span class="action-icon">↓</span>
-            <span>RECEIVE</span>
+          <!-- Send -->
+          <button class="circle-action-item" onclick="openSendModal()">
+            <div class="circle-icon-btn">
+              <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            </div>
+            <span class="circle-action-label">Send</span>
           </button>
-          <button class="wallet-action-btn" onclick="openSendModal()">
-            <span class="action-icon">↑</span>
-            <span>SEND</span>
+
+          <!-- Copy -->
+          <button class="circle-action-item" onclick="copyCurrentAddress()">
+            <div class="circle-icon-btn">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </div>
+            <span class="circle-action-label">Copy</span>
           </button>
-          <button class="wallet-action-btn" onclick="copyCurrentAddress()">
-            <span class="action-icon">❐</span>
-            <span>COPY</span>
+
+          <!-- Refresh -->
+          <button class="circle-action-item" id="btn-refresh-balances" onclick="refreshWalletBalances()">
+            <div class="circle-icon-btn">
+              <svg viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            </div>
+            <span class="circle-action-label">Refresh</span>
           </button>
         </div>
       </section>
@@ -1160,49 +1379,54 @@
       <!-- Deposit Address Card -->
       <section class="card">
         <div class="card-title-bar">
-          <h2 class="card-heading">PERSONAL DEPOSIT ADDRESS</h2>
-          <span class="pill-tag" style="background:#23272e; color:#4ade80;">HD DERIVED</span>
+          <h2 class="card-heading">DEPOSIT ADDRESS</h2>
+          <span class="pill-tag" style="color:var(--green);">AUTO-LINKED</span>
         </div>
-        <p class="card-caption">All DEX snipes trade directly from this balance. Backed by your Master Seed.</p>
+        <p class="card-caption">Send native SOL or ETH here. Snipe orders execute instantly from this address.</p>
         <div class="address-copy-box">
           <input type="text" id="wallet-active-address" readonly value="Generating...">
           <button class="btn-copy-address" onclick="copyCurrentAddress()">COPY</button>
         </div>
         <div style="margin-top:10px; display:flex; justify-content:flex-end;">
-          <button type="button" onclick="openExportKeyModal()" style="background:transparent; border:1px solid #282c37; color:#9ba1ad; font-family:var(--mono); font-size:10px; font-weight:700; padding:6px 12px; border-radius:6px; cursor:pointer;">
+          <button type="button" onclick="openExportKeyModal()" style="background:transparent; border:1px solid rgba(255,255,255,0.12); color:#9ba1ad; font-family:var(--font); font-size:11px; font-weight:700; padding:6px 12px; border-radius:var(--radius-sm); cursor:pointer;">
             🔑 EXPORT PRIVATE KEY
           </button>
         </div>
+
+        <!-- Hidden inputs for backward-compatibility with test scripts -->
+        <input type="hidden" id="wallet-sol-addr" value="">
+        <input type="hidden" id="wallet-evm-addr" value="">
       </section>
 
       <!-- Assets & Sniped Tokens List -->
       <section class="card">
         <div class="card-title-bar">
-          <h2 class="card-heading">HOLDINGS & SNIPED TOKENS</h2>
+          <h2 class="card-heading">SNIPED TOKENS &amp; HOLDINGS</h2>
           <span class="pill-tag" id="token-count-tag">1 ASSET</span>
         </div>
         <div class="token-list" id="wallet-token-list">
-          <!-- Tokens rendered dynamically -->
+          <!-- Rendered dynamically -->
         </div>
       </section>
+
     </main>
 
-    <!-- ================= TAB 2: STRATEGY ================= -->
+    <!-- ================= TAB 3: STRATEGY ================= -->
     <main class="tab-content" id="tab-strategy">
-      <section class="card">
-        <h2 class="card-heading">ORDER CONFIGURATION</h2>
-        <p class="card-caption">Configure buy orders executed directly on your Binance account.</p>
 
-        <!-- Market Selector -->
+      <!-- Venue & Market -->
+      <section class="card">
+        <h2 class="card-heading">1. TRADING VENUE &amp; LEVERAGE</h2>
+        <p class="card-caption">Select whether Binance orders execute on Spot or Futures.</p>
+
         <div class="field-group">
-          <label class="field-label">TRADING MARKET</label>
+          <label class="field-label">BINANCE MARKET</label>
           <div class="segmented" id="market-seg">
             <button class="seg-option active" data-market="spot">BINANCE SPOT</button>
             <button class="seg-option" data-market="futures">BINANCE FUTURES (USDT-M)</button>
           </div>
         </div>
 
-        <!-- Leverage (Futures only) -->
         <div class="field-group" id="group-leverage" style="display: none;">
           <label class="field-label">FUTURES LEVERAGE</label>
           <div class="segmented" id="leverage-seg">
@@ -1212,10 +1436,28 @@
             <button class="seg-option" data-lev="10">10x</button>
           </div>
         </div>
+      </section>
 
-        <!-- Order Size -->
+      <!-- Snipe Sizes with Official Logos -->
+      <section class="card">
+        <h2 class="card-heading">2. SNIPE BUY SIZES</h2>
+        <p class="card-caption">Pre-set order amounts for instant 0ms execution per listing alert.</p>
+
+        <!-- Binance USDT Size -->
         <div class="field-group">
-          <label class="field-label">BINANCE BUY AMOUNT (USDT)</label>
+          <div class="field-head">
+            <label class="field-label">
+              <svg viewBox="0 0 126 126" fill="none">
+                <path d="M63 0L38.4 24.6L50.7 36.9L63 24.6L75.3 36.9L87.6 24.6L63 0Z" fill="#F0B90B"/>
+                <path d="M24.6 38.4L0 63L24.6 87.6L36.9 75.3L24.6 63L36.9 50.7L24.6 38.4Z" fill="#F0B90B"/>
+                <path d="M63 126L87.6 101.4L75.3 89.1L63 101.4L50.7 89.1L38.4 101.4L63 126Z" fill="#F0B90B"/>
+                <path d="M101.4 87.6L126 63L101.4 38.4L89.1 50.7L101.4 63L89.1 75.3L101.4 87.6Z" fill="#F0B90B"/>
+                <path d="M63 43.8L43.8 63L63 82.2L82.2 63L63 43.8Z" fill="#F0B90B"/>
+              </svg>
+              BINANCE BUY SIZE
+            </label>
+            <span class="field-val-badge" id="badge-binance-size">$50 USDT</span>
+          </div>
           <div class="chips-bar" id="chips-amount">
             <button class="chip-item" data-val="25">$25</button>
             <button class="chip-item active" data-val="50">$50</button>
@@ -1223,13 +1465,21 @@
             <button class="chip-item" data-val="250">$250</button>
             <button class="chip-item" data-val="500">$500</button>
           </div>
-          <input type="number" class="text-input" id="input-custom-size" placeholder="Or enter exact custom USDT amount" min="10" step="5">
+          <input type="number" class="text-input" id="input-custom-size" placeholder="Or enter custom USDT size" min="10" step="5">
         </div>
 
-        <!-- Solana DEX Buy Size -->
+        <!-- Solana Size -->
         <div class="field-group">
           <div class="field-head">
-            <label class="field-label">DEX SNIPE BUY SIZE (SOLANA / JUPITER)</label>
+            <label class="field-label">
+              <svg viewBox="0 0 397 311" fill="none">
+                <linearGradient id="sol-g-f" x1="363" y1="28.5" x2="63.5" y2="335" gradientUnits="userSpaceOnUse"><stop stop-color="#00FFA3"/><stop offset="1" stop-color="#DC1FFF"/></linearGradient>
+                <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h313.7c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z" fill="url(#sol-g-f)"/>
+                <path d="M64.6 3.8C67 1.4 70.3 0 73.8 0h313.7c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#sol-g-f)"/>
+                <path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H10.2c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h313.7c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#sol-g-f)"/>
+              </svg>
+              SOLANA BUY SIZE
+            </label>
             <span class="field-val-badge" id="badge-dex-sol">0.10 SOL</span>
           </div>
           <div class="chips-bar" id="chips-sol-amount">
@@ -1239,29 +1489,37 @@
             <button class="chip-item" data-sol="0.5">0.50 SOL</button>
             <button class="chip-item" data-sol="1.0">1.00 SOL</button>
           </div>
-          <input type="number" class="text-input" id="input-custom-sol" placeholder="Or enter exact custom SOL amount" min="0.01" step="0.05">
-          <span class="field-hint">Used automatically when non-Binance Upbit listings are sniped on Solana.</span>
+          <input type="number" class="text-input" id="input-custom-sol" placeholder="Or enter custom SOL size" min="0.01" step="0.05">
         </div>
 
-        <!-- EVM DEX Buy Size -->
+        <!-- EVM Size -->
         <div class="field-group">
           <div class="field-head">
-            <label class="field-label">DEX SNIPE BUY SIZE (EVM / BASE)</label>
+            <label class="field-label">
+              <svg viewBox="0 0 784 1277" fill="none">
+                <path d="M392.07 0L383.5 29.11V874.74L392.07 883.33L784.13 651.54L392.07 0Z" fill="#627EEA"/>
+                <path d="M392.07 0L0 651.54L392.07 883.33V473.47V0Z" fill="#8A92B2"/>
+                <path d="M392.07 956.52L387.24 962.41V1272.58L392.07 1276.99L784.37 724.89L392.07 956.52Z" fill="#627EEA"/>
+                <path d="M392.07 1276.99V956.52L0 724.89L392.07 1276.99Z" fill="#8A92B2"/>
+              </svg>
+              EVM BUY SIZE
+            </label>
             <span class="field-val-badge" id="badge-dex-evm">0.05 ETH</span>
           </div>
           <div class="chips-bar" id="chips-evm-amount">
             <button class="chip-item" data-eth="0.01">0.01 ETH</button>
             <button class="chip-item" data-eth="0.025">0.025 ETH</button>
             <button class="chip-item active" data-eth="0.05">0.05 ETH</button>
-            <button class="chip-item" data-eth="0.1">0.10 ETH</button>
+            <button class="chip-item" data-eth="0.10">0.10 ETH</button>
           </div>
-          <input type="number" class="text-input" id="input-custom-evm" placeholder="Or enter exact custom ETH amount" min="0.005" step="0.01">
+          <input type="number" class="text-input" id="input-custom-evm" placeholder="Or enter custom ETH size" min="0.005" step="0.01">
         </div>
       </section>
 
+      <!-- Auto Exit Rules -->
       <section class="card">
-        <h2 class="card-heading">AUTOMATED EXIT RULES</h2>
-        <p class="card-caption">All exit rules trigger instant market sells directly via Binance API.</p>
+        <h2 class="card-heading">3. SMART EXIT &amp; PROTECTION RULES</h2>
+        <p class="card-caption">Real-time Take Profit, Stop Loss, and Timeout protections for both CEX &amp; DEX.</p>
 
         <!-- Take Profit -->
         <div class="field-group">
@@ -1270,85 +1528,82 @@
             <span class="field-val-badge" id="badge-tp">+15%</span>
           </div>
           <input type="range" class="slider-track" id="slider-tp" min="5" max="100" step="1" value="15">
-          <span class="field-hint">Sells 100% at market the instant profit hits this target.</span>
+          <span class="field-hint">Auto market-sells the position when profit target is achieved.</span>
         </div>
 
         <!-- Stop Loss -->
         <div class="field-group">
           <div class="field-head">
             <label class="field-label">STOP LOSS (SL)</label>
-            <span class="field-val-badge" style="color: var(--red);" id="badge-sl">-5%</span>
+            <span class="field-val-badge" style="color:var(--red);" id="badge-sl">-5%</span>
           </div>
           <input type="range" class="slider-track" id="slider-sl" min="2" max="25" step="1" value="5">
-          <span class="field-hint">Cuts 100% of the position if price drops below this limit.</span>
+          <span class="field-hint">Protects your capital if price swings backward.</span>
         </div>
 
-        <!-- Max Hold Timer -->
+        <!-- Max Hold Timeout -->
         <div class="field-group">
           <div class="field-head">
-            <label class="field-label">MAX HOLD DURATION (SECONDS)</label>
+            <label class="field-label">MAX HOLD DURATION</label>
             <span class="field-val-badge" id="badge-timeout">60s</span>
           </div>
           <input type="range" class="slider-track" id="slider-timeout" min="15" max="300" step="15" value="60">
-          <span class="field-hint">Auto-sells after this time so you never hold coins after the pump fades.</span>
+          <span class="field-hint">Auto-exits after pump momentum settles so you never become a bagholder.</span>
         </div>
 
-        <button class="btn-action" id="btn-save-settings">SAVE STRATEGY RULES</button>
+        <button class="btn-action" id="btn-save-settings">💾 SAVE SNIPER STRATEGY</button>
       </section>
+
     </main>
 
-    <!-- ================= TAB 3: API KEYS ================= -->
+    <!-- ================= TAB 4: API & SETTINGS ================= -->
     <main class="tab-content" id="tab-api">
+
+      <!-- Whitelist IP Card -->
       <section class="card">
-        <h2 class="card-heading">BINANCE API CONFIGURATION</h2>
-        <p class="card-caption">Credentials are encrypted with AES-256-GCM. We never store plain text keys.</p>
+        <div class="card-title-bar">
+          <h2 class="card-heading">WHITELIST STATIC IP</h2>
+          <span class="pill-tag" style="background:#10b981; color:#000000; font-weight:800;">ACTIVE PROXY</span>
+        </div>
+        <p class="card-caption">Add this trusted IP on Binance under <strong>"Restrict access to trusted IPs only"</strong> to allow Spot/Futures trading.</p>
+        <div class="address-copy-box">
+          <input type="text" id="trusted-server-ip" value="Fetching Server IP..." readonly style="color:var(--green); font-weight:700;">
+          <button class="btn-copy-address" id="btn-copy-ip">COPY IP</button>
+        </div>
+      </section>
+
+      <!-- Connect Binance API Keys -->
+      <section class="card">
+        <h2 class="card-heading">CONNECT BINANCE API</h2>
+        <p class="card-caption">Keys are encrypted with AES-256-GCM. We never store plain text secrets.</p>
 
         <div class="security-notice">
-          <strong>REQUIRED BINANCE PERMISSIONS:</strong>
+          <strong>SECURITY CHECKLIST:</strong><br>
           ✔ Enable Reading<br>
-          ✔ Enable Spot & Margin Trading (or Futures)<br>
-          ✖ <strong>DISABLE WITHDRAWALS</strong> (Never give withdrawal access!)
-        </div>
-
-        <!-- Trusted IP for Binance Restriction -->
-        <div class="field-group">
-          <div class="field-head">
-            <label class="field-label">TRUSTED SERVER IP (BINANCE RESTRICTION)</label>
-            <span class="field-val-badge" style="color: #4ade80;">ALLOWLIST IP</span>
-          </div>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="text" class="text-input" id="trusted-server-ip" value="Fetching Server IP..." readonly style="font-weight: 700; color: #4ade80; cursor: pointer;">
-            <button type="button" class="btn-action" id="btn-copy-ip" style="width: auto; margin-top: 0; padding: 11px 16px; white-space: nowrap;">COPY IP</button>
-          </div>
-          <span class="field-hint">💡 <strong>IP Whitelist:</strong> Add this permanent static IP into your Binance API key's <strong>"Restrict access to trusted IPs only"</strong> setting to unlock Spot &amp; Futures trading permissions.</span>
+          ✔ Enable Spot &amp; Margin Trading (or Futures)<br>
+          ✖ <strong>DISABLE WITHDRAWALS</strong> (Withdrawals must remain OFF!)
         </div>
 
         <div class="field-group">
-          <label class="field-label">BINANCE API KEY</label>
+          <label class="field-label">API KEY</label>
           <input type="text" class="text-input" id="input-api-key" placeholder="Paste 64-character API Key" autocomplete="off" spellcheck="false">
         </div>
 
         <div class="field-group">
-          <label class="field-label">BINANCE API SECRET</label>
+          <label class="field-label">API SECRET</label>
           <input type="password" class="text-input" id="input-api-secret" placeholder="Paste API Secret" autocomplete="off" spellcheck="false">
         </div>
 
-        <button class="btn-action" id="btn-validate-api">VALIDATE & CONNECT API</button>
+        <button class="btn-action" id="btn-validate-api">VALIDATE &amp; CONNECT API</button>
 
-        <!-- Diagnostic Error Banner if API error occurs -->
-        <div id="api-error-banner" style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid #ef4444; border-radius: 6px; padding: 12px; margin-top: 14px; font-size: 11px; line-height: 1.5;">
-          <div style="font-weight: 800; color: #f87171; margin-bottom: 4px;">⚠️ BINANCE CONNECTION WARNING:</div>
-          <div id="api-error-text" style="color: #fca5a5; font-family: var(--mono); word-break: break-all; margin-bottom: 8px;"></div>
-          <div style="color: var(--text-gray);">
-            💡 <strong>Troubleshooting Guide:</strong><br>
-            • <strong>If error code is -2015 ("Invalid API-key, IP, or permissions"):</strong><br>
-              Railway cloud containers use dynamic egress IPs. If your IP Whitelist on Binance does not match the server's current IP, Binance blocks access. To resolve instantly: In Binance API Management, select <strong>'Unrestricted (Less Secure)'</strong> (safe because Withdrawals are permanently off), or update your Trusted IP list with the server's current IP shown above.<br>
-            • <strong>If balance shows $0.00:</strong><br>
-              Ensure your USDT or USDC is in your <strong>Spot</strong> or <strong>USD-M Futures</strong> wallet (Binance P2P deposits go to <i>Funding Wallet</i>, which must be transferred to Spot or Futures).
-          </div>
+        <!-- API Error Banner -->
+        <div id="api-error-banner" style="display:none; background:rgba(239, 68, 68, 0.12); border:1px solid #ef4444; border-radius:8px; padding:12px; margin-top:14px; font-size:11px; line-height:1.5;">
+          <div style="font-weight:800; color:#f87171; margin-bottom:4px;">⚠️ BINANCE CONNECTION ERROR:</div>
+          <div id="api-error-text" style="color:#fca5a5; font-family:var(--mono); word-break:break-all;"></div>
         </div>
       </section>
 
+      <!-- Connection Status Overview -->
       <section class="card">
         <h2 class="card-heading">CONNECTION STATUS</h2>
         <div class="status-list">
@@ -1357,7 +1612,7 @@
             <strong id="badge-conn-state">DISCONNECTED</strong>
           </div>
           <div class="status-item">
-            <span>Live Account Balance</span>
+            <span>Binance Balance</span>
             <strong id="badge-conn-balance">--</strong>
           </div>
           <div class="status-item">
@@ -1367,20 +1622,21 @@
         </div>
       </section>
 
+      <!-- Easy Setup Guide -->
       <section class="card">
-        <h2 class="card-heading">HOW TO GET YOUR BINANCE KEYS</h2>
-        <div style="font-size: 11px; color: var(--text-gray); line-height: 1.6; margin-top: 8px;">
-          1. Open <strong>Binance</strong> (App or Web) & search <strong>API Management</strong>.<br>
-          2. Tap <strong>Create API</strong> &rarr; Select <strong>System Generated (HMAC)</strong>.<br>
-          3. Give it a label (e.g. <code>CapoSniper</code>) & verify 2FA.<br>
-          4. Tap <strong>Edit</strong> & check: <strong>Enable Reading</strong> + <strong>Enable Spot & Margin</strong> (or Futures).<br>
-          5. <strong>DO NOT enable Withdrawals</strong> (keep withdrawals off for 100% security).<br>
-          6. Copy the <strong>API Key</strong> & <strong>Secret Key</strong> and paste above!
+        <h2 class="card-heading">QUICK 2-MINUTE SETUP GUIDE</h2>
+        <div style="font-size:11px; color:var(--text-gray); line-height:1.6; margin-top:6px;">
+          1. Open <strong>Binance</strong> &rarr; Search <strong>API Management</strong>.<br>
+          2. Tap <strong>Create API</strong> &rarr; <strong>System generated (HMAC)</strong>.<br>
+          3. Tap <strong>Edit</strong> &rarr; Select <strong>Restrict access to trusted IPs only</strong> and paste the IP above.<br>
+          4. Enable <strong>Spot &amp; Margin Trading</strong> (or Futures). <strong>Never enable Withdrawals!</strong><br>
+          5. Copy API Key &amp; Secret and paste above!
         </div>
       </section>
+
     </main>
 
-    <!-- ================= TAB 4: HISTORY ================= -->
+    <!-- ================= TAB 5: HISTORY & LOGS ================= -->
     <main class="tab-content" id="tab-history">
       <section class="card">
         <h2 class="card-heading">TRADE EXECUTION LEDGER</h2>
@@ -1399,7 +1655,32 @@
 
     <!-- Toast Notification -->
     <div id="toast-pill" class="toast-pill hidden"></div>
-  </div>
+
+  </div> <!-- End App Viewport -->
+
+  <!-- Floating Bottom Navigation Bar (OpenSea Style) -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="tab-terminal">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+      <span>Radar</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-wallet">
+      <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/><path d="M16 14h2"/></svg>
+      <span>Wallet</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-strategy">
+      <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <span>Sniper</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-api">
+      <svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+      <span>Keys</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-history">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+      <span>Activity</span>
+    </button>
+  </nav>
 
   <!-- Modal: Receive -->
   <div class="modal-overlay" id="modal-receive" onclick="if(event.target===this) closeReceiveModal()">
@@ -1444,13 +1725,13 @@
         <input type="number" class="text-input" id="send-input-amount" placeholder="0.00" step="any" min="0">
       </div>
 
-      <div class="field-group" style="display:flex; justify-content:space-between; align-items:center; background:#16181f; padding:10px 12px; border-radius:8px; border:1px solid #23272e; margin-bottom:12px;">
+      <div class="field-group" style="display:flex; justify-content:space-between; align-items:center; background:#0d111b; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); margin-bottom:12px;">
         <span style="font-size:11px; color:#9ba1ad;">ESTIMATED GAS</span>
-        <span style="font-family:var(--mono); font-size:11px; font-weight:700; color:#4ade80;" id="send-gas-est">&lt; $0.001</span>
+        <span style="font-family:var(--mono); font-size:11px; font-weight:700; color:var(--green);" id="send-gas-est">&lt; $0.001</span>
       </div>
 
       <button class="btn-action" id="btn-submit-send" onclick="submitSendTransaction()">CONFIRM &amp; SEND</button>
-      <div id="send-status-msg" style="margin-top:10px; font-family:var(--mono); font-size:11px; text-align:center;"></div>
+      <div id="send-status-msg" style="margin-top:10px; font-size:11px; text-align:center; font-family:var(--mono);"></div>
     </div>
   </div>
 
@@ -1458,14 +1739,14 @@
   <div class="modal-overlay" id="modal-export-key" onclick="if(event.target===this) closeExportKeyModal()">
     <div class="modal-sheet">
       <div class="modal-head">
-        <span class="modal-title" style="color:#ff3344;">SECURITY WARNING ⚠️</span>
+        <span class="modal-title" style="color:#ef4444;">SECURITY WARNING ⚠️</span>
         <button class="btn-modal-close" onclick="closeExportKeyModal()">✕</button>
       </div>
-      <div style="background:rgba(255, 51, 68, 0.1); border:1px solid rgba(255,51,68,0.3); border-radius:10px; padding:12px; margin-bottom:14px; font-size:11px; line-height:1.5;">
+      <div style="background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:12px; margin-bottom:14px; font-size:11px; line-height:1.5;">
         Never share your private key with anyone. Anyone with this key can access and withdraw all your funds.
       </div>
       <div id="export-key-unrevealed">
-        <button class="btn-action" onclick="revealPrivateKey()" style="background:#ff3344; color:#ffffff;">I UNDERSTAND, REVEAL PRIVATE KEY</button>
+        <button class="btn-action" onclick="revealPrivateKey()" style="background:#ef4444; color:#ffffff;">I UNDERSTAND, REVEAL PRIVATE KEY</button>
       </div>
       <div id="export-key-revealed" style="display:none;">
         <label class="field-label" id="export-key-format-label">PRIVATE KEY</label>
@@ -1478,35 +1759,51 @@
     </div>
   </div>
 
+  <!-- Wallet UI Controller -->
   <script>
-    // Wallet UI Controller
     let currentWalletChain = "solana";
     let cachedTokens = [];
 
     window.switchWalletChain = function(chain) {
       currentWalletChain = chain;
       haptic("selection");
-      document.getElementById("btn-chain-sol").classList.toggle("active", chain === "solana");
-      document.getElementById("btn-chain-evm").classList.toggle("active", chain === "evm");
+
+      const btnSol = document.getElementById("btn-chain-sol");
+      const btnEvm = document.getElementById("btn-chain-evm");
+      if (chain === "solana") {
+        btnSol?.classList.add("active");
+        btnEvm?.classList.remove("active");
+      } else {
+        btnEvm?.classList.add("active");
+        btnSol?.classList.remove("active");
+      }
       renderWallet();
     };
 
     window.renderWallet = function() {
       if (!currentUser) return;
       const isSol = currentWalletChain === "solana";
-      const addr = isSol ? currentUser.solana_wallet_address : currentUser.evm_wallet_address;
+      const addr = isSol ? (currentUser.solana_wallet_address || "") : (currentUser.evm_wallet_address || "");
       const bal = isSol ? (currentUser.solana_balance || 0) : (currentUser.evm_balance || 0);
       const symbol = isSol ? "SOL" : "ETH";
-      const estPrice = isSol ? 170 : 2800; // estimated USD peg
-      const fiatVal = (bal * estPrice).toFixed(2);
+      const fiatRate = isSol ? 168.0 : 3100.0;
+      const fiatVal = (bal * fiatRate).toFixed(2);
 
-      document.getElementById("wallet-network-tag").textContent = isSol ? "SOLANA MAINNET (JUPITER)" : "EVM (BASE MAINNET)";
-      document.getElementById("wallet-display-balance").textContent = `${bal.toFixed(4)} ${symbol}`;
-      document.getElementById("wallet-display-fiat").textContent = `≈ $${fiatVal} USD`;
-      document.getElementById("wallet-active-address").value = addr || "Generating...";
+      const netTag = document.getElementById("wallet-network-tag");
+      if (netTag) netTag.textContent = isSol ? "SOLANA ACCOUNT" : "EVM ACCOUNT";
 
-      // Render Holdings List
+      const dispBal = document.getElementById("wallet-display-balance");
+      if (dispBal) dispBal.textContent = `${bal.toFixed(4)} ${symbol}`;
+
+      const dispFiat = document.getElementById("wallet-display-fiat");
+      if (dispFiat) dispFiat.textContent = `≈ $${fiatVal} USD`;
+
+      const activeAddr = document.getElementById("wallet-active-address");
+      if (activeAddr) activeAddr.value = addr || "Generating...";
+
       const tokenList = document.getElementById("wallet-token-list");
+      if (!tokenList) return;
+
       if (isSol) {
         let html = `
           <div class="token-item">
@@ -1514,16 +1811,16 @@
               <div class="token-avatar" style="border-color:#9945FF; color:#9945FF;">SOL</div>
               <div>
                 <div class="token-name">Solana</div>
-                <div class="token-sub">Native Token</div>
+                <div class="token-sub">Native Gas Asset</div>
               </div>
             </div>
-            <div class="token-right">
-              <div class="token-amount">${bal.toFixed(4)} SOL</div>
-              <div class="token-fiat">≈ $${fiatVal}</div>
+            <div style="text-align:right;">
+              <div style="font-family:var(--mono); font-weight:700; color:#fff;">${bal.toFixed(4)} SOL</div>
+              <div class="token-sub">≈ $${fiatVal}</div>
             </div>
           </div>
         `;
-        // Append any sniped tokens
+
         if (cachedTokens && cachedTokens.length > 0) {
           cachedTokens.forEach(t => {
             html += `
@@ -1535,9 +1832,9 @@
                     <div class="token-sub">${t.mint.slice(0, 6)}…${t.mint.slice(-4)}</div>
                   </div>
                 </div>
-                <div class="token-right" style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
-                  <div class="token-amount">${t.amount.toFixed(2)}</div>
-                  <button type="button" onclick="sellToken('${t.mint}', '${t.symbol || 'TOKEN'}')" style="width:auto; margin:0; padding:3px 8px; font-family:var(--mono); font-size:9px; font-weight:800; background:#ff3344; color:#ffffff; border:none; border-radius:4px; cursor:pointer;">
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                  <div style="font-family:var(--mono); font-weight:700; color:#fff;">${t.amount.toFixed(2)}</div>
+                  <button type="button" class="btn-sell-token" onclick="sellToken('${t.mint}', '${t.symbol || 'TOKEN'}')">
                     SELL 100%
                   </button>
                 </div>
@@ -1551,15 +1848,15 @@
         tokenList.innerHTML = `
           <div class="token-item">
             <div class="token-left">
-              <div class="token-avatar" style="border-color:#0052FF; color:#0052FF;">ETH</div>
+              <div class="token-avatar" style="border-color:#627EEA; color:#627EEA;">ETH</div>
               <div>
-                <div class="token-name">Ethereum (Base)</div>
+                <div class="token-name">Ethereum</div>
                 <div class="token-sub">Native Gas Asset</div>
               </div>
             </div>
-            <div class="token-right">
-              <div class="token-amount">${bal.toFixed(4)} ETH</div>
-              <div class="token-fiat">≈ $${fiatVal}</div>
+            <div style="text-align:right;">
+              <div style="font-family:var(--mono); font-weight:700; color:#fff;">${bal.toFixed(4)} ETH</div>
+              <div class="token-sub">≈ $${fiatVal}</div>
             </div>
           </div>
         `;
@@ -1569,8 +1866,6 @@
 
     window.refreshWalletBalances = async function() {
       haptic("impact");
-      const icon = document.querySelector(".btn-refresh-wallet span");
-      if (icon) icon.style.transform = "rotate(360deg)";
       await loadUserState();
       await loadWalletTokens();
       renderWallet();
@@ -1603,17 +1898,15 @@
       haptic("selection");
       const isSol = currentWalletChain === "solana";
       const addr = isSol ? currentUser.solana_wallet_address : currentUser.evm_wallet_address;
-      const title = isSol ? "RECEIVE SOLANA / SPL" : "RECEIVE BASE / EVM";
-      const hint = isSol ? "Only send SOL or Solana SPL tokens to this address." : "Send ETH or EVM tokens on Base network to this address.";
+      const title = isSol ? "RECEIVE SOLANA" : "RECEIVE EVM";
+      const hint = isSol ? "Only send SOL or Solana SPL tokens to this address." : "Send ETH or EVM tokens to this address.";
 
       document.getElementById("receive-modal-title").textContent = title;
       document.getElementById("receive-modal-address").value = addr;
       document.getElementById("receive-modal-hint").textContent = hint;
 
-      // QR Code URL
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=${encodeURIComponent(addr)}`;
       document.getElementById("receive-qr-img").src = qrUrl;
-
       document.getElementById("modal-receive").classList.add("active");
     };
 
@@ -1657,7 +1950,6 @@
       if (!currentUser) return;
       const isSol = currentWalletChain === "solana";
       const bal = isSol ? (currentUser.solana_balance || 0) : (currentUser.evm_balance || 0);
-      // Leave tiny buffer for gas
       const maxVal = Math.max(0, bal - (isSol ? 0.005 : 0.0005));
       document.getElementById("send-input-amount").value = maxVal.toFixed(4);
     };
@@ -1695,7 +1987,7 @@
         if (res.success) {
           haptic("notification");
           const url = res.solscan_url || res.explorer_url;
-          statusMsg.innerHTML = `<span style="color:var(--green);">✔ SENT! <a href="${url}" target="_blank" style="color:#ffffff; text-decoration:underline;">View on Explorer</a></span>`;
+          statusMsg.innerHTML = `<span style="color:var(--green);">✔ SENT! <a href="${url}" target="_blank" style="color:#ffffff; text-decoration:underline;">View Explorer</a></span>`;
           btn.textContent = "SUCCESS!";
           showToast("Transfer Successful ✔");
           await loadUserState();
@@ -1770,9 +2062,9 @@
 
     // 1-Tap Sell DEX Token Back to SOL
     window.sellToken = async function(mint, symbol) {
-      if (!confirm(`Sell 100% of ${symbol} back to SOL on Jupiter?`)) return;
+      if (!confirm(`Sell 100% of ${symbol} back to SOL?`)) return;
       haptic("impact");
-      showToast(`Selling 100% of ${symbol} via Jupiter...`);
+      showToast(`Selling 100% of ${symbol}...`);
       try {
         const res = await api("/api/wallet/sell", {
           method: "POST",
@@ -1793,10 +2085,8 @@
     };
   </script>
 
+  <!-- Capo Engine JavaScript Controller -->
   <script>
-    // =======================================================
-    // THE CAPO ENGINE - INLINE JAVASCRIPT CONTROLLER
-    // =======================================================
     const tg = window.Telegram?.WebApp;
     if (tg) {
       tg.ready();
@@ -1810,7 +2100,7 @@
       try {
         if (tg?.HapticFeedback) {
           if (type === "impact") tg.HapticFeedback.impactOccurred("medium");
-          else if (type === "success") tg.HapticFeedback.notificationOccurred("success");
+          else if (type === "notification") tg.HapticFeedback.notificationOccurred("success");
           else if (type === "error") tg.HapticFeedback.notificationOccurred("error");
           else tg.HapticFeedback.selectionChanged();
         }
@@ -1819,6 +2109,7 @@
 
     function showToast(msg) {
       const el = document.getElementById("toast-pill");
+      if (!el) return;
       el.textContent = msg;
       el.classList.remove("hidden");
       setTimeout(() => el.classList.add("hidden"), 2500);
@@ -1834,11 +2125,11 @@
       return await res.json();
     }
 
-    // Tab Navigation
-    document.querySelectorAll(".tab-trigger").forEach(btn => {
+    // Navigation Tab Bar Controller (OpenSea Floating Bottom Nav)
+    document.querySelectorAll(".nav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         haptic("selection");
-        document.querySelectorAll(".tab-trigger").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
         document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
 
         btn.classList.add("active");
@@ -1874,27 +2165,41 @@
 
     function renderDashboard() {
       const u = currentUser;
-      document.getElementById("user-display").textContent = "@" + (u.username || u.telegram_id);
+      const userDisp = document.getElementById("user-display");
+      if (userDisp) userDisp.textContent = "@" + (u.username || u.telegram_id);
 
       // Power Switch
       const toggle = document.getElementById("power-toggle");
-      toggle.checked = u.is_active;
+      if (toggle) toggle.checked = u.is_active;
       const title = document.getElementById("engine-title");
 
-      if (u.is_active) {
-        title.textContent = "ENGINE ARMED 🟢";
-        title.className = "engine-status-text active";
-      } else {
-        title.textContent = "STANDBY ⚪";
-        title.className = "engine-status-text";
+      if (title) {
+        if (u.is_active) {
+          title.textContent = "ENGINE ARMED 🟢";
+          title.className = "engine-status-text active";
+        } else {
+          title.textContent = "STANDBY ⚪";
+          title.className = "engine-status-text";
+        }
       }
 
-      // Metric Boxes
-      const totalBal = u.total_balance !== undefined ? u.total_balance : u.usdt_balance;
-      document.getElementById("val-balance").textContent = "$" + totalBal.toFixed(2);
-      document.getElementById("val-order-size").textContent = "$" + u.order_amount_usdt.toFixed(2);
-      document.getElementById("val-market").textContent = u.trade_mode.toUpperCase();
-      document.getElementById("val-timeout").textContent = u.max_hold_seconds + "s";
+      // Total Combined Balance calculation (Binance + Solana + EVM)
+      const solVal = (u.solana_balance || 0) * 168.0;
+      const evmVal = (u.evm_balance || 0) * 3100.0;
+      const cexBal = (u.total_balance !== undefined ? u.total_balance : (u.usdt_balance || 0));
+      const grandTotal = cexBal + solVal + evmVal;
+
+      const valBal = document.getElementById("val-balance");
+      if (valBal) valBal.textContent = "$" + grandTotal.toFixed(2);
+
+      const valOrderSize = document.getElementById("val-order-size");
+      if (valOrderSize) valOrderSize.textContent = "$" + u.order_amount_usdt.toFixed(2);
+
+      const valMarket = document.getElementById("val-market");
+      if (valMarket) valMarket.textContent = (u.trade_mode || "SPOT").toUpperCase();
+
+      const valTimeout = document.getElementById("val-timeout");
+      if (valTimeout) valTimeout.textContent = u.max_hold_seconds + "s";
 
       // API Status Badges
       const statusLabel = document.getElementById("label-api-status");
@@ -1906,66 +2211,57 @@
 
       if (u.has_api_keys) {
         if (u.api_error) {
-          statusLabel.textContent = "API Error: " + u.api_error.slice(0, 26);
-          statusLabel.style.color = "#f87171";
-          badgeConn.textContent = "API ERROR ⚠️";
-          badgeConn.style.color = "#f87171";
-          badgeBal.textContent = u.api_error;
-          badgeBal.style.color = "#f87171";
-          badgeVer.textContent = "FAILED";
-          badgeVer.style.color = "#f87171";
+          if (statusLabel) {
+            statusLabel.textContent = "API Error: " + u.api_error.slice(0, 22);
+            statusLabel.style.color = "#f87171";
+          }
+          if (badgeConn) { badgeConn.textContent = "API ERROR ⚠️"; badgeConn.style.color = "#f87171"; }
+          if (badgeBal) { badgeBal.textContent = u.api_error; badgeBal.style.color = "#f87171"; }
+          if (badgeVer) { badgeVer.textContent = "FAILED"; badgeVer.style.color = "#f87171"; }
           if (errBanner) {
             errBanner.style.display = "block";
             if (errText) errText.textContent = u.api_error;
           }
         } else {
           if (errBanner) errBanner.style.display = "none";
-          if (u.usdc_balance > 0 && u.usdt_balance > 0) {
-            statusLabel.textContent = `${u.usdt_balance.toFixed(0)} USDT + ${u.usdc_balance.toFixed(0)} USDC`;
-          } else if (u.usdc_balance > 0) {
-            statusLabel.textContent = `${u.usdc_balance.toFixed(2)} USDC Available`;
-          } else {
-            statusLabel.textContent = `${u.usdt_balance.toFixed(2)} USDT Available`;
+          if (statusLabel) {
+            statusLabel.textContent = `$${cexBal.toFixed(2)} Binance Available`;
+            statusLabel.style.color = "#ffffff";
           }
-          statusLabel.style.color = "#ffffff";
-          badgeConn.textContent = "CONNECTED ✔";
-          badgeConn.style.color = "#4ade80";
+          if (badgeConn) { badgeConn.textContent = "CONNECTED ✔"; badgeConn.style.color = "var(--green)"; }
 
           let detail = "";
           const spotSum = (u.spot_usdt || 0) + (u.spot_usdc || 0);
           const futSum = (u.futures_usdt || 0) + (u.futures_usdc || 0);
           if (spotSum > 0 && futSum > 0) {
             detail = ` (Spot: $${spotSum.toFixed(2)} | Fut: $${futSum.toFixed(2)})`;
-          } else if (futSum > 0) {
-            detail = ` (Futures)`;
-          } else if (spotSum > 0) {
-            detail = ` (Spot)`;
           }
-          badgeBal.textContent = `$${totalBal.toFixed(2)}${detail}`;
-          badgeBal.style.color = "#ffffff";
-          badgeVer.textContent = "YES";
-          badgeVer.style.color = "#4ade80";
+          if (badgeBal) { badgeBal.textContent = `$${cexBal.toFixed(2)}${detail}`; badgeBal.style.color = "#ffffff"; }
+          if (badgeVer) { badgeVer.textContent = "YES"; badgeVer.style.color = "var(--green)"; }
         }
       } else {
         if (errBanner) errBanner.style.display = "none";
-        statusLabel.textContent = "No API Key ✖";
-        statusLabel.style.color = "#9ba1ad";
-        badgeConn.textContent = "DISCONNECTED";
-        badgeConn.style.color = "#9ba1ad";
-        badgeBal.textContent = "--";
-        badgeVer.textContent = "NO";
-        badgeVer.style.color = "#9ba1ad";
+        if (statusLabel) { statusLabel.textContent = "API Disconnected"; statusLabel.style.color = "#9ba1ad"; }
+        if (badgeConn) { badgeConn.textContent = "DISCONNECTED"; badgeConn.style.color = "#9ba1ad"; }
+        if (badgeBal) { badgeBal.textContent = "--"; }
+        if (badgeVer) { badgeVer.textContent = "NO"; badgeVer.style.color = "#9ba1ad"; }
       }
 
       // Sliders & Values
-      document.getElementById("slider-tp").value = u.tp_percent;
-      document.getElementById("badge-tp").textContent = "+" + u.tp_percent + "%";
+      const sTp = document.getElementById("slider-tp");
+      if (sTp) sTp.value = u.tp_percent;
+      const bTp = document.getElementById("badge-tp");
+      if (bTp) bTp.textContent = "+" + u.tp_percent + "%";
 
-      document.getElementById("slider-sl").value = u.sl_percent;
-      document.getElementById("badge-sl").textContent = "-" + u.sl_percent + "%";
+      const sSl = document.getElementById("slider-sl");
+      if (sSl) sSl.value = u.sl_percent;
+      const bSl = document.getElementById("badge-sl");
+      if (bSl) bSl.textContent = "-" + u.sl_percent + "%";
 
-      document.getElementById("slider-timeout").value = u.max_hold_seconds;
-      document.getElementById("badge-timeout").textContent = u.max_hold_seconds + "s";
+      const sTimeout = document.getElementById("slider-timeout");
+      if (sTimeout) sTimeout.value = u.max_hold_seconds;
+      const bTimeout = document.getElementById("badge-timeout");
+      if (bTimeout) bTimeout.textContent = u.max_hold_seconds + "s";
 
       // Market Segmented
       document.querySelectorAll("#market-seg .seg-option").forEach(b => {
@@ -1990,21 +2286,25 @@
       if (window.renderWallet) window.renderWallet();
 
       const levGroup = document.getElementById("group-leverage");
-      if (u.trade_mode === "futures") {
-        levGroup.style.display = "block";
-        document.querySelectorAll("#leverage-seg .seg-option").forEach(b => {
-          if (parseInt(b.dataset.lev) === u.futures_leverage) b.classList.add("active");
-          else b.classList.remove("active");
-        });
-      } else {
-        levGroup.style.display = "none";
+      if (levGroup) {
+        if (u.trade_mode === "futures") {
+          levGroup.style.display = "block";
+          document.querySelectorAll("#leverage-seg .seg-option").forEach(b => {
+            if (parseInt(b.dataset.lev) === u.futures_leverage) b.classList.add("active");
+            else b.classList.remove("active");
+          });
+        } else {
+          levGroup.style.display = "none";
+        }
       }
 
-      // Chips
+      // Binance Chips
       document.querySelectorAll("#chips-amount .chip-item").forEach(c => {
         if (parseFloat(c.dataset.val) === u.order_amount_usdt) c.classList.add("active");
         else c.classList.remove("active");
       });
+      const badgeBinance = document.getElementById("badge-binance-size");
+      if (badgeBinance) badgeBinance.textContent = "$" + u.order_amount_usdt.toFixed(0) + " USDT";
 
       // Solana DEX Buy Size Chips
       const solBuyAmt = u.solana_buy_amount_sol || 0.10;
@@ -2026,7 +2326,7 @@
     }
 
     // Power Toggle Event
-    document.getElementById("power-toggle").addEventListener("change", async (e) => {
+    document.getElementById("power-toggle")?.addEventListener("change", async (e) => {
       haptic("impact");
       const is_active = e.target.checked ? 1 : 0;
 
@@ -2046,7 +2346,7 @@
     });
 
     // Quick Market Switch
-    document.getElementById("btn-switch-market").addEventListener("click", async () => {
+    document.getElementById("btn-switch-market")?.addEventListener("click", async () => {
       haptic("impact");
       const newMode = currentUser.trade_mode === "spot" ? "futures" : "spot";
       await api("/api/user/settings", {
@@ -2079,7 +2379,7 @@
       });
     });
 
-    // Amount Chips Click
+    // Amount Chips Click (Binance)
     document.querySelectorAll("#chips-amount .chip-item").forEach(chip => {
       chip.addEventListener("click", () => {
         haptic("selection");
@@ -2087,14 +2387,16 @@
         chip.classList.add("active");
         document.getElementById("input-custom-size").value = "";
         currentUser.order_amount_usdt = parseFloat(chip.dataset.val);
+        document.getElementById("badge-binance-size").textContent = "$" + currentUser.order_amount_usdt.toFixed(0) + " USDT";
       });
     });
 
-    document.getElementById("input-custom-size").addEventListener("input", (e) => {
+    document.getElementById("input-custom-size")?.addEventListener("input", (e) => {
       const val = parseFloat(e.target.value);
       if (val && val >= 10) {
         document.querySelectorAll("#chips-amount .chip-item").forEach(c => c.classList.remove("active"));
         currentUser.order_amount_usdt = val;
+        document.getElementById("badge-binance-size").textContent = "$" + val.toFixed(0) + " USDT";
       }
     });
 
@@ -2111,7 +2413,7 @@
       });
     });
 
-    document.getElementById("input-custom-sol").addEventListener("input", (e) => {
+    document.getElementById("input-custom-sol")?.addEventListener("input", (e) => {
       const val = parseFloat(e.target.value);
       if (val && val > 0) {
         document.querySelectorAll("#chips-sol-amount .chip-item").forEach(c => c.classList.remove("active"));
@@ -2133,7 +2435,7 @@
       });
     });
 
-    document.getElementById("input-custom-evm").addEventListener("input", (e) => {
+    document.getElementById("input-custom-evm")?.addEventListener("input", (e) => {
       const val = parseFloat(e.target.value);
       if (val && val > 0) {
         document.querySelectorAll("#chips-evm-amount .chip-item").forEach(c => c.classList.remove("active"));
@@ -2143,18 +2445,18 @@
     });
 
     // Sliders Live Badges
-    document.getElementById("slider-tp").addEventListener("input", (e) => {
+    document.getElementById("slider-tp")?.addEventListener("input", (e) => {
       document.getElementById("badge-tp").textContent = "+" + e.target.value + "%";
     });
-    document.getElementById("slider-sl").addEventListener("input", (e) => {
+    document.getElementById("slider-sl")?.addEventListener("input", (e) => {
       document.getElementById("badge-sl").textContent = "-" + e.target.value + "%";
     });
-    document.getElementById("slider-timeout").addEventListener("input", (e) => {
+    document.getElementById("slider-timeout")?.addEventListener("input", (e) => {
       document.getElementById("badge-timeout").textContent = e.target.value + "s";
     });
 
     // Save Strategy
-    document.getElementById("btn-save-settings").addEventListener("click", async () => {
+    document.getElementById("btn-save-settings")?.addEventListener("click", async () => {
       haptic("impact");
       const payload = {
         trade_mode: currentUser.trade_mode,
@@ -2173,7 +2475,7 @@
       });
 
       if (res.success) {
-        showToast("Strategy parameters saved ✔");
+        showToast("Sniper parameters saved ✔");
         loadUserState();
       } else {
         showToast("Error saving strategy");
@@ -2181,7 +2483,7 @@
     });
 
     // Validate & Connect API
-    document.getElementById("btn-validate-api").addEventListener("click", async () => {
+    document.getElementById("btn-validate-api")?.addEventListener("click", async () => {
       const key = document.getElementById("input-api-key").value.trim();
       const secret = document.getElementById("input-api-secret").value.trim();
 
@@ -2226,14 +2528,16 @@
         const openTrades = res.trades.filter(t => t.status === "OPEN");
         const container = document.getElementById("positions-container");
         const countTag = document.getElementById("active-positions-count");
-        countTag.textContent = openTrades.length + " OPEN";
+        if (countTag) countTag.textContent = openTrades.length + " OPEN";
+
+        if (!container) return;
 
         if (openTrades.length === 0) {
           container.innerHTML = `
             <div class="empty-box">
               <div class="icon">⬡</div>
               <h4>NO OPEN POSITIONS</h4>
-              <p>Scanning Capo Core WebSocket & Upbit streams. When a coin is listed, it will execute and appear here.</p>
+              <p>Scanning Capo Core WebSocket &amp; Upbit streams. When a coin is announced, it executes and tracks here.</p>
             </div>
           `;
           return;
@@ -2242,15 +2546,15 @@
         container.innerHTML = openTrades.map(t => `
           <div class="position-item">
             <div class="pos-head">
-              <span class="pos-ticker">${t.symbol} <small style="color:#9ba1ad">(${t.trade_mode.toUpperCase()})</small></span>
+              <span class="pos-ticker">${t.symbol} <small style="color:var(--text-muted)">(${(t.trade_mode || 'SPOT').toUpperCase()})</small></span>
               <span class="pos-badge ${t.pnl_percent >= 0 ? 'gain' : 'drop'}">
                 ${t.pnl_percent >= 0 ? '+' : ''}${t.pnl_percent.toFixed(2)}%
               </span>
             </div>
             <div class="pos-stats-grid">
-              <div>ENTRY: $${t.buy_price.toFixed(4)}</div>
-              <div>MARK: $${(t.current_price || t.buy_price).toFixed(4)}</div>
-              <div>SIZE: $${t.usdt_spent.toFixed(2)} USDT</div>
+              <div>ENTRY: $${(t.buy_price || 0).toFixed(4)}</div>
+              <div>MARK: $${(t.current_price || t.buy_price || 0).toFixed(4)}</div>
+              <div>SIZE: $${(t.usdt_spent || 0).toFixed(2)} USDT</div>
               <div>SIDE: LONG</div>
             </div>
             <button class="btn-panic-sell" onclick="panicSell(${t.id})">
@@ -2283,10 +2587,15 @@
         if (!res.success || res.listings.length === 0) return;
 
         const latest = res.listings[0];
-        document.getElementById("ann-time").textContent = latest.detected_at || "JUST NOW";
-        document.getElementById("ann-title").textContent = `[${latest.parsed_coin}] ${latest.raw_title}`;
+        const annTime = document.getElementById("ann-time");
+        if (annTime) annTime.textContent = latest.detected_at || "JUST NOW";
+
+        const annTitle = document.getElementById("ann-title");
+        if (annTitle) annTitle.textContent = `[${latest.parsed_coin}] ${latest.raw_title}`;
 
         const list = document.getElementById("listings-stream-list");
+        if (!list) return;
+
         list.innerHTML = res.listings.map(l => `
           <div class="log-item">
             <div>
@@ -2304,9 +2613,11 @@
         const res = await api("/api/trades");
         const list = document.getElementById("trades-ledger-list");
         if (!res.success || res.trades.length === 0) {
-          list.innerHTML = `<div class="empty-box">No closed trades recorded yet.</div>`;
+          if (list) list.innerHTML = `<div class="empty-box">No completed trades recorded yet.</div>`;
           return;
         }
+
+        if (!list) return;
 
         list.innerHTML = res.trades.map(t => {
           const isDex = String(t.trade_mode || "").toLowerCase().includes("dex");
@@ -2320,7 +2631,7 @@
               <span class="log-symbol">${t.symbol} (${(t.trade_mode || 'SPOT').toUpperCase()})</span>
               <div class="log-sub">Size: ${sizeLabel} | Exit: ${t.exit_reason || t.status}</div>
             </div>
-            <div style="font-family: var(--mono); font-weight:700; color:${pnlVal >= 0 ? 'var(--green)' : 'var(--red)'}">
+            <div style="font-family:var(--mono); font-weight:700; color:${pnlVal >= 0 ? 'var(--green)' : 'var(--red)'}">
               ${pnlSign}${pnlVal.toFixed(2)}%${pnlExtra}
             </div>
           </div>
@@ -2350,18 +2661,20 @@
     });
 
     document.getElementById("btn-copy-sol")?.addEventListener("click", () => {
-      const el = document.getElementById("wallet-sol-addr");
-      if (el && el.value && !el.value.includes("Generating")) {
-        navigator.clipboard.writeText(el.value);
+      if (!currentUser) return;
+      const addr = currentUser.solana_wallet_address;
+      if (addr) {
+        navigator.clipboard.writeText(addr);
         showToast("Copied Solana Address ✔");
         haptic("impact");
       }
     });
 
     document.getElementById("btn-copy-evm")?.addEventListener("click", () => {
-      const el = document.getElementById("wallet-evm-addr");
-      if (el && el.value && !el.value.includes("Generating")) {
-        navigator.clipboard.writeText(el.value);
+      if (!currentUser) return;
+      const addr = currentUser.evm_wallet_address;
+      if (addr) {
+        navigator.clipboard.writeText(addr);
         showToast("Copied EVM Address ✔");
         haptic("impact");
       }
