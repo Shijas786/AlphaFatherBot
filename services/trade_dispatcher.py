@@ -85,48 +85,74 @@ class TradeDispatcher:
 
         logger.info(f"Executing orders for {len(active_users)} active trader(s)...")
 
-        if binance_symbol:
-            # ── BINANCE PATH ─────────────────────────────────────────────────
-            logger.info(f"Resolved {coin} → Binance symbol: {binance_symbol}")
-            tasks = [
-                self._execute_user_order(user, binance_symbol, sym_info, start_time)
-                for user in active_users
-            ]
-            await asyncio.gather(*tasks, return_exceptions=True)
-        else:
-            # ── DEX FALLBACK PATH ────────────────────────────────────────────
-            logger.info(f"'{coin}' NOT on Binance — engaging DEX fallback (Solana/Jupiter)...")
+        # Determine if DEX contract extraction is required
+        needs_dex = any(
+            (u.get("snipe_venue", "combo") == "dex_only") or 
+            (u.get("snipe_venue", "combo") == "combo" and not binance_symbol)
+            for u in active_users
+        )
 
-            # Extract contract address from notice (async, shared across all users)
+        contract_info = None
+        if needs_dex:
+            logger.info(f"Extracting smart contract for {coin} from notice...")
             contract_info = await self._resolve_contract(coin, notice_url, body_text)
+            if contract_info:
+                logger.info(
+                    f"[DEX] Contract resolved: {contract_info['network'].upper()} "
+                    f"{contract_info['contract'][:16]}… (source: {contract_info.get('source', '?')})"
+                )
+            else:
+                logger.warning(f"[DEX] No contract found for {coin}")
 
-            if not contract_info:
-                logger.warning(f"[DEX] No contract found for {coin} — skipping DEX trade")
-                # Notify users that coin was detected but DEX trade couldn't execute
-                for user in active_users:
+        tasks = []
+        for user in active_users:
+            venue = user.get("snipe_venue", "combo")
+            user_id = user["telegram_id"]
+
+            if venue == "dex_only":
+                # ── DEX ONLY MODE ─────────────────────────────────────────────
+                if contract_info and contract_info.get("network") != "bitcoin":
+                    tasks.append(self._execute_user_dex_swap(user, coin, contract_info, start_time))
+                else:
                     if self.telegram_buy_notifier:
-                        await self.telegram_buy_notifier(user["telegram_id"], {
+                        asyncio.create_task(self.telegram_buy_notifier(user_id, {
                             "symbol": coin,
                             "dex": True,
                             "failed": True,
-                            "error": f"⚠️ {coin} listed on Upbit but no contract found yet. Buy manually!",
+                            "error": f"⚠️ {coin} detected for DEX snipe, but no valid contract was found in the Upbit notice.",
                             "latency_ms": int((time.time() - start_time) * 1000)
-                        })
-                return
+                        }))
 
-            if contract_info["network"] == "bitcoin":
-                logger.info(f"[DEX] {coin} is on Bitcoin — no DEX support. Skipping.")
-                return
+            elif venue == "cex_only":
+                # ── BINANCE CEX ONLY MODE ─────────────────────────────────────
+                if binance_symbol:
+                    tasks.append(self._execute_user_order(user, binance_symbol, sym_info, start_time))
+                else:
+                    if self.telegram_buy_notifier:
+                        asyncio.create_task(self.telegram_buy_notifier(user_id, {
+                            "symbol": coin,
+                            "failed": True,
+                            "error": f"ℹ️ {coin} is not tradable on Binance (DEX snipe skipped per your 'Binance CEX Only' setting).",
+                            "latency_ms": int((time.time() - start_time) * 1000)
+                        }))
 
-            logger.info(
-                f"[DEX] Contract resolved: {contract_info['network'].upper()} "
-                f"{contract_info['contract'][:16]}… (source: {contract_info.get('source', '?')})"
-            )
+            else:
+                # ── HYBRID COMBO (Binance First + DEX Fallback) ───────────────
+                if binance_symbol:
+                    tasks.append(self._execute_user_order(user, binance_symbol, sym_info, start_time))
+                elif contract_info and contract_info.get("network") != "bitcoin":
+                    tasks.append(self._execute_user_dex_swap(user, coin, contract_info, start_time))
+                else:
+                    if self.telegram_buy_notifier:
+                        asyncio.create_task(self.telegram_buy_notifier(user_id, {
+                            "symbol": coin,
+                            "dex": True,
+                            "failed": True,
+                            "error": f"⚠️ {coin} listed on Upbit but not on Binance, and no DEX contract found.",
+                            "latency_ms": int((time.time() - start_time) * 1000)
+                        }))
 
-            tasks = [
-                self._execute_user_dex_swap(user, coin, contract_info, start_time)
-                for user in active_users
-            ]
+        if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
     # ─────────────────────────────────────────────────────────────────────────

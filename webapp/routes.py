@@ -98,6 +98,7 @@ async def api_get_user(request: web.Request):
             "username": user.get("username", ""),
             "is_active": bool(user.get("is_active", 0)),
             "trade_mode": user.get("trade_mode", "spot"),
+            "snipe_venue": user.get("snipe_venue", "combo"),
             "order_amount_usdt": user.get("order_amount_usdt", 50.0),
             "futures_leverage": user.get("futures_leverage", 3),
             "tp_percent": user.get("tp_percent", 15.0),
@@ -131,7 +132,7 @@ async def api_update_settings(request: web.Request):
     data = await request.json()
 
     allowed_fields = [
-        "is_active", "trade_mode", "order_amount_usdt",
+        "is_active", "trade_mode", "snipe_venue", "order_amount_usdt",
         "futures_leverage", "tp_percent", "sl_percent", "max_hold_seconds",
         "solana_buy_amount_sol", "evm_buy_amount_eth"
     ]

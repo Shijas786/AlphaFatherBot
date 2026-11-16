@@ -841,6 +841,130 @@
       cursor: pointer;
     }
 
+    /* Venue Selection Cards */
+    .venue-selector-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .venue-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 14px 14px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      user-select: none;
+    }
+
+    .venue-card:hover {
+      border-color: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .venue-card.active {
+      border-color: var(--green);
+      background: rgba(16, 185, 129, 0.07);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.12);
+    }
+
+    .venue-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .venue-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .venue-radio {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .venue-card.active .venue-radio {
+      border-color: var(--green);
+      background: var(--green);
+    }
+
+    .venue-card.active .venue-radio::after {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #000000;
+    }
+
+    .venue-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .venue-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: #ffffff;
+    }
+
+    .venue-badge {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--green);
+      text-transform: uppercase;
+    }
+
+    .venue-badge.dex {
+      background: rgba(153, 69, 255, 0.2);
+      color: #00FFA3;
+    }
+
+    .venue-badge.cex {
+      background: rgba(240, 185, 11, 0.2);
+      color: #F0B90B;
+    }
+
+    .venue-desc {
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--text-muted);
+    }
+
+    .dimmed-size-group {
+      opacity: 0.38;
+      pointer-events: none;
+      filter: grayscale(0.5);
+      transition: opacity 0.3s;
+    }
+
+    .venue-bypass-tag {
+      font-size: 10px;
+      font-weight: 800;
+      color: #f87171;
+      background: rgba(239, 68, 68, 0.15);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
     .segmented {
       display: flex;
       background: #0d111b;
@@ -1414,26 +1538,101 @@
     <!-- ================= TAB 3: STRATEGY ================= -->
     <main class="tab-content" id="tab-strategy">
 
-      <!-- Venue & Market -->
+      <!-- Venue & Market Selector -->
       <section class="card">
-        <h2 class="card-heading">1. TRADING VENUE &amp; LEVERAGE</h2>
-        <p class="card-caption">Select whether Binance orders execute on Spot or Futures.</p>
+        <div class="card-title-bar">
+          <h2 class="card-heading">1. SNIPER EXECUTION VENUE</h2>
+          <span class="pill-tag" id="tag-current-venue" style="background:#10b981; color:#000000; font-weight:800;">HYBRID COMBO</span>
+        </div>
+        <p class="card-caption">Choose exactly where your orders execute when an Upbit listing announcement is detected.</p>
 
-        <div class="field-group">
-          <label class="field-label">BINANCE MARKET</label>
-          <div class="segmented" id="market-seg">
-            <button class="seg-option active" data-market="spot">BINANCE SPOT</button>
-            <button class="seg-option" data-market="futures">BINANCE FUTURES (USDT-M)</button>
+        <div class="venue-selector-grid">
+          <!-- Option 1: DEX ONLY -->
+          <div class="venue-card" id="venue-card-dex_only" onclick="setSnipeVenue('dex_only', true)">
+            <div class="venue-card-head">
+              <div class="venue-icons">
+                <!-- Solana SVG -->
+                <svg viewBox="0 0 397 311" fill="none" style="width:20px; height:16px;">
+                  <linearGradient id="sol-v-1" x1="363" y1="28.5" x2="63.5" y2="335" gradientUnits="userSpaceOnUse"><stop stop-color="#00FFA3"/><stop offset="1" stop-color="#DC1FFF"/></linearGradient>
+                  <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h313.7c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z" fill="url(#sol-v-1)"/>
+                  <path d="M64.6 3.8C67 1.4 70.3 0 73.8 0h313.7c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#sol-v-1)"/>
+                  <path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H10.2c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h313.7c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#sol-v-1)"/>
+                </svg>
+                <!-- Ethereum SVG -->
+                <svg viewBox="0 0 784 1277" fill="none" style="width:14px; height:20px;">
+                  <path d="M392.07 0L383.5 29.11V874.74L392.07 883.33L784.13 651.54L392.07 0Z" fill="#627EEA"/>
+                  <path d="M392.07 0L0 651.54L392.07 883.33V473.47V0Z" fill="#8A92B2"/>
+                  <path d="M392.07 956.52L387.24 962.41V1272.58L392.07 1276.99L784.37 724.89L392.07 956.52Z" fill="#627EEA"/>
+                  <path d="M392.07 1276.99V956.52L0 724.89L392.07 1276.99Z" fill="#8A92B2"/>
+                </svg>
+              </div>
+              <div class="venue-radio"></div>
+            </div>
+            <div class="venue-title-row">
+              <span class="venue-title">DEX ONLY (SOLANA &amp; EVM)</span>
+              <span class="venue-badge dex">ZERO API KEYS NEEDED</span>
+            </div>
+            <div class="venue-desc">100% on-chain decentralized snipe via in-app wallet. Directly swaps on Jupiter &amp; Uniswap. Does not touch Binance.</div>
+          </div>
+
+          <!-- Option 2: BINANCE CEX ONLY -->
+          <div class="venue-card" id="venue-card-cex_only" onclick="setSnipeVenue('cex_only', true)">
+            <div class="venue-card-head">
+              <div class="venue-icons">
+                <!-- Binance SVG -->
+                <svg viewBox="0 0 126 126" fill="none" style="width:20px; height:20px;">
+                  <path d="M63 0L38.4 24.6L50.7 36.9L63 24.6L75.3 36.9L87.6 24.6L63 0Z" fill="#F0B90B"/>
+                  <path d="M24.6 38.4L0 63L24.6 87.6L36.9 75.3L24.6 63L36.9 50.7L24.6 38.4Z" fill="#F0B90B"/>
+                  <path d="M63 126L87.6 101.4L75.3 89.1L63 101.4L50.7 89.1L38.4 101.4L63 126Z" fill="#F0B90B"/>
+                  <path d="M101.4 87.6L126 63L101.4 38.4L89.1 50.7L101.4 63L89.1 75.3L101.4 87.6Z" fill="#F0B90B"/>
+                  <path d="M63 43.8L43.8 63L63 82.2L82.2 63L63 43.8Z" fill="#F0B90B"/>
+                </svg>
+              </div>
+              <div class="venue-radio"></div>
+            </div>
+            <div class="venue-title-row">
+              <span class="venue-title">BINANCE CEX ONLY</span>
+              <span class="venue-badge cex">SPOT / FUTURES</span>
+            </div>
+            <div class="venue-desc">Snipes exclusively on Binance with your API keys. Skips all decentralized DEX trades.</div>
+          </div>
+
+          <!-- Option 3: HYBRID COMBO -->
+          <div class="venue-card active" id="venue-card-combo" onclick="setSnipeVenue('combo', true)">
+            <div class="venue-card-head">
+              <div class="venue-icons">
+                <svg viewBox="0 0 126 126" fill="none" style="width:18px; height:18px;"><path d="M63 0L38.4 24.6L50.7 36.9L63 24.6L75.3 36.9L87.6 24.6L63 0Z" fill="#F0B90B"/><path d="M24.6 38.4L0 63L24.6 87.6L36.9 75.3L24.6 63L36.9 50.7L24.6 38.4Z" fill="#F0B90B"/><path d="M63 126L87.6 101.4L75.3 89.1L63 101.4L50.7 89.1L38.4 101.4L63 126Z" fill="#F0B90B"/><path d="M101.4 87.6L126 63L101.4 38.4L89.1 50.7L101.4 63L89.1 75.3L101.4 87.6Z" fill="#F0B90B"/><path d="M63 43.8L43.8 63L63 82.2L82.2 63L63 43.8Z" fill="#F0B90B"/></svg>
+                <span style="color:var(--text-muted); font-size:11px;">+</span>
+                <svg viewBox="0 0 397 311" fill="none" style="width:18px; height:14px;"><linearGradient id="sol-v-3" x1="363" y1="28.5" x2="63.5" y2="335" gradientUnits="userSpaceOnUse"><stop stop-color="#00FFA3"/><stop offset="1" stop-color="#DC1FFF"/></linearGradient><path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h313.7c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z" fill="url(#sol-v-3)"/><path d="M64.6 3.8C67 1.4 70.3 0 73.8 0h313.7c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="url(#sol-v-3)"/><path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H10.2c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h313.7c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="url(#sol-v-3)"/></svg>
+              </div>
+              <div class="venue-radio"></div>
+            </div>
+            <div class="venue-title-row">
+              <span class="venue-title">HYBRID COMBO</span>
+              <span class="venue-badge">RECOMMENDED</span>
+            </div>
+            <div class="venue-desc">Buys on Binance first for deepest liquidity. If the coin is not yet on Binance, automatically snipes on Solana/EVM DEX!</div>
           </div>
         </div>
 
-        <div class="field-group" id="group-leverage" style="display: none;">
-          <label class="field-label">FUTURES LEVERAGE</label>
-          <div class="segmented" id="leverage-seg">
-            <button class="seg-option" data-lev="2">2x</button>
-            <button class="seg-option active" data-lev="3">3x</button>
-            <button class="seg-option" data-lev="5">5x</button>
-            <button class="seg-option" data-lev="10">10x</button>
+        <!-- Sub-options for Binance Market (Spot vs Futures) -->
+        <div id="sub-binance-venue-options" style="margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.06);">
+          <div class="field-group">
+            <label class="field-label">BINANCE ORDER TYPE</label>
+            <div class="segmented" id="market-seg">
+              <button class="seg-option active" data-market="spot">BINANCE SPOT</button>
+              <button class="seg-option" data-market="futures">BINANCE FUTURES (USDT-M)</button>
+            </div>
+          </div>
+
+          <div class="field-group" id="group-leverage" style="display: none; margin-top:12px;">
+            <label class="field-label">FUTURES LEVERAGE</label>
+            <div class="segmented" id="leverage-seg">
+              <button class="seg-option" data-lev="2">2x</button>
+              <button class="seg-option active" data-lev="3">3x</button>
+              <button class="seg-option" data-lev="5">5x</button>
+              <button class="seg-option" data-lev="10">10x</button>
+            </div>
           </div>
         </div>
       </section>
@@ -1444,7 +1643,7 @@
         <p class="card-caption">Pre-set order amounts for instant 0ms execution per listing alert.</p>
 
         <!-- Binance USDT Size -->
-        <div class="field-group">
+        <div class="field-group" id="group-size-binance">
           <div class="field-head">
             <label class="field-label">
               <svg viewBox="0 0 126 126" fill="none">
@@ -1456,7 +1655,10 @@
               </svg>
               BINANCE BUY SIZE
             </label>
-            <span class="field-val-badge" id="badge-binance-size">$50 USDT</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="venue-bypass-tag" id="tag-bypass-binance" style="display:none;">BYPASSED IN DEX ONLY</span>
+              <span class="field-val-badge" id="badge-binance-size">$50 USDT</span>
+            </div>
           </div>
           <div class="chips-bar" id="chips-amount">
             <button class="chip-item" data-val="25">$25</button>
@@ -1469,7 +1671,7 @@
         </div>
 
         <!-- Solana Size -->
-        <div class="field-group">
+        <div class="field-group" id="group-size-sol">
           <div class="field-head">
             <label class="field-label">
               <svg viewBox="0 0 397 311" fill="none">
@@ -1480,7 +1682,10 @@
               </svg>
               SOLANA BUY SIZE
             </label>
-            <span class="field-val-badge" id="badge-dex-sol">0.10 SOL</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="venue-bypass-tag" id="tag-bypass-sol" style="display:none;">BYPASSED IN CEX ONLY</span>
+              <span class="field-val-badge" id="badge-dex-sol">0.10 SOL</span>
+            </div>
           </div>
           <div class="chips-bar" id="chips-sol-amount">
             <button class="chip-item" data-sol="0.05">0.05 SOL</button>
@@ -1493,7 +1698,7 @@
         </div>
 
         <!-- EVM Size -->
-        <div class="field-group">
+        <div class="field-group" id="group-size-evm">
           <div class="field-head">
             <label class="field-label">
               <svg viewBox="0 0 784 1277" fill="none">
@@ -1504,7 +1709,10 @@
               </svg>
               EVM BUY SIZE
             </label>
-            <span class="field-val-badge" id="badge-dex-evm">0.05 ETH</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="venue-bypass-tag" id="tag-bypass-evm" style="display:none;">BYPASSED IN CEX ONLY</span>
+              <span class="field-val-badge" id="badge-dex-evm">0.05 ETH</span>
+            </div>
           </div>
           <div class="chips-bar" id="chips-evm-amount">
             <button class="chip-item" data-eth="0.01">0.01 ETH</button>
@@ -1808,10 +2016,10 @@
         let html = `
           <div class="token-item">
             <div class="token-left">
-              <div class="token-avatar" style="border-color:#9945FF; color:#9945FF;">SOL</div>
+              ${renderTokenIcon("SOL", null, 38)}
               <div>
                 <div class="token-name">Solana</div>
-                <div class="token-sub">Native Gas Asset</div>
+                <div class="token-sub">Native Gas Asset • Mainnet</div>
               </div>
             </div>
             <div style="text-align:right;">
@@ -1826,7 +2034,7 @@
             html += `
               <div class="token-item">
                 <div class="token-left">
-                  <div class="token-avatar">${(t.symbol || "TKN").slice(0, 3)}</div>
+                  ${renderTokenIcon(t.symbol, t.mint, 38)}
                   <div>
                     <div class="token-name">${t.symbol}</div>
                     <div class="token-sub">${t.mint.slice(0, 6)}…${t.mint.slice(-4)}</div>
@@ -1848,10 +2056,10 @@
         tokenList.innerHTML = `
           <div class="token-item">
             <div class="token-left">
-              <div class="token-avatar" style="border-color:#627EEA; color:#627EEA;">ETH</div>
+              ${renderTokenIcon("ETH", null, 38)}
               <div>
                 <div class="token-name">Ethereum</div>
-                <div class="token-sub">Native Gas Asset</div>
+                <div class="token-sub">Native Gas Asset • EVM</div>
               </div>
             </div>
             <div style="text-align:right;">
@@ -2088,6 +2296,129 @@
   <!-- Capo Engine JavaScript Controller -->
   <script>
     const tg = window.Telegram?.WebApp;
+
+    // High-fidelity Token Logo Icon Renderer
+    function renderTokenIcon(symbol, mint = null, size = 32) {
+      const sym = (symbol || "COIN").toUpperCase().replace(/USDT$|USDC$|-USDT$|_USDT$/i, "");
+      
+      if (sym === "SOL") {
+        return `<div class="token-avatar" style="width:${size}px; height:${size}px; min-width:${size}px; min-height:${size}px; background:rgba(153,69,255,0.14); border-color:rgba(153,69,255,0.35);"><svg viewBox="0 0 397 311" style="width:${Math.round(size*0.6)}px; height:${Math.round(size*0.6)}px;" fill="none"><path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h313.7c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z" fill="#00FFA3"/><path d="M64.6 3.8C67 1.4 70.3 0 73.8 0h313.7c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z" fill="#00FFA3"/><path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H10.2c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h313.7c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z" fill="#DC1FFF"/></svg></div>`;
+      }
+      if (sym === "ETH") {
+        return `<div class="token-avatar" style="width:${size}px; height:${size}px; min-width:${size}px; min-height:${size}px; background:rgba(98,126,234,0.14); border-color:rgba(98,126,234,0.35);"><svg viewBox="0 0 784 1277" style="width:${Math.round(size*0.55)}px; height:${Math.round(size*0.55)}px;" fill="none"><path d="M392.07 0L383.5 29.11V874.74L392.07 883.33L784.13 651.54L392.07 0Z" fill="#627EEA"/><path d="M392.07 0L0 651.54L392.07 883.33V473.47V0Z" fill="#8A92B2"/><path d="M392.07 956.52L387.24 962.41V1272.58L392.07 1276.99L784.37 724.89L392.07 956.52Z" fill="#627EEA"/><path d="M392.07 1276.99V956.52L0 724.89L392.07 1276.99Z" fill="#8A92B2"/></svg></div>`;
+      }
+      if (sym === "BNB") {
+        return `<div class="token-avatar" style="width:${size}px; height:${size}px; min-width:${size}px; min-height:${size}px; background:rgba(240,185,11,0.14); border-color:rgba(240,185,11,0.35);"><svg viewBox="0 0 126 126" style="width:${Math.round(size*0.6)}px; height:${Math.round(size*0.6)}px;" fill="none"><path d="M63 0L38.4 24.6L50.7 36.9L63 24.6L75.3 36.9L87.6 24.6L63 0Z" fill="#F0B90B"/><path d="M24.6 38.4L0 63L24.6 87.6L36.9 75.3L24.6 63L36.9 50.7L24.6 38.4Z" fill="#F0B90B"/><path d="M63 126L87.6 101.4L75.3 89.1L63 101.4L50.7 89.1L38.4 101.4L63 126Z" fill="#F0B90B"/><path d="M101.4 87.6L126 63L101.4 38.4L89.1 50.7L101.4 63L89.1 75.3L101.4 87.6Z" fill="#F0B90B"/><path d="M63 43.8L43.8 63L63 82.2L82.2 63L63 43.8Z" fill="#F0B90B"/></svg></div>`;
+      }
+      if (sym === "USDT") {
+        return `<div class="token-avatar" style="width:${size}px; height:${size}px; min-width:${size}px; min-height:${size}px; background:rgba(38,161,123,0.15); border-color:rgba(38,161,123,0.4); color:#26a17b; font-weight:800; font-size:${Math.round(size*0.5)}px;">₮</div>`;
+      }
+
+      let hash = 0;
+      for (let i = 0; i < sym.length; i++) hash = sym.charCodeAt(i) + ((hash << 5) - hash);
+      const hue1 = Math.abs(hash % 360);
+      const hue2 = (hue1 + 45) % 360;
+
+      const primaryLogo = mint 
+        ? `https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/${mint}/logo.png`
+        : `https://assets.coincap.io/assets/icons/${sym.toLowerCase()}@2x.png`;
+      const backupLogo = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/binance/assets/${sym}USDT/logo.png`;
+
+      return `
+        <div class="token-avatar" style="width:${size}px; height:${size}px; min-width:${size}px; min-height:${size}px; position:relative; overflow:hidden;">
+          <img src="${primaryLogo}" alt="${sym}" loading="lazy"
+               onerror="if(this.dataset.b){this.style.display='none'; this.nextElementSibling.style.display='flex';}else{this.dataset.b='1'; this.src='${backupLogo}';}"
+               style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+          <div style="display:none; width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg, hsl(${hue1},70%,50%), hsl(${hue2},80%,40%)); align-items:center; justify-content:center; color:#fff; font-size:${Math.max(9, Math.round(size*0.35))}px; font-weight:800; text-transform:uppercase;">
+            ${sym.slice(0, 3)}
+          </div>
+        </div>
+      `;
+    }
+
+    // Set & Persist Snipe Venue Selection
+    window.setSnipeVenue = async function(venue, saveNow = false) {
+      if (!currentUser) return;
+      currentUser.snipe_venue = venue;
+      haptic("impact");
+
+      // Update card active classes
+      ["dex_only", "cex_only", "combo"].forEach(v => {
+        const el = document.getElementById("venue-card-" + v);
+        if (el) {
+          if (v === venue) el.classList.add("active");
+          else el.classList.remove("active");
+        }
+      });
+
+      // Update header badge
+      const tag = document.getElementById("tag-current-venue");
+      if (tag) {
+        if (venue === "dex_only") {
+          tag.textContent = "DEX ONLY";
+          tag.style.background = "#9945FF";
+          tag.style.color = "#ffffff";
+        } else if (venue === "cex_only") {
+          tag.textContent = "BINANCE CEX ONLY";
+          tag.style.background = "#F0B90B";
+          tag.style.color = "#000000";
+        } else {
+          tag.textContent = "HYBRID COMBO";
+          tag.style.background = "#10b981";
+          tag.style.color = "#000000";
+        }
+      }
+
+      // Show/hide Binance sub-options
+      const binOpts = document.getElementById("sub-binance-venue-options");
+      if (binOpts) {
+        binOpts.style.display = (venue === "dex_only") ? "none" : "block";
+      }
+
+      // Dim bypassed buy size cards
+      const grpBin = document.getElementById("group-size-binance");
+      const tagBin = document.getElementById("tag-bypass-binance");
+      const grpSol = document.getElementById("group-size-sol");
+      const tagSol = document.getElementById("tag-bypass-sol");
+      const grpEvm = document.getElementById("group-size-evm");
+      const tagEvm = document.getElementById("tag-bypass-evm");
+
+      if (venue === "dex_only") {
+        if (grpBin) grpBin.classList.add("dimmed-size-group");
+        if (tagBin) tagBin.style.display = "inline-block";
+        if (grpSol) grpSol.classList.remove("dimmed-size-group");
+        if (tagSol) tagSol.style.display = "none";
+        if (grpEvm) grpEvm.classList.remove("dimmed-size-group");
+        if (tagEvm) tagEvm.style.display = "none";
+      } else if (venue === "cex_only") {
+        if (grpBin) grpBin.classList.remove("dimmed-size-group");
+        if (tagBin) tagBin.style.display = "none";
+        if (grpSol) grpSol.classList.add("dimmed-size-group");
+        if (tagSol) tagSol.style.display = "inline-block";
+        if (grpEvm) grpEvm.classList.add("dimmed-size-group");
+        if (tagEvm) tagEvm.style.display = "inline-block";
+      } else {
+        if (grpBin) grpBin.classList.remove("dimmed-size-group");
+        if (tagBin) tagBin.style.display = "none";
+        if (grpSol) grpSol.classList.remove("dimmed-size-group");
+        if (tagSol) tagSol.style.display = "none";
+        if (grpEvm) grpEvm.classList.remove("dimmed-size-group");
+        if (tagEvm) tagEvm.style.display = "none";
+      }
+
+      if (saveNow) {
+        try {
+          const res = await api("/api/user/settings", {
+            method: "POST",
+            body: JSON.stringify({ snipe_venue: venue })
+          });
+          if (res.success) {
+            const label = venue === "dex_only" ? "DEX Only (Solana & EVM)" : (venue === "cex_only" ? "Binance CEX Only" : "Hybrid Combo (CEX + DEX)");
+            showToast("Venue set to " + label + " ✔");
+          }
+        } catch (e) {}
+      }
+    };
     if (tg) {
       tg.ready();
       tg.expand();
@@ -2139,6 +2470,11 @@
 
         if (targetId === "tab-wallet") {
           if (window.renderWallet) window.renderWallet();
+
+      // Sync Snipe Venue state
+      if (window.setSnipeVenue) {
+        window.setSnipeVenue(u.snipe_venue || "combo", false);
+      }
           if (window.loadWalletTokens) window.loadWalletTokens().then(() => { if (window.renderWallet) window.renderWallet(); });
         }
         if (targetId === "tab-history") {
@@ -2460,6 +2796,7 @@
       haptic("impact");
       const payload = {
         trade_mode: currentUser.trade_mode,
+        snipe_venue: currentUser.snipe_venue || "combo",
         futures_leverage: currentUser.futures_leverage,
         order_amount_usdt: currentUser.order_amount_usdt,
         solana_buy_amount_sol: currentUser.solana_buy_amount_sol || 0.10,
@@ -2546,7 +2883,13 @@
         container.innerHTML = openTrades.map(t => `
           <div class="position-item">
             <div class="pos-head">
-              <span class="pos-ticker">${t.symbol} <small style="color:var(--text-muted)">(${(t.trade_mode || 'SPOT').toUpperCase()})</small></span>
+              <div style="display:flex; align-items:center; gap:10px;">
+                ${renderTokenIcon(t.symbol, t.contract_address, 34)}
+                <div>
+                  <div class="pos-ticker" style="font-size:14px; font-weight:800;">${t.symbol}</div>
+                  <div style="font-size:10px; color:var(--text-muted); font-weight:700; letter-spacing:0.04em;">${(t.trade_mode || 'SPOT').toUpperCase()} • ACTIVE</div>
+                </div>
+              </div>
               <span class="pos-badge ${t.pnl_percent >= 0 ? 'gain' : 'drop'}">
                 ${t.pnl_percent >= 0 ? '+' : ''}${t.pnl_percent.toFixed(2)}%
               </span>
@@ -2597,8 +2940,9 @@
         if (!list) return;
 
         list.innerHTML = res.listings.map(l => `
-          <div class="log-item">
-            <div>
+          <div class="log-item" style="display:flex; align-items:center; gap:12px;">
+            ${renderTokenIcon(l.parsed_coin, null, 30)}
+            <div style="flex:1;">
               <span class="log-symbol">${l.parsed_coin}</span>
               <div class="log-sub">${l.raw_title}</div>
             </div>
@@ -2626,8 +2970,9 @@
           const pnlSign = pnlVal >= 0 ? '+' : '';
           const pnlExtra = isDex ? '' : ` ($${(t.pnl_usdt || 0).toFixed(2)})`;
           return `
-          <div class="log-item">
-            <div>
+          <div class="log-item" style="display:flex; align-items:center; gap:12px;">
+            ${renderTokenIcon(t.symbol, null, 30)}
+            <div style="flex:1;">
               <span class="log-symbol">${t.symbol} (${(t.trade_mode || 'SPOT').toUpperCase()})</span>
               <div class="log-sub">Size: ${sizeLabel} | Exit: ${t.exit_reason || t.status}</div>
             </div>

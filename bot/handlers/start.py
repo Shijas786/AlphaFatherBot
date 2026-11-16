@@ -38,12 +38,21 @@ async def format_dashboard_text(user: dict) -> str:
         except Exception as e:
             balance_text = "API Key Error"
 
+    venue = user.get("snipe_venue", "combo")
+    venue_labels = {
+        "combo": "HYBRID (CEX + DEX)",
+        "dex_only": "DEX ONLY (Solana/EVM)",
+        "cex_only": "BINANCE CEX ONLY"
+    }
+    venue_text = venue_labels.get(venue, "HYBRID (CEX + DEX)")
+
     text = (
         "THE CAPO TERMINAL ⚡\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         f"ACCOUNT: `{telegram_id}`\n"
         f"STATUS: {status_icon}\n"
-        f"MARKET: `{trade_mode}`\n"
+        f"TARGET VENUE: `{venue_text}`\n"
+        f"BINANCE MARKET: `{trade_mode}`\n"
         f"ORDER SIZE: `${order_amount:,.0f} USDT`\n"
         f"AVAILABLE FUNDS: `{balance_text}`\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -126,6 +135,33 @@ async def toggle_active_callback(update: Update, context: ContextTypes.DEFAULT_T
     await update_user_fields(query.from_user.id, is_active=new_state)
     await query.answer(f"Sniping {'ACTIVATED! 🟢' if new_state else 'PAUSED ⚪'}")
     
+    updated_user = await get_user(query.from_user.id)
+    text = await format_dashboard_text(updated_user)
+    await query.edit_message_text(text, reply_markup=get_main_dashboard_kb(updated_user), parse_mode="Markdown")
+
+async def toggle_snipe_venue_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Cycle between combo, dex_only, and cex_only venues."""
+    query = update.callback_query
+    user = await get_user(query.from_user.id)
+    if not user:
+        return
+
+    current_venue = user.get("snipe_venue", "combo")
+    cycle_map = {
+        "combo": "dex_only",
+        "dex_only": "cex_only",
+        "cex_only": "combo"
+    }
+    new_venue = cycle_map.get(current_venue, "combo")
+    labels = {
+        "combo": "HYBRID (CEX + DEX)",
+        "dex_only": "DEX ONLY",
+        "cex_only": "BINANCE CEX ONLY"
+    }
+
+    await update_user_fields(query.from_user.id, snipe_venue=new_venue)
+    await query.answer(f"Venue set to: {labels[new_venue]}")
+
     updated_user = await get_user(query.from_user.id)
     text = await format_dashboard_text(updated_user)
     await query.edit_message_text(text, reply_markup=get_main_dashboard_kb(updated_user), parse_mode="Markdown")

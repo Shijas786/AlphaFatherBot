@@ -8,6 +8,14 @@ def get_main_dashboard_kb(user: Dict[str, Any]) -> InlineKeyboardMarkup:
     trade_mode = user.get("trade_mode", "spot").upper()
     has_api = bool(user.get("binance_api_key"))
 
+    venue = user.get("snipe_venue", "combo")
+    venue_labels = {
+        "combo": "⚡ VENUE: HYBRID (CEX+DEX)",
+        "dex_only": "🌐 VENUE: DEX ONLY",
+        "cex_only": "🟡 VENUE: BINANCE CEX",
+    }
+    venue_text = venue_labels.get(venue, "⚡ VENUE: HYBRID (CEX+DEX)")
+
     status_text = "🟢 SNIPING: ACTIVE" if is_active else "⚪ SNIPING: PAUSED"
     toggle_data = "toggle_active"
 
@@ -24,6 +32,9 @@ def get_main_dashboard_kb(user: Dict[str, Any]) -> InlineKeyboardMarkup:
     keyboard.extend([
         [
             InlineKeyboardButton(status_text, callback_data=toggle_data)
+        ],
+        [
+            InlineKeyboardButton(venue_text, callback_data="toggle_snipe_venue")
         ],
         [
             InlineKeyboardButton(f"MARKET: {trade_mode}", callback_data="toggle_trade_mode"),

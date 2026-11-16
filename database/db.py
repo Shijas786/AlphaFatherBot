@@ -15,6 +15,7 @@ async def init_db():
                 binance_api_secret TEXT DEFAULT '',
                 is_active INTEGER DEFAULT 0,
                 trade_mode TEXT DEFAULT 'spot',
+                snipe_venue TEXT DEFAULT 'combo',
                 order_amount_usdt REAL DEFAULT 50.0,
                 futures_leverage INTEGER DEFAULT 3,
                 tp_percent REAL DEFAULT 15.0,
@@ -84,6 +85,8 @@ async def init_db():
             "ALTER TABLE trades ADD COLUMN fee_rate REAL DEFAULT 0.10",
             "ALTER TABLE trades ADD COLUMN fee_usdt REAL DEFAULT 0.0",
             "ALTER TABLE trades ADD COLUMN fee_status TEXT DEFAULT 'CALCULATED'",
+            # ── Trading venue selection (combo, dex_only, cex_only) ────────────
+            "ALTER TABLE users ADD COLUMN snipe_venue TEXT DEFAULT 'combo'",
             # ── Solana DEX wallet columns ──────────────────────────────────────
             "ALTER TABLE users ADD COLUMN solana_wallet_address TEXT DEFAULT ''",
             "ALTER TABLE users ADD COLUMN encrypted_solana_private_key TEXT DEFAULT ''",
