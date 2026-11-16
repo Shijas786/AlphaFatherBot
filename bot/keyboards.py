@@ -72,8 +72,7 @@ def get_settings_kb(user: Dict[str, Any]) -> InlineKeyboardMarkup:
             InlineKeyboardButton(f"🛑 Stop Loss: -{sl:.0f}%", callback_data="set_sl_menu")
         ],
         [
-            InlineKeyboardButton(f"🔄 Trailing Stop: {trailing_pct:.0f}%", callback_data="set_trailing_menu"),
-            InlineKeyboardButton(f"⏱ Max Hold: {max_hold}s", callback_data="set_timeout_menu")
+            InlineKeyboardButton(f"🔄 Trailing Stop: {trailing_pct:.0f}%", callback_data="set_trailing_menu")
         ]
     ]
 

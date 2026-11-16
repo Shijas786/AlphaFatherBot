@@ -1392,9 +1392,9 @@
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">MAX HOLD TIMER</div>
-          <div class="stat-value" id="val-timeout">60s</div>
-          <div class="stat-sub">Auto Take Profit & Exit</div>
+          <div class="stat-label">SMART EXIT GUARD</div>
+          <div class="stat-value" style="color:var(--green);">TP / SL</div>
+          <div class="stat-sub">Trailing Peak Lock</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">DEX FALLBACK</div>
@@ -1749,15 +1749,7 @@
           <span class="field-hint">Protects your capital if price swings backward.</span>
         </div>
 
-        <!-- Max Hold Timeout -->
-        <div class="field-group">
-          <div class="field-head">
-            <label class="field-label">MAX HOLD DURATION</label>
-            <span class="field-val-badge" id="badge-timeout">60s</span>
-          </div>
-          <input type="range" class="slider-track" id="slider-timeout" min="15" max="300" step="15" value="60">
-          <span class="field-hint">Auto-exits after pump momentum settles so you never become a bagholder.</span>
-        </div>
+
 
         <button class="btn-action" id="btn-save-settings">💾 SAVE SNIPER STRATEGY</button>
       </section>
@@ -2594,10 +2586,7 @@
       const bSl = document.getElementById("badge-sl");
       if (bSl) bSl.textContent = "-" + u.sl_percent + "%";
 
-      const sTimeout = document.getElementById("slider-timeout");
-      if (sTimeout) sTimeout.value = u.max_hold_seconds;
-      const bTimeout = document.getElementById("badge-timeout");
-      if (bTimeout) bTimeout.textContent = u.max_hold_seconds + "s";
+
 
       // Market Segmented
       document.querySelectorAll("#market-seg .seg-option").forEach(b => {
@@ -2787,9 +2776,7 @@
     document.getElementById("slider-sl")?.addEventListener("input", (e) => {
       document.getElementById("badge-sl").textContent = "-" + e.target.value + "%";
     });
-    document.getElementById("slider-timeout")?.addEventListener("input", (e) => {
-      document.getElementById("badge-timeout").textContent = e.target.value + "s";
-    });
+
 
     // Save Strategy
     document.getElementById("btn-save-settings")?.addEventListener("click", async () => {
@@ -2803,7 +2790,7 @@
         evm_buy_amount_eth: currentUser.evm_buy_amount_eth || 0.05,
         tp_percent: parseFloat(document.getElementById("slider-tp").value),
         sl_percent: parseFloat(document.getElementById("slider-sl").value),
-        max_hold_seconds: parseInt(document.getElementById("slider-timeout").value)
+        max_hold_seconds: 0
       };
 
       const res = await api("/api/user/settings", {

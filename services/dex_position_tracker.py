@@ -91,10 +91,6 @@ class DEXPositionTracker:
             # 1. Check current value
             current_sol_val = await self._get_current_sol_value(token_mint, raw_token_amount)
             if current_sol_val <= 0:
-                # If RPC or quote lags, continue checking
-                if elapsed > max_hold_secs:
-                    exit_reason = "MAX_HOLD_TIMEOUT"
-                    break
                 continue
 
             pnl_pct = ((current_sol_val - entry_sol_spent) / entry_sol_spent) * 100.0 if entry_sol_spent > 0 else 0.0
@@ -107,11 +103,6 @@ class DEXPositionTracker:
             # 3. Check Stop Loss
             if pnl_pct <= -sl_pct:
                 exit_reason = f"STOP_LOSS ({pnl_pct:.1f}%)"
-                break
-
-            # 4. Check Hold Timeout
-            if elapsed >= max_hold_secs:
-                exit_reason = f"MAX_HOLD_TIMEOUT ({elapsed:.0f}s)"
                 break
 
         # Execute Auto-Sell via Jupiter

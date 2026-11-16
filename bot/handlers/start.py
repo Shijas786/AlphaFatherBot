@@ -59,7 +59,7 @@ async def format_dashboard_text(user: dict) -> str:
         "EXECUTION RULES:\n"
         f" • Take Profit: `+{user.get('tp_percent', 15):.0f}%` (Market Sell)\n"
         f" • Stop Loss: `-{user.get('sl_percent', 5):.0f}%` (Market Sell)\n"
-        f" • Auto-Sell Timer: `{user.get('max_hold_seconds', 60)}s`\n"
+        f" • Trailing Peak Lock: `Active`\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "⚡ Tap 'OPEN PRO TERMINAL' below for the Web Dashboard."
     )

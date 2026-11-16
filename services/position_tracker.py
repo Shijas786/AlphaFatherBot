@@ -73,10 +73,6 @@ class PositionTracker:
                     
                     async for msg in ws:
                         elapsed = time.time() - start_time
-                        if elapsed >= max_hold_sec:
-                            logger.info(f"[Trade #{trade_id}] Max hold timeout reached ({elapsed:.0f}s)")
-                            await self._execute_exit(trade_id, user, trade_data, exit_reason="TIMEOUT_REACHED", exit_price=highest_price)
-                            return
 
                         if msg.type == aiohttp.WSMsgType.TEXT:
                             data = json.loads(msg.data)
@@ -158,11 +154,6 @@ class PositionTracker:
                 if effective_pnl_pct <= -sl_percent:
                     logger.info(f"[Trade #{trade_id}] Hard Stop Loss hit ({effective_pnl_pct:.2f}%)")
                     await self._execute_exit(trade_id, user, trade_data, exit_reason="STOP_LOSS", exit_price=current_price)
-                    break
-
-                if elapsed >= max_hold_sec:
-                    logger.info(f"[Trade #{trade_id}] Max hold timeout reached ({elapsed:.0f}s)")
-                    await self._execute_exit(trade_id, user, trade_data, exit_reason="TIMEOUT_REACHED", exit_price=current_price)
                     break
 
             except asyncio.CancelledError:
