@@ -111,18 +111,35 @@ async def send_evm_native(
                 res = await r.json()
                 nonce = int(res.get("result", "0x0"), 16)
 
-            # 2. Get gas price
-            async with session.post(
-                rpc_url,
-                json={"jsonrpc": "2.0", "id": 2, "method": "eth_gasPrice", "params": []},
-                timeout=aiohttp.ClientTimeout(total=5)
-            ) as r:
-                res = await r.json()
-                gas_price = int(res.get("result", "0x3b9aca00"), 16)  # fallback 1 gwei
+            # 2. Get modern EIP-1559 gas
+            try:
+                async with session.post(
+                    rpc_url,
+                    json={"jsonrpc": "2.0", "id": 2, "method": "eth_getBlockByNumber", "params": ["latest", False]},
+                    timeout=aiohttp.ClientTimeout(total=4)
+                ) as r:
+                    bdata = await r.json()
+                    base_fee = int(bdata.get("result", {}).get("baseFeePerGas", "0x3b9aca00"), 16)
+
+                async with session.post(
+                    rpc_url,
+                    json={"jsonrpc": "2.0", "id": 3, "method": "eth_maxPriorityFeePerGas", "params": []},
+                    timeout=aiohttp.ClientTimeout(total=4)
+                ) as r:
+                    pdata = await r.json()
+                    priority_fee = int(pdata.get("result", "0x5f5e100"), 16)
+            except Exception:
+                base_fee = 1_000_000_000  # 1 gwei
+                priority_fee = 100_000_000 # 0.1 gwei
+
+            max_priority = max(priority_fee, 50_000_000)
+            max_fee = int(base_fee * 1.5) + max_priority
 
             tx = {
+                "type": 2,
                 "nonce": nonce,
-                "gasPrice": int(gas_price * 1.2),  # 20% buffer for fast inclusion
+                "maxFeePerGas": max_fee,
+                "maxPriorityFeePerGas": max_priority,
                 "gas": 21000,
                 "to": to_address,
                 "value": wei_value,

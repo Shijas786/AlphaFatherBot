@@ -307,11 +307,14 @@ class TelegramNotifier:
         if is_dex:
             symbol   = data.get("symbol", "?")
             network  = data.get("network", "SOLANA")
-            sol_in   = data.get("sol_spent", data.get("in_sol", 0.0))
+            unit     = data.get("unit", "SOL" if network == "SOLANA" else "ETH")
+            spent_in = data.get("sol_spent", data.get("in_sol", 0.0))
             tokens   = data.get("out_tokens_approx", 0)
             impact   = data.get("price_impact_pct", 0.0)
             sig      = data.get("signature", "")
-            url      = data.get("solscan_url", f"https://solscan.io/tx/{sig}" if sig else "")
+            url      = data.get("solscan_url", "")
+            if not url and sig:
+                url = f"https://solscan.io/tx/{sig}" if network == "SOLANA" else f"https://basescan.org/tx/{sig}"
             latency  = data.get("latency_ms", 0)
             contract = data.get("contract", "")[:16] + "…" if data.get("contract") else ""
 
@@ -320,7 +323,7 @@ class TelegramNotifier:
                 f"━━━━━━━━━━━━━━━━━━━━━━\n"
                 f"🪙 *Token:* `#{symbol}`\n"
                 f"⛓ *Chain:* `{network}`\n"
-                f"💸 *SOL Spent:* `{sol_in:.4f} SOL`\n"
+                f"💸 *Spent:* `{spent_in:.4f} {unit}`\n"
                 f"📦 *Tokens Received:* `~{tokens:,.2f} {symbol}`\n"
                 f"📉 *Price Impact:* `{impact:.2f}%`\n"
                 f"⏱ *Total Latency:* `{latency}ms`\n"

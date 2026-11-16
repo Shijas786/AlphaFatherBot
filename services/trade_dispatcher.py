@@ -282,42 +282,56 @@ class TradeDispatcher:
         contract_info: Dict[str, Any],
         announcement_start_time: float,
     ):
-        """Execute a DEX swap for a single user using their personal Solana wallet."""
+        """Execute a DEX swap for a single user using their personal Solana or EVM wallet."""
         user_id = user["telegram_id"]
-        network = contract_info.get("network", "")
+        network = contract_info.get("network", "").lower()
         contract = contract_info.get("contract", "")
 
-        # Only Solana supported currently
-        if network != "solana":
-            logger.info(f"[DEX] Network '{network}' not yet supported for user {user_id}. Skipping.")
+        is_sol = (network == "solana")
+        spent_amount = 0.0
+
+        if is_sol:
+            sol_amount = float(user.get("solana_buy_amount_sol") or 0.1)
+            spent_amount = sol_amount
+            wallet_address = user.get("solana_wallet_address", "")
+            if not wallet_address:
+                logger.warning(f"[DEX] User {user_id} has no Solana wallet — skipping DEX trade")
+                return
+
+            try:
+                from services.dex_swapper import execute_jupiter_swap
+                result = await execute_jupiter_swap(
+                    user=user,
+                    contract_address=contract,
+                    sol_amount=sol_amount,
+                )
+            except Exception as e:
+                logger.error(f"[DEX] execute_jupiter_swap raised for user {user_id}: {e}", exc_info=True)
+                result = {"success": False, "error": str(e)}
+
+        elif network in ("base", "ethereum", "eth", "arbitrum", "bsc", "polygon"):
+            eth_amount = float(user.get("evm_buy_amount_eth") or 0.05)
+            spent_amount = eth_amount
+            wallet_address = user.get("evm_wallet_address", "")
+            if not wallet_address:
+                logger.warning(f"[DEX] User {user_id} has no EVM wallet — skipping DEX trade")
+                return
+
+            try:
+                from services.evm_dex_swapper import execute_evm_swap
+                result = await execute_evm_swap(
+                    user=user,
+                    network=network,
+                    contract_address=contract,
+                    eth_amount=eth_amount,
+                )
+            except Exception as e:
+                logger.error(f"[DEX] execute_evm_swap raised for user {user_id}: {e}", exc_info=True)
+                result = {"success": False, "error": str(e)}
+
+        else:
+            logger.info(f"[DEX] Network '{network}' not supported for user {user_id}. Skipping.")
             return
-
-        sol_amount = float(user.get("solana_buy_amount_sol") or 0.1)
-
-        # Check wallet is provisioned
-        wallet_address = user.get("solana_wallet_address", "")
-        if not wallet_address:
-            logger.warning(f"[DEX] User {user_id} has no Solana wallet — skipping DEX trade")
-            if self.telegram_buy_notifier:
-                await self.telegram_buy_notifier(user_id, {
-                    "symbol": coin,
-                    "dex": True,
-                    "failed": True,
-                    "error": "No Solana wallet found. Please restart the bot to auto-generate one.",
-                    "latency_ms": int((time.time() - announcement_start_time) * 1000)
-                })
-            return
-
-        try:
-            from services.dex_swapper import execute_jupiter_swap
-            result = await execute_jupiter_swap(
-                user=user,
-                contract_address=contract,
-                sol_amount=sol_amount,
-            )
-        except Exception as e:
-            logger.error(f"[DEX] execute_jupiter_swap raised for user {user_id}: {e}", exc_info=True)
-            result = {"success": False, "error": str(e)}
 
         total_latency_ms = int((time.time() - announcement_start_time) * 1000)
 
@@ -327,8 +341,8 @@ class TradeDispatcher:
             symbol=coin,
             network=network,
             contract_address=contract,
-            tx_signature=result.get("signature", ""),
-            sol_spent=sol_amount if result.get("success") else 0.0,
+            tx_signature=result.get("signature", result.get("tx_hash", "")),
+            sol_spent=spent_amount if result.get("success") else 0.0,
             tokens_received=result.get("out_tokens_approx", 0.0),
             price_impact_pct=result.get("price_impact_pct", 0.0),
             liquidity_usd=result.get("liquidity_usd", 0.0),
@@ -338,8 +352,8 @@ class TradeDispatcher:
             error_msg=result.get("error", ""),
         )
 
-        # Launch automated DEX Smart Exit Tracker (Auto TP/SL/Timeout)
-        if result.get("success"):
+        # Launch automated Solana DEX Smart Exit Tracker
+        if result.get("success") and is_sol:
             try:
                 from services.dex_position_tracker import dex_position_tracker
                 dex_position_tracker.start_tracking(
@@ -347,7 +361,7 @@ class TradeDispatcher:
                     user=user,
                     token_mint=contract,
                     symbol=coin,
-                    entry_sol_spent=sol_amount,
+                    entry_sol_spent=spent_amount,
                     tokens_received=result.get("out_tokens_approx", 0.0)
                 )
             except Exception as e:
@@ -356,16 +370,18 @@ class TradeDispatcher:
         # Telegram notification
         if self.telegram_buy_notifier:
             if result.get("success"):
+                tx_url = result.get("explorer_url", result.get("solscan_url", ""))
                 await self.telegram_buy_notifier(user_id, {
                     "symbol": coin,
                     "dex": True,
                     "network": network.upper(),
                     "contract": contract,
-                    "sol_spent": sol_amount,
+                    "sol_spent": spent_amount,
+                    "unit": "SOL" if is_sol else "ETH",
                     "out_tokens_approx": result.get("out_tokens_approx", 0),
                     "price_impact_pct": result.get("price_impact_pct", 0),
-                    "signature": result.get("signature", ""),
-                    "solscan_url": result.get("solscan_url", ""),
+                    "signature": result.get("signature", result.get("tx_hash", "")),
+                    "solscan_url": tx_url,
                     "latency_ms": total_latency_ms,
                 })
             else:
