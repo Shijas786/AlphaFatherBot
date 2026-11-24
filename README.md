@@ -100,8 +100,12 @@ TELEGRAM_BOT_TOKEN=your_bot_token_here
 # Your numeric Telegram user ID (from @userinfobot)
 ADMIN_USER_ID=123456789
 
-# Master encryption key (pre-generated)
-ENCRYPTION_MASTER_KEY=5x7leB-lrBlllbp0BV2o7oVIa4JjfV8dmmwwsLAF39U=
+# Master encryption key. Generate your own:
+# python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+ENCRYPTION_MASTER_KEY=your_generated_fernet_key_here
+
+# 12-word seed phrase the user wallets are derived from (required, keep it private)
+MASTER_WALLET_MNEMONIC=
 
 # Telegram Mini App URL (set when hosting with HTTPS / ngrok)
 WEBAPP_URL=https://your-domain.com
