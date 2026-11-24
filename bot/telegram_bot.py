@@ -13,7 +13,7 @@ from telegram.ext import (
     filters
 )
 import config
-from database.db import register_group, deactivate_group, get_active_groups
+from database.db import create_or_update_user, register_group, deactivate_group, get_active_groups
 from bot.handlers.start import (
     start_command,
     refresh_dashboard_callback,
