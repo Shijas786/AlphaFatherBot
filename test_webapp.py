@@ -63,7 +63,6 @@ class TestWebApp(AioHTTPTestCase):
         self.assertEqual(user_data["user"]["order_amount_usdt"], 75.0)
 
     @unittest_run_loop
-||||||| Stash base
     async def test_wallet_and_panic_endpoints_reject_bad_numbers(self):
         headers = {"Authorization": "Bearer test_user_123456789"}
         for path, payload in (
