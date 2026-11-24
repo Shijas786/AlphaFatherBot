@@ -260,6 +260,7 @@ async def api_get_listings(request: web.Request):
 
 async def api_get_server_ip(request: web.Request):
     """GET /api/ip - Get server outbound IP for Binance trusted IP whitelist."""
+    get_auth_user(request)
     try:
         session = await binance_service.get_session()
         async with session.get("https://api.ipify.org?format=json", proxy=binance_service.proxy, timeout=5) as resp:
@@ -272,6 +273,7 @@ async def api_get_server_ip(request: web.Request):
 
 async def api_get_system_status(request: web.Request):
     """GET /api/status - Live health, registered groups, and sniper engine metrics."""
+    get_auth_user(request)
     groups = await get_active_groups()
     users = await get_all_users()
     active_traders = await get_active_traders()
