@@ -30,7 +30,7 @@ class TestWebApp(AioHTTPTestCase):
     @unittest_run_loop
     async def test_api_update_settings(self):
         headers = {"Authorization": "Bearer test_user_123456789"}
-        payload = {"is_active": 1, "order_amount_usdt": 120.0, "tp_percent": 18.0}
+        payload = {"is_active": 1, "order_amount_usdt": 120.0, "tp_percent": 18.0, "max_hold_seconds": 0}
         resp = await self.client.post("/api/user/settings", headers=headers, json=payload)
         self.assertEqual(resp.status, 200)
         data = await resp.json()
@@ -42,6 +42,25 @@ class TestWebApp(AioHTTPTestCase):
         self.assertTrue(user_data["user"]["is_active"])
         self.assertEqual(user_data["user"]["order_amount_usdt"], 120.0)
         self.assertEqual(user_data["user"]["tp_percent"], 18.0)
+
+    @unittest_run_loop
+    async def test_api_update_settings_rejects_invalid_values(self):
+        headers = {"Authorization": "Bearer test_user_123456789"}
+        await self.client.post("/api/user/settings", headers=headers, json={"order_amount_usdt": 75.0})
+        for payload in (
+            {"order_amount_usdt": -50},
+            {"order_amount_usdt": "abc"},
+            {"trade_mode": "margin"},
+            {"snipe_venue": "everywhere"},
+            {"futures_leverage": 0},
+            {"sl_percent": 250},
+            {"is_active": 5},
+        ):
+            resp = await self.client.post("/api/user/settings", headers=headers, json=payload)
+            self.assertEqual(resp.status, 400, payload)
+
+        user_data = await (await self.client.get("/api/user", headers=headers)).json()
+        self.assertEqual(user_data["user"]["order_amount_usdt"], 75.0)
 
     @unittest_run_loop
     async def test_api_listings_endpoint(self):

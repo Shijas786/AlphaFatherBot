@@ -1,3 +1,4 @@
+import math
 import json
 import logging
 from aiohttp import web
@@ -125,22 +126,58 @@ async def api_get_user(request: web.Request):
         }
     })
 
+def _choice(*options):
+    def parse(value):
+        if value not in options:
+            raise ValueError(value)
+        return value
+    return parse
+
+def _number(cast, minimum, maximum, min_exclusive=False):
+    def parse(value):
+        if isinstance(value, bool):
+            raise ValueError(value)
+        number = cast(value)
+        if not math.isfinite(number) or number > maximum or number < minimum or (min_exclusive and number == minimum):
+            raise ValueError(value)
+        return number
+    return parse
+
+def _flag(value):
+    if value in (0, 1, True, False):
+        return int(value)
+    raise ValueError(value)
+
+# Settings a user may change from the Mini App, with the values each one accepts.
+SETTINGS_VALIDATORS = {
+    "is_active": _flag,
+    "trade_mode": _choice("spot", "futures"),
+    "snipe_venue": _choice("combo", "dex_only", "cex_only"),
+    "order_amount_usdt": _number(float, 0, 1_000_000, min_exclusive=True),
+    "futures_leverage": _number(int, 1, 125),
+    "tp_percent": _number(float, 0, 10_000, min_exclusive=True),
+    "sl_percent": _number(float, 0, 100, min_exclusive=True),
+    "max_hold_seconds": _number(int, 0, 86_400),
+    "solana_buy_amount_sol": _number(float, 0, 1_000_000, min_exclusive=True),
+    "evm_buy_amount_eth": _number(float, 0, 1_000_000, min_exclusive=True),
+}
+
 async def api_update_settings(request: web.Request):
     """POST /api/user/settings - Update trading parameters."""
     tg_user = get_auth_user(request)
     user_id = tg_user["id"]
     data = await request.json()
 
-    allowed_fields = [
-        "is_active", "trade_mode", "snipe_venue", "order_amount_usdt",
-        "futures_leverage", "tp_percent", "sl_percent", "max_hold_seconds",
-        "solana_buy_amount_sol", "evm_buy_amount_eth"
-    ]
+    if not isinstance(data, dict):
+        return web.json_response({"success": False, "error": "Request body must be a JSON object"}, status=400)
 
     updates = {}
-    for k in allowed_fields:
+    for k, parse in SETTINGS_VALIDATORS.items():
         if k in data:
-            updates[k] = data[k]
+            try:
+                updates[k] = parse(data[k])
+            except (TypeError, ValueError):
+                return web.json_response({"success": False, "error": f"Invalid value for {k}"}, status=400)
 
     if updates:
         await update_user_fields(user_id, **updates)
