@@ -2974,8 +2974,7 @@
 
     async function loadServerIp() {
       try {
-        const res = await fetch("/api/ip");
-        const data = await res.json();
+        const data = await api("/api/ip");
         if (data.success && data.ip) {
           const el = document.getElementById("trusted-server-ip");
           if (el) el.value = data.ip;

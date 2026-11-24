@@ -72,7 +72,12 @@ class TestWebApp(AioHTTPTestCase):
 
     @unittest_run_loop
     async def test_api_status_endpoint(self):
-        resp = await self.client.get("/api/status")
+        for path in ("/api/status", "/api/ip"):
+            resp = await self.client.get(path)
+            self.assertEqual(resp.status, 401, path)
+
+        headers = {"Authorization": "Bearer test_user_123456789"}
+        resp = await self.client.get("/api/status", headers=headers)
         self.assertEqual(resp.status, 200)
         data = await resp.json()
         self.assertTrue(data["success"])
