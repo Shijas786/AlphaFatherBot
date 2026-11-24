@@ -135,7 +135,7 @@ class DEXPositionTracker:
                     f"📌 <b>Reason:</b> <code>{exit_reason}</code>\n"
                     f"❌ <b>Error:</b> <code>{html.escape(str(res.get('error', 'Unknown error')))}</code>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"The tokens are still in your wallet and are no longer monitored. Sell them manually."
+                    f"This position is no longer monitored. Check your wallet and sell any remaining tokens manually."
                 ) if not res.get("success") else (
                     f"{icon} <b>DEX POSITION CLOSED!</b>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━\n"
