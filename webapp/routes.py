@@ -244,7 +244,10 @@ async def api_panic_sell(request: web.Request):
     tg_user = get_auth_user(request)
     user_id = tg_user["id"]
     data = await request.json()
-    trade_id = int(data.get("trade_id", 0))
+    try:
+        trade_id = int(data.get("trade_id", 0))
+    except (TypeError, ValueError):
+        return web.json_response({"success": False, "error": "trade_id must be a number"}, status=400)
 
     user = await get_user(user_id)
     if not user:
@@ -308,11 +311,14 @@ async def api_send_wallet_funds(request: web.Request):
 
     chain = (data.get("chain") or "solana").lower()
     recipient = data.get("recipient", "").strip()
-    amount = float(data.get("amount", 0.0))
+    try:
+        amount = float(data.get("amount", 0.0))
+    except (TypeError, ValueError):
+        return web.json_response({"success": False, "error": "Amount must be a number"}, status=400)
 
     if not recipient:
         return web.json_response({"success": False, "error": "Recipient address is required"}, status=400)
-    if amount <= 0:
+    if not math.isfinite(amount) or amount <= 0:
         return web.json_response({"success": False, "error": "Amount must be greater than zero"}, status=400)
 
     user = await get_user(user_id)
@@ -369,10 +375,15 @@ async def api_sell_wallet_token(request: web.Request):
     data = await request.json()
 
     mint = data.get("mint", "").strip()
-    pct = float(data.get("percentage", 1.0))
+    try:
+        pct = float(data.get("percentage", 1.0))
+    except (TypeError, ValueError):
+        return web.json_response({"success": False, "error": "Percentage must be a number"}, status=400)
 
     if not mint:
         return web.json_response({"success": False, "error": "Token mint address is required"}, status=400)
+    if not 0 < pct <= 1:
+        return web.json_response({"success": False, "error": "Percentage must be between 0 and 1"}, status=400)
 
     user = await get_user(user_id)
     if not user:
