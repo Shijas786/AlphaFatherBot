@@ -41,7 +41,14 @@ An ultra-low latency Telegram-controlled crypto trading bot designed to detect n
 │   ├── symbol_cache.py       # In-memory Binance symbol & precision cache
 │   ├── binance_service.py    # Binance Spot & Futures REST API execution
 │   ├── position_tracker.py   # Smart exit engine (Trailing SL, TP, Timeout, Panic)
-│   └── trade_dispatcher.py   # Multi-user parallel order dispatcher
+│   ├── trade_dispatcher.py   # Multi-user parallel order dispatcher
+│   ├── upbit_contract_extractor.py # Contract address & network extraction from Upbit notices
+│   ├── master_wallet.py      # BIP-39/BIP-44 HD wallet deriving each user's Solana & EVM wallet
+│   ├── solana_wallet.py      # Per-user Solana wallet storage & retrieval
+│   ├── evm_wallet.py         # Per-user EVM wallet storage & retrieval
+│   ├── dex_swapper.py        # Solana swaps via Jupiter v6
+│   ├── evm_dex_swapper.py    # EVM swaps (Base L2 & Ethereum L1)
+│   └── dex_position_tracker.py # Smart exit engine for open DEX positions
 ├── webapp/                   # Telegram Mini App
 │   ├── auth.py               # Telegram WebApp initData HMAC validation
 │   ├── routes.py             # REST API routes (user, settings, trades, panic sell)
@@ -91,7 +98,7 @@ The bot comes with an integrated, modern **Telegram Mini App** built into the se
 * Python 3.9+
 
 ### 2. Configure Environment (`.env`)
-Open `.env` and fill in your credentials:
+Copy the template with `cp .env.example .env`, then open `.env` and fill in your credentials:
 
 ```ini
 # Telegram Bot Token (obtain from @BotFather on Telegram)
@@ -113,8 +120,12 @@ WEBAPP_URL=https://your-domain.com
 
 ### 3. Run the Bot
 ```bash
-# Activate the virtual environment
+# First run only: create the virtual environment
+python -m venv .venv
+
+# Activate it and install the dependencies
 source .venv/bin/activate
+pip install -r requirements.txt
 
 # Start the bot
 python main.py
