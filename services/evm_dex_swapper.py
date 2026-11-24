@@ -41,6 +41,18 @@ NETWORK_MAP = {
 }
 
 
+def _price_impact_pct(route_summary: Dict[str, Any]) -> float:
+    """Percent of the input's USD value lost in the swap, from a KyberSwap route summary."""
+    try:
+        usd_in = float(route_summary.get("amountInUsd") or 0)
+        usd_out = float(route_summary.get("amountOutUsd") or 0)
+    except (TypeError, ValueError):
+        return 0.0
+    if usd_in <= 0 or usd_out <= 0:
+        return 0.0
+    return max(0.0, (usd_in - usd_out) / usd_in * 100.0)
+
+
 async def get_eip1559_gas_params(session: aiohttp.ClientSession, rpc_url: str) -> Dict[str, int]:
     """
     Fetch modern EIP-1559 gas fees (baseFeePerGas + maxPriorityFeePerGas).
@@ -142,7 +154,7 @@ async def execute_evm_swap(
                     return {"success": False, "error": f"No liquid DEX pool found for {contract_address} on {canon_network}"}
 
                 tokens_approx = float(route_summary.get("amountOut", 0))
-                price_impact = float(route_summary.get("extraFee", {}).get("feeAmount", 0))
+                price_impact = _price_impact_pct(route_summary)
 
         except Exception as e:
             return {"success": False, "error": f"Route request error: {e}"}
