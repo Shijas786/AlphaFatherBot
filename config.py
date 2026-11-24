@@ -17,11 +17,8 @@ ADMIN_USER_ID = int(os.getenv("ADMIN_USER_ID", "0")) if os.getenv("ADMIN_USER_ID
 # Encryption Key
 ENCRYPTION_MASTER_KEY = os.getenv("ENCRYPTION_MASTER_KEY", "")
 
-# Master HD Wallet Mnemonic (12-word seed phrase)
-MASTER_WALLET_MNEMONIC = os.getenv(
-    "MASTER_WALLET_MNEMONIC",
-    "undo tennis science vacuum thank lab knock solid priority render faith have"
-)
+# Master HD Wallet Mnemonic (12-word seed phrase). No default: it must come from the environment.
+MASTER_WALLET_MNEMONIC = os.getenv("MASTER_WALLET_MNEMONIC", "")
 
 # Tree News
 TREE_NEWS_WS_URL = os.getenv("TREE_NEWS_WS_URL", "wss://news.treeofalpha.com/ws")
@@ -30,7 +27,7 @@ TREE_NEWS_API_KEY = os.getenv("TREE_NEWS_API_KEY", "")
 # Binance URLs & Static Proxy
 BINANCE_SPOT_BASE_URL = os.getenv("BINANCE_SPOT_BASE_URL", "https://api.binance.com")
 BINANCE_FUTURES_BASE_URL = os.getenv("BINANCE_FUTURES_BASE_URL", "https://fapi.binance.com")
-BINANCE_PROXY_URL = os.getenv("BINANCE_PROXY_URL", "http://mncnbxht:vborty6p7gkt@64.137.10.153:5803")
+BINANCE_PROXY_URL = os.getenv("BINANCE_PROXY_URL", "")
 
 # Database Path
 default_db = "/data/bot.db" if os.path.isdir("/data") and os.access("/data", os.W_OK) else "data/bot.db"
