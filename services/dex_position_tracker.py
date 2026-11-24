@@ -6,6 +6,7 @@ Automatically triggers take-profit or stop-loss exits using Jupiter.
 """
 
 import asyncio
+import html
 import time
 import logging
 from typing import Dict, Any, Optional, Callable
@@ -127,6 +128,15 @@ class DEXPositionTracker:
                 sign = "+" if pnl_pct >= 0 else ""
                 icon = "🎉" if pnl_pct >= 0 else "🛑"
                 text = (
+                    f"⚠️ <b>DEX AUTO-SELL FAILED!</b>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🪙 <b>Token:</b> #{symbol}\n"
+                    f"📈 <b>PnL at trigger:</b> <code>{sign}{pnl_pct:.2f}%</code>\n"
+                    f"📌 <b>Reason:</b> <code>{exit_reason}</code>\n"
+                    f"❌ <b>Error:</b> <code>{html.escape(str(res.get('error', 'Unknown error')))}</code>\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"This position is no longer monitored. Check your wallet and sell any remaining tokens manually."
+                ) if not res.get("success") else (
                     f"{icon} <b>DEX POSITION CLOSED!</b>\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━\n"
                     f"🪙 <b>Token:</b> #{symbol}\n"
