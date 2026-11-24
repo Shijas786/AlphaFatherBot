@@ -36,5 +36,6 @@ jobs:
           python -m unittest -v
           test_webapp
           test_dex_tracker
+          test_evm_dex_swapper
           test_bot.TestUpbitSniper.test_regex_parsing
           test_bot.TestUpbitSniper.test_encryption
