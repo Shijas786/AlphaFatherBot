@@ -28,14 +28,14 @@ class PositionTracker:
 
     async def panic_sell_manual(self, trade_id: int, user: Dict[str, Any]) -> Dict[str, Any]:
         """Manually trigger immediate sell from Telegram button."""
+        trade = await get_open_trade_by_id(trade_id)
+        if not trade or trade.get("user_id") != user.get("telegram_id") or trade.get("status") != "OPEN":
+            return {"success": False, "error": "Trade is already closed or not found."}
+
         # Cancel tracking loop if running
         if trade_id in self.active_tasks:
             self.active_tasks[trade_id].cancel()
             self.active_tasks.pop(trade_id, None)
-
-        trade = await get_open_trade_by_id(trade_id)
-        if not trade or trade.get("status") != "OPEN":
-            return {"success": False, "error": "Trade is already closed or not found."}
 
         return await self._execute_exit(trade_id, user, trade, exit_reason="MANUAL_PANIC_SELL")
 
