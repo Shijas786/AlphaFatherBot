@@ -13,7 +13,7 @@ from telegram.ext import (
     filters
 )
 import config
-from database.db import register_group, deactivate_group, get_active_groups
+from database.db import create_or_update_user, register_group, deactivate_group, get_active_groups
 from bot.handlers.start import (
     start_command,
     refresh_dashboard_callback,
@@ -173,6 +173,10 @@ async def wallet_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     user = update.effective_user
     if not chat or not user:
+        return
+
+    if chat.type != "private":
+        await update.message.reply_text("🔒 Send /wallet to me in a private chat to see your wallets.")
         return
 
     db_user = await create_or_update_user(user.id, user.username or "", user.first_name or "")
