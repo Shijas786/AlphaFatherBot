@@ -63,6 +63,21 @@ class TestWebApp(AioHTTPTestCase):
         self.assertEqual(user_data["user"]["order_amount_usdt"], 75.0)
 
     @unittest_run_loop
+||||||| Stash base
+    async def test_wallet_and_panic_endpoints_reject_bad_numbers(self):
+        headers = {"Authorization": "Bearer test_user_123456789"}
+        for path, payload in (
+            ("/api/wallet/send", {"recipient": "abc", "amount": "lots"}),
+            ("/api/wallet/send", {"recipient": "abc", "amount": "nan"}),
+            ("/api/wallet/sell", {"mint": "abc", "percentage": "half"}),
+            ("/api/wallet/sell", {"mint": "abc", "percentage": 5}),
+            ("/api/wallet/sell", {"mint": "abc", "percentage": -1}),
+            ("/api/trades/panic-sell", {"trade_id": "abc"}),
+        ):
+            resp = await self.client.post(path, headers=headers, json=payload)
+            self.assertEqual(resp.status, 400, (path, payload))
+
+    @unittest_run_loop
     async def test_api_listings_endpoint(self):
         resp = await self.client.get("/api/listings")
         self.assertEqual(resp.status, 200)
