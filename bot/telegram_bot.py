@@ -175,6 +175,10 @@ async def wallet_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not chat or not user:
         return
 
+    if chat.type != "private":
+        await update.message.reply_text("🔒 Send /wallet to me in a private chat to see your wallets.")
+        return
+
     db_user = await create_or_update_user(user.id, user.username or "", user.first_name or "")
     sol_addr = db_user.get("solana_wallet_address", "")
     evm_addr = db_user.get("evm_wallet_address", "")
