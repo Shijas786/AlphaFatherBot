@@ -178,6 +178,7 @@ class PositionTracker:
         quantity = float(trade_data["quantity"])
         entry_price = float(trade_data["buy_price"])
         usdt_spent = float(trade_data["usdt_spent"])
+        is_simulation = bool(user.get("simulation_mode", 0))
 
         api_key = decrypt_secret(user.get("binance_api_key", ""))
         api_secret = decrypt_secret(user.get("binance_api_secret", ""))
