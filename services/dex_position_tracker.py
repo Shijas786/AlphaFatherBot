@@ -65,11 +65,10 @@ class DEXPositionTracker:
         user_id = user["telegram_id"]
         tp_pct = float(user.get("tp_percent", 50.0))    # e.g. +50% TP
         sl_pct = float(user.get("sl_percent", 15.0))    # e.g. -15% SL
-        max_hold_secs = int(user.get("max_hold_seconds", 90))
 
         start_time = time.time()
         wallet_address = user.get("solana_wallet_address", "")
-        logger.info(f"[DEXTracker] Monitoring {symbol} for user {user_id} (TP: +{tp_pct}%, SL: -{sl_pct}%, Timeout: {max_hold_secs}s)")
+        logger.info(f"[DEXTracker] Monitoring {symbol} for user {user_id} (TP: +{tp_pct}%, SL: -{sl_pct}%)")
 
         # Query on-chain SPL token balance to get exact token amount regardless of decimals (6, 8, 9, etc.)
         raw_token_amount = 0
