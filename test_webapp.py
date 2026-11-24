@@ -77,6 +77,24 @@ class TestWebApp(AioHTTPTestCase):
             self.assertEqual(resp.status, 400, (path, payload))
 
     @unittest_run_loop
+    async def test_wallet_send_uses_requested_evm_network(self):
+        from unittest import mock
+
+        headers = {"Authorization": "Bearer test_user_123456789"}
+        user = {"telegram_id": 123456789, "encrypted_evm_private_key": "enc"}
+        send = mock.AsyncMock(return_value={"success": True})
+        with mock.patch("webapp.routes.get_user", mock.AsyncMock(return_value=user)), \
+                mock.patch("webapp.routes.decrypt_secret", return_value="ab" * 32), \
+                mock.patch("services.evm_wallet.send_evm_native", send):
+            for chain, network in (("evm", "base"), ("base", "base"), ("ethereum", "ethereum"), ("bsc", "bsc")):
+                resp = await self.client.post(
+                    "/api/wallet/send", headers=headers,
+                    json={"chain": chain, "recipient": "0xabc", "amount": 0.1},
+                )
+                self.assertEqual(resp.status, 200)
+                self.assertEqual(send.call_args.kwargs["network"], network, chain)
+
+    @unittest_run_loop
     async def test_api_listings_endpoint(self):
         resp = await self.client.get("/api/listings")
         self.assertEqual(resp.status, 200)

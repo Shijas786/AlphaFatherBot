@@ -303,6 +303,9 @@ async def api_get_system_status(request: web.Request):
         "recent_listings_count": len(listings)
     })
 
+# Network a /api/wallet/send request is broadcast on; the Mini App's generic "evm" means Base.
+EVM_SEND_NETWORKS = {"evm": "base", "base": "base", "ethereum": "ethereum", "bsc": "bsc"}
+
 async def api_send_wallet_funds(request: web.Request):
     """POST /api/wallet/send - Send SOL or ETH to an external address."""
     tg_user = get_auth_user(request)
@@ -334,13 +337,13 @@ async def api_send_wallet_funds(request: web.Request):
         res = await send_sol(priv_b58, recipient, amount)
         return web.json_response(res)
 
-    elif chain in ("evm", "base", "ethereum", "bsc"):
+    elif chain in EVM_SEND_NETWORKS:
         enc_pk = user.get("encrypted_evm_private_key", "")
         if not enc_pk:
             return web.json_response({"success": False, "error": "No EVM wallet found for user"}, status=400)
         priv_hex = decrypt_secret(enc_pk)
         from services.evm_wallet import send_evm_native
-        res = await send_evm_native(priv_hex, recipient, amount, network="base")
+        res = await send_evm_native(priv_hex, recipient, amount, network=EVM_SEND_NETWORKS[chain])
         return web.json_response(res)
 
     return web.json_response({"success": False, "error": f"Unsupported chain: {chain}"}, status=400)
