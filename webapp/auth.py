@@ -1,9 +1,13 @@
 import hmac
 import hashlib
 import json
+import time
 import urllib.parse
 from typing import Optional, Dict, Any
 import config
+
+# Signed initData older than this is rejected, so a leaked string stops working.
+MAX_INIT_DATA_AGE_SECONDS = 24 * 60 * 60
 
 def validate_init_data(init_data_raw: str) -> Optional[Dict[str, Any]]:
     """
@@ -48,7 +52,10 @@ def validate_init_data(init_data_raw: str) -> Optional[Dict[str, Any]]:
             hashlib.sha256
         ).hexdigest()
 
-        if calculated_hash == received_hash:
+        if hmac.compare_digest(calculated_hash, received_hash):
+            auth_date = int(parsed_data.get("auth_date", 0))
+            if time.time() - auth_date > MAX_INIT_DATA_AGE_SECONDS:
+                return None
             user_json = parsed_data.get("user")
             if user_json:
                 return json.loads(user_json)
