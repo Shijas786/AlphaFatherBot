@@ -60,6 +60,18 @@ class TestWebApp(AioHTTPTestCase):
         self.assertIn("active_groups_count", data)
         self.assertIn("outbound_ip", data)
 
+class TestInitDataAuth(unittest.TestCase):
+    def test_test_user_shortcut_rejected_when_bot_token_set(self):
+        import config
+        from unittest import mock
+        from webapp.auth import validate_init_data
+
+        with mock.patch.object(config, "TELEGRAM_BOT_TOKEN", "123:abc"):
+            self.assertIsNone(validate_init_data("test_user_123456789"))
+        with mock.patch.object(config, "TELEGRAM_BOT_TOKEN", ""):
+            self.assertEqual(validate_init_data("test_user_123456789")["id"], 123456789)
+            self.assertIsNone(validate_init_data("test_user_abc"))
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -13,9 +13,15 @@ def validate_init_data(init_data_raw: str) -> Optional[Dict[str, Any]]:
     if not init_data_raw:
         return None
 
-    # Dev/testing shortcut if bot token isn't configured yet
+    # Dev/testing shortcut, only while no bot token is configured. With a token set,
+    # every request must carry initData signed by Telegram.
     if init_data_raw.startswith("test_user_"):
-        uid = int(init_data_raw.replace("test_user_", ""))
+        if config.TELEGRAM_BOT_TOKEN:
+            return None
+        try:
+            uid = int(init_data_raw.replace("test_user_", ""))
+        except ValueError:
+            return None
         return {"id": uid, "first_name": "Test User", "username": "tester"}
 
     try:
