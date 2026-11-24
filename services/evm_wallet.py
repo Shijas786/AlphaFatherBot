@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 # Public reliable RPC endpoints for EVM chains
 EVM_RPCS: Dict[str, str] = {
     "base": "https://mainnet.base.org",
-    "ethereum": "https://eth.llamarpc.com",
-    "bsc": "https://binance.llamarpc.com",
+    "ethereum": "https://ethereum-rpc.publicnode.com",
+    "bsc": "https://bsc-dataseed.binance.org",
     "arbitrum": "https://arb1.arbitrum.io/rpc",
     "polygon": "https://polygon-rpc.com"
 }
