@@ -15,7 +15,6 @@ An ultra-low latency Telegram-controlled crypto trading bot designed to detect n
 * **🧠 Smart Exit Strategy:**
   * **Trailing Profit Lock:** Tracks peak price; arms when profit reaches e.g. `+8%`, and triggers market sell if price pulls back by e.g. `4%` from the peak.
   * **Hard Take Profit & Stop Loss:** Instant exit if price spikes to moon target (e.g. `+20%`) or dumps (e.g. `-5%`).
-  * **Max Hold Timeout:** Auto-sells at market after $N$ seconds (e.g. 60s, 90s, 120s) to avoid holding bags after the pump fades.
   * **🚨 1-Click Panic Sell:** Instant emergency button delivered with every buy alert and in the Mini App.
 * **📱 Telegram Mini App (Web Dashboard):** A native, responsive in-Telegram WebApp for managing settings, viewing active positions, and clicking Panic Sell.
 * **🧪 Simulation / Paper Trading Mode:** Test the bot in real-time without risking real funds.
@@ -40,7 +39,7 @@ An ultra-low latency Telegram-controlled crypto trading bot designed to detect n
 │   ├── upbit_notice_scraper.py # Redundant Upbit official notice scraper
 │   ├── symbol_cache.py       # In-memory Binance symbol & precision cache
 │   ├── binance_service.py    # Binance Spot & Futures REST API execution
-│   ├── position_tracker.py   # Smart exit engine (Trailing SL, TP, Timeout, Panic)
+│   ├── position_tracker.py   # Smart exit engine (Trailing Stop, TP, SL, Panic)
 │   ├── trade_dispatcher.py   # Multi-user parallel order dispatcher
 │   ├── upbit_contract_extractor.py # Contract address & network extraction from Upbit notices
 │   ├── master_wallet.py      # BIP-39/BIP-44 HD wallet deriving each user's Solana & EVM wallet
@@ -85,7 +84,7 @@ The bot comes with an integrated, modern **Telegram Mini App** built into the se
 5. When users open the bot or click `🚀 Open Sniper Mini App` or the menu button, the native Mini App opens with:
    * **Live Dashboard:** Toggle bot ON/OFF, switch between Real/Simulation mode, view live Binance balance.
    * **Active Positions:** See real-time PnL, open trades, and click **🚨 PANIC SELL 100% NOW**.
-   * **Strategy Controls:** Adjust order size, Spot vs Futures, Take Profit %, Stop Loss %, Trailing Stop %, and Hold Timeout.
+   * **Strategy Controls:** Adjust order size, Spot vs Futures, Take Profit %, Stop Loss %, and Trailing Stop %.
    * **Binance API:** Connect & validate API keys with instant balance detection.
    * **Live Activity:** Real-time Upbit listing notices feed & completed trade history.
 
@@ -142,7 +141,7 @@ python main.py
    * **🧪 Mode:** Toggle between `SIMULATION (Paper Trading)` and `REAL FUNDS`.
    * **📈 Market:** Switch between `SPOT` and `FUTURES`.
    * **🔑 Connect Binance API:** Connect your API key securely (ensure withdrawals are disabled).
-   * **⚙️ Strategy Settings:** Configure order size ($25 - $1000), Take Profit %, Stop Loss %, Trailing Pullback %, and Timeout.
+   * **⚙️ Strategy Settings:** Configure order size ($25 - $1000), Take Profit %, Stop Loss %, and Trailing Pullback %.
    * **📊 Trade History:** View recent trades, fill prices, and realized PnL.
 
 3. **Admin Testing:**
