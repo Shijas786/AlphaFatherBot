@@ -110,6 +110,27 @@ class TestInitDataAuth(unittest.TestCase):
             self.assertEqual(validate_init_data("test_user_123456789")["id"], 123456789)
             self.assertIsNone(validate_init_data("test_user_abc"))
 
+    def test_signed_init_data_expires(self):
+        import hashlib, hmac, json, time, urllib.parse
+        import config
+        from unittest import mock
+        from webapp.auth import validate_init_data, MAX_INIT_DATA_AGE_SECONDS
+
+        token = "123:abc"
+
+        def signed(auth_date):
+            fields = {"auth_date": str(auth_date), "user": json.dumps({"id": 42})}
+            check = "\n".join(f"{k}={v}" for k, v in sorted(fields.items()))
+            secret = hmac.new(b"WebAppData", token.encode(), hashlib.sha256).digest()
+            fields["hash"] = hmac.new(secret, check.encode(), hashlib.sha256).hexdigest()
+            return urllib.parse.urlencode(fields)
+
+        now = int(time.time())
+        with mock.patch.object(config, "TELEGRAM_BOT_TOKEN", token):
+            self.assertEqual(validate_init_data(signed(now))["id"], 42)
+            self.assertIsNone(validate_init_data(signed(now - MAX_INIT_DATA_AGE_SECONDS - 60)))
+            self.assertIsNone(validate_init_data(signed(now) + "0"))
+
 if __name__ == "__main__":
     unittest.main()
 
